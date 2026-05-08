@@ -42,4 +42,19 @@ describe('resultDetail', () => {
     expect(csv).toContain('4;NON UN CUP;INVALIDO_FORMATO;');
     expect(csv.trim().endsWith(';')).toBe(true);
   });
+
+  it('prefixes formula-like CSV cells with an apostrophe', () => {
+    const csv = buildCsvReport([
+      {
+        inputRow: '=1+1',
+        normalizedValue: '+SUM(1,1)',
+        outcome: '-FORMULA',
+        failedRules: [],
+        warnings: ['@WARNING'],
+      },
+    ]);
+
+    expect(csv).toContain("'=1+1;'+SUM(1,1);'-FORMULA;");
+    expect(csv).toContain('Avvisi non bloccanti: @WARNING - avviso non documentato');
+  });
 });

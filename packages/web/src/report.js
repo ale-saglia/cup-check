@@ -54,10 +54,18 @@ export function buildCsvReport(results) {
 }
 
 function csvCell(value) {
-  const text = String(value ?? '');
+  const text = protectCsvFormula(String(value ?? ''));
 
   if (/[;"\n\r]/.test(text)) {
     return `"${text.replaceAll('"', '""')}"`;
+  }
+
+  return text;
+}
+
+function protectCsvFormula(text) {
+  if (/^[=+\-@]/.test(text)) {
+    return `'${text}`;
   }
 
   return text;
