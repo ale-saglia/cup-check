@@ -1,0 +1,15 @@
+node_modules/
+dist/
+coverage/
+.vite/
+.pytest_cache/
+.ruff_cache/
+.venv/
+__pycache__/
+*.pyc
+.DS_Store
+*.log
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/tasks.json

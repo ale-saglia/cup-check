@@ -1,0 +1,42 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "cup-check: release-check",
+      "type": "shell",
+      "command": "make release-check",
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "cup-check: unit",
+      "type": "shell",
+      "command": "npm test -- --run",
+      "options": {
+        "cwd": "${workspaceFolder}/packages/web"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "cup-check: acceptance",
+      "type": "shell",
+      "command": "npm run test:acceptance",
+      "options": {
+        "cwd": "${workspaceFolder}/packages/web"
+      },
+      "group": "test",
+      "problemMatcher": []
+    },
+    {
+      "label": "cup-check: lighthouse",
+      "type": "shell",
+      "command": "npm run test:lighthouse",
+      "options": {
+        "cwd": "${workspaceFolder}/packages/web"
+      },
+      "group": "test",
+      "problemMatcher": []
+    }
+  ]
+}

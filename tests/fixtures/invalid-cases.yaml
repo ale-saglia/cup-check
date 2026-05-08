@@ -1,0 +1,48 @@
+- id: invalid-too-short
+  description: 'CUP troppo corto'
+  input: 'G17H0300013000'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R1]
+
+- id: invalid-too-long
+  description: 'CUP troppo lungo'
+  input: 'G17H030001300011'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R1]
+
+- id: invalid-lowercase-typical
+  description: 'CUP scritto in minuscolo'
+  input: 'g17h03000130001'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R2, R3, R5]
+
+- id: invalid-charset
+  description: 'CUP con carattere non ammesso'
+  input: 'G17H0300013000!'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R2]
+
+- id: invalid-first-position-digit
+  description: 'CUP con prima posizione numerica'
+  input: '117H03000130001'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R3]
+
+- id: invalid-future-year
+  description: 'CUP con anno futuro implausibile nelle posizioni 5-6'
+  input: 'G17H99000130001'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R4]
+
+- id: invalid-fourth-position-digit
+  description: 'CUP con quarta posizione numerica'
+  input: 'G17003000130001'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R5]

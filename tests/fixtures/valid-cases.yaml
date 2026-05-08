@@ -1,0 +1,41 @@
+- id: valid-typical
+  description: 'CUP formalmente valido tipico'
+  input: 'G17H03000130001'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: valid-current-year
+  description: 'CUP con anno corrente a due cifre nelle posizioni 5-6'
+  input: 'A00B26000000000'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: valid-year-2000
+  description: 'CUP con anno 00'
+  input: 'A00B00000000000'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: valid-real-2021
+  description: 'CUP formalmente valido con anno 21 nelle posizioni 5-6'
+  input: 'J61B21007000007'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: valid-real-2022
+  description: 'CUP formalmente valido con anno 22 nelle posizioni 5-6'
+  input: 'E83C22006760006'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: valid-real-2023
+  description: 'CUP formalmente valido con anno 23 nelle posizioni 5-6'
+  input: 'D61F23000260006'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []

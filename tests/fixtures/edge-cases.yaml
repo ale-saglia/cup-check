@@ -1,0 +1,20 @@
+- id: edge-whitespace-padded
+  description: 'CUP valido con spazi di padding'
+  input: '  G17H03000130001  '
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: edge-tab-padded
+  description: 'CUP valido con tab di padding'
+  input: "\tG17H03000130001\t"
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+
+- id: edge-empty
+  description: 'Valore vuoto'
+  input: ''
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R0]

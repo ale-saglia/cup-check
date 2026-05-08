@@ -1,0 +1,68 @@
+SHELL := /bin/bash
+
+WEB_DIR := packages/web
+WEB_PORT ?= 5173
+WEB_PREVIEW_PORT ?= 4173
+
+.DEFAULT_GOAL := help
+
+.PHONY: help
+help: ## Mostra i comandi disponibili
+	@awk 'BEGIN {FS = ":.*##"; printf "\nComandi disponibili:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
+
+.PHONY: setup
+setup: web-install ## Installa le dipendenze di sviluppo
+
+.PHONY: check
+check: web-lint web-test web-build web-audit ## Esegue tutte le verifiche locali veloci
+
+.PHONY: release-check
+release-check: check web-acceptance web-lighthouse ## Esegue anche le prove browser/Lighthouse per il rilascio
+
+.PHONY: web-install
+web-install: ## Installa le dipendenze del package web
+	cd $(WEB_DIR) && npm install
+
+.PHONY: web-dev
+web-dev: ## Avvia Vite in sviluppo
+	cd $(WEB_DIR) && npm run dev -- --port $(WEB_PORT)
+
+.PHONY: web-preview
+web-preview: web-build ## Builda e serve la preview statica Vite
+	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT)
+
+.PHONY: web-lint
+web-lint: ## Esegue ESLint sul package web
+	cd $(WEB_DIR) && npm run lint
+
+.PHONY: web-test
+web-test: ## Esegue i test Vitest una volta
+	cd $(WEB_DIR) && npm test -- --run
+
+.PHONY: web-test-watch
+web-test-watch: ## Esegue i test Vitest in watch mode
+	cd $(WEB_DIR) && npm test
+
+.PHONY: web-acceptance
+web-acceptance: web-build ## Verifica upload XLSX 10k e offline PWA con Chromium
+	cd $(WEB_DIR) && npm run test:acceptance
+
+.PHONY: web-lighthouse
+web-lighthouse: web-build ## Verifica soglie Lighthouse MVP sulla build statica
+	cd $(WEB_DIR) && npm run test:lighthouse
+
+.PHONY: web-build
+web-build: ## Genera la build statica web
+	cd $(WEB_DIR) && npm run build
+
+.PHONY: web-audit
+web-audit: ## Controlla vulnerabilita nelle dipendenze runtime web
+	cd $(WEB_DIR) && npm audit --omit=dev
+
+.PHONY: web-clean
+web-clean: ## Rimuove la build web
+	rm -rf $(WEB_DIR)/dist
+
+.PHONY: clean
+clean: web-clean ## Rimuove artefatti generati
+	rm -rf .pytest_cache .ruff_cache

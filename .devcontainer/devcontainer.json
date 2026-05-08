@@ -1,0 +1,40 @@
+{
+  "name": "cup-check",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": ".."
+  },
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "charliermarsh.ruff",
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "spmeesseman.vscode-taskexplorer",
+        "vitest.explorer"
+      ],
+      "settings": {
+        "editor.formatOnSave": true,
+        "eslint.workingDirectories": ["packages/web"],
+        "npm.autoDetect": "off",
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "python.terminal.activateEnvironment": false,
+        "taskexplorer.useNpmProvider": true
+      }
+    }
+  },
+  "containerEnv": {
+    "CHROME_PATH": "/usr/bin/chromium",
+    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
+  },
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "Vite dev server",
+      "onAutoForward": "notify"
+    }
+  },
+  "postCreateCommand": "make setup",
+  "remoteUser": "vscode"
+}
