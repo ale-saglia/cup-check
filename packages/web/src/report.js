@@ -1,4 +1,5 @@
 import { RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
+import { resultRowsLabel } from './results.js';
 
 export const PRODUCT_VERSION = '0.1.0';
 
@@ -27,12 +28,12 @@ export function opencupUrl(cup) {
 }
 
 export function buildCsvReport(results) {
-  const headers = ['riga_originale', 'cup_normalizzato', 'esito', 'dettaglio', 'link_opencup'];
+  const headers = ['righe_originali', 'cup_normalizzato', 'esito', 'dettaglio', 'link_opencup'];
   const lines = [
     headers.join(';'),
     ...results.map((result) =>
       [
-        result.inputRow,
+        resultRowsLabel(result),
         result.normalizedValue,
         result.outcome,
         resultDetail(result),

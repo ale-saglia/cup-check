@@ -411,6 +411,12 @@ a {
   font-weight: 700;
 }
 
+.multiple-rows-button {
+  font-weight: 400;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
 .nav-link-button {
   color: var(--link);
   font-weight: 400;

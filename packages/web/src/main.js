@@ -1,5 +1,6 @@
 import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport, opencupUrl, PRODUCT_VERSION, resultDetail } from './report.js';
+import { resultRowsLabel, uniqueResultsByCup } from './results.js';
 import { textInputLines } from './text-input.js';
 import { OUTCOMES, validateCup, summarizeResults } from './validator.js';
 import './styles.css';
@@ -8,6 +9,7 @@ const state = {
   parsed: null,
   selectedColumnIndex: 0,
   results: [],
+  sourceRowCount: 0,
   filter: 'ALL',
   query: '',
   fileName: 'report',
@@ -237,7 +239,9 @@ textCheckButton.addEventListener('click', () => {
   }
 
   const startedAt = performance.now();
-  state.results = lines.map((line, index) => validateCup(line, index + 1));
+  const results = lines.map((line, index) => validateCup(line, index + 1));
+  state.results = uniqueResultsByCup(results);
+  state.sourceRowCount = results.length;
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
   state.query = '';
@@ -280,9 +284,11 @@ checkButton.addEventListener('click', () => {
   const rowsToValidate = state.skipMissingCup
     ? state.parsed.rows.filter((row) => !isMissingCup(row))
     : state.parsed.rows;
-  state.results = rowsToValidate.map((row) =>
+  const results = rowsToValidate.map((row) =>
     validateCup(row.cells[state.selectedColumnIndex], row.originalRowNumber),
   );
+  state.results = uniqueResultsByCup(results);
+  state.sourceRowCount = results.length;
   collapsePanel(previewPanel, previewToggle);
   renderResults(performance.now() - startedAt);
 });
@@ -306,6 +312,13 @@ clearButton.addEventListener('click', () => {
 });
 
 resultsTable.addEventListener('click', (event) => {
+  const rowsButton = event.target.closest('.multiple-rows-button');
+  if (rowsButton) {
+    detailDialogText.textContent = `Righe originali: ${rowsButton.dataset.rows}`;
+    detailDialog.showModal();
+    return;
+  }
+
   const cell = event.target.closest('.detail-cell');
   if (!cell || cell.scrollWidth <= cell.clientWidth) return;
   detailDialogText.textContent = cell.closest('td').title;
@@ -388,8 +401,8 @@ function renderResults(durationMs) {
   const data = summarizeResults(state.results, durationMs);
   const invalid = data.counts[OUTCOMES.INVALID];
   const valid = data.counts[OUTCOMES.CHECK];
-  summary.textContent = `${data.total} righe - ${valid} da verificare - ${invalid} invalidi - ${Math.round(data.durationMs)} ms`;
-  resultsToggleMeta.textContent = `${data.total} righe`;
+  summary.textContent = `${data.total} CUP unici da ${state.sourceRowCount} righe - ${valid} da verificare - ${invalid} invalidi - ${Math.round(data.durationMs)} ms`;
+  resultsToggleMeta.textContent = `${data.total} CUP unici`;
   renderResultsTable();
 }
 
@@ -412,7 +425,7 @@ function renderResultsTable() {
   const rows = state.results.filter((result) => {
     const matchesOutcome = state.filter === 'ALL' || result.outcome === state.filter;
     const haystack =
-      `${result.normalizedValue} ${result.outcome} ${resultDetail(result)}`.toLowerCase();
+      `${resultRowsLabel(result)} ${result.normalizedValue} ${result.outcome} ${resultDetail(result)}`.toLowerCase();
     const matchesQuery = state.query === '' || haystack.includes(state.query);
     return matchesOutcome && matchesQuery;
   });
@@ -438,7 +451,7 @@ function renderResultsTable() {
         .map(
           (result) => `
             <tr>
-              <td>${result.inputRow}</td>
+              <td>${renderRowsCell(result)}</td>
               <td><code>${escapeHtml(result.normalizedValue)}</code></td>
               <td><span class="badge ${result.outcome === OUTCOMES.INVALID ? 'bad' : 'warn'}">${result.outcome}</span></td>
               <td title="${escapeHtml(resultDetail(result))}"><div class="detail-cell">${escapeHtml(resultDetail(result))}</div></td>
@@ -457,10 +470,22 @@ function renderResultsTable() {
   });
 }
 
+function renderRowsCell(result) {
+  const rows = result.inputRows ?? [result.inputRow];
+
+  if (rows.length <= 1) {
+    return escapeHtml(rows[0]);
+  }
+
+  const rowsLabel = resultRowsLabel(result);
+  return `<button class="link-button multiple-rows-button" type="button" data-rows="${escapeHtml(rowsLabel)}" aria-label="Mostra tutte le righe per il CUP">${escapeHtml(rows[0])}++</button>`;
+}
+
 function resetApp() {
   state.parsed = null;
   state.selectedColumnIndex = 0;
   state.results = [];
+  state.sourceRowCount = 0;
   state.filter = 'ALL';
   state.query = '';
   state.fileName = 'report';
