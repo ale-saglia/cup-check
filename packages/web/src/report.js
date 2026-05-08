@@ -1,8 +1,6 @@
 import { RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
 
-export const PRODUCT_VERSION = '0.1.0';
-
 export function resultDetail(result) {
   const warnings = result.warnings?.length
     ? ` Avvisi non bloccanti: ${result.warnings.map(formatWarning).join('; ')}`

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cup-check-v0.1.0';
+const CACHE_NAME = 'cup-check-v__APP_VERSION__';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest'];
 
 self.addEventListener('install', (event) => {

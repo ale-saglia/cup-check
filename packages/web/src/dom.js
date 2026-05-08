@@ -1,5 +1,5 @@
-import { PRODUCT_VERSION } from './report.js';
 import { OUTCOMES } from './validator.js';
+import { PRODUCT_VERSION } from './version.js';
 
 export function mountApp(root = document.querySelector('#app')) {
   root.innerHTML = `
@@ -132,7 +132,7 @@ export function mountApp(root = document.querySelector('#app')) {
       <dialog id="limits-dialog" class="limits-dialog" aria-labelledby="limits-title">
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
-          <p>La versione 0.1.0 verifica solo la correttezza formale del CUP. Un codice con formato valido non viene dichiarato esistente.</p>
+          <p>La versione ${PRODUCT_VERSION} verifica solo la correttezza formale del CUP. Un codice con formato valido non viene dichiarato esistente.</p>
           <p>Per attestare l'esistenza del progetto serve una fonte autoritativa, come il Sistema CUP o il portale OpenCUP quando applicabile.</p>
         </div>
         <form method="dialog">
