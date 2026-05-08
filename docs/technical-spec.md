@@ -2,18 +2,18 @@
 
 ## Stack
 
-| Layer | Tecnologia | Motivazione |
-| --- | --- | --- |
-| Web language | Vanilla JavaScript ES modules | Browser-native, nessun framework necessario |
-| Web build | Vite | Dev server rapido, output statico per GitHub Pages |
-| CSV parsing | PapaParse | Maturo e leggero |
-| XLSX parsing | read-excel-file | MIT, evita dipendenze pesanti |
-| Service Worker | Vanilla | Comportamento esplicito |
-| Test web | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate |
-| Lint/format | ESLint, Prettier, EditorConfig | Stile coerente |
-| Fixture | YAML | Leggibili e consumabili da JS/Python |
-| Hosting | GitHub Pages | Vincolo MVP |
-| Python library, da `0.2.0` | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test |
+| Layer                      | Tecnologia                     | Motivazione                                        |
+| -------------------------- | ------------------------------ | -------------------------------------------------- |
+| Web language               | Vanilla JavaScript ES modules  | Browser-native, nessun framework necessario        |
+| Web build                  | Vite                           | Dev server rapido, output statico per GitHub Pages |
+| CSV parsing                | PapaParse                      | Maturo e leggero                                   |
+| XLSX parsing               | read-excel-file                | MIT, evita dipendenze pesanti                      |
+| Service Worker             | Vanilla                        | Comportamento esplicito                            |
+| Test web                   | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate                    |
+| Lint/format                | ESLint, Prettier, EditorConfig | Stile coerente                                     |
+| Fixture                    | YAML                           | Leggibili e consumabili da JS/Python               |
+| Hosting                    | GitHub Pages                   | Vincolo MVP                                        |
+| Python library, da `0.2.0` | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
 
 ## Struttura Repo
 
@@ -51,8 +51,8 @@ I file `tests/fixtures/*.yaml` sono normativi. Ogni caso contiene:
 
 ```yaml
 - id: valid-typical
-  description: "CUP formalmente valido tipico"
-  input: "G17H03000130001"
+  description: 'CUP formalmente valido tipico'
+  input: 'G17H03000130001'
   expected:
     outcome: FORMATO_VALIDO_DA_VERIFICARE
     failed_rules: []
@@ -69,13 +69,15 @@ Regole:
 ```text
 Outcome    = INVALIDO_FORMATO | FORMATO_VALIDO_DA_VERIFICARE
 FailedRule = R0 | R1 | R2 | R3 | R4 | R5
+Warning    = N1 | N2
 
 ValidationResult = {
   inputRow: int | null,
   rawValue: string,
   normalizedValue: string,
   outcome: Outcome,
-  failedRules: FailedRule[]
+  failedRules: FailedRule[],
+  warnings: Warning[]
 }
 ```
 
@@ -96,12 +98,12 @@ result = validate_format("G17H03000130001")
 
 ## Workflow
 
-| Workflow | Trigger | Effetto |
-| --- | --- | --- |
-| `ci.yml` | PR e push su `main` | lint, test, build |
-| `release-web.yml` | push tag `v*` o release published | build e deploy Pages |
-| `release-python.yml` | futuro, da `0.2.0` | publish PyPI |
-| `refresh-dataset.yml` | futuro, da `0.3.0` | refresh dataset OpenCUP |
+| Workflow              | Trigger                           | Effetto                 |
+| --------------------- | --------------------------------- | ----------------------- |
+| `ci.yml`              | PR e push su `main`               | lint, test, build       |
+| `release-web.yml`     | push tag `v*` o release published | build e deploy Pages    |
+| `release-python.yml`  | futuro, da `0.2.0`                | publish PyPI            |
+| `refresh-dataset.yml` | futuro, da `0.3.0`                | refresh dataset OpenCUP |
 
 ## Comandi
 

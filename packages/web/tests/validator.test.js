@@ -21,6 +21,7 @@ describe('validateCup', () => {
 
     expect(result.outcome).toBe(testCase.expected.outcome);
     expect(result.failedRules).toEqual(testCase.expected.failed_rules);
+    expect(result.warnings).toEqual(testCase.expected.warnings ?? []);
   });
 
   it('uses R0 for a missing CUP value', () => {

@@ -4,6 +4,7 @@
   expected:
     outcome: FORMATO_VALIDO_DA_VERIFICARE
     failed_rules: []
+    warnings: [N1]
 
 - id: edge-tab-padded
   description: 'CUP valido con tab di padding'
@@ -11,6 +12,23 @@
   expected:
     outcome: FORMATO_VALIDO_DA_VERIFICARE
     failed_rules: []
+    warnings: [N1]
+
+- id: edge-lowercase-typical
+  description: 'CUP valido dopo conversione in maiuscolo'
+  input: 'g17h03000130001'
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+    warnings: [N2]
+
+- id: edge-padded-lowercase
+  description: 'CUP valido dopo trim e conversione in maiuscolo'
+  input: '  g17h03000130001  '
+  expected:
+    outcome: FORMATO_VALIDO_DA_VERIFICARE
+    failed_rules: []
+    warnings: [N1, N2]
 
 - id: edge-empty
   description: 'Valore vuoto'
@@ -18,3 +36,4 @@
   expected:
     outcome: INVALIDO_FORMATO
     failed_rules: [R0]
+    warnings: []

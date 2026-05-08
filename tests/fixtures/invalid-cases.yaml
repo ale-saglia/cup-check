@@ -12,13 +12,6 @@
     outcome: INVALIDO_FORMATO
     failed_rules: [R1]
 
-- id: invalid-lowercase-typical
-  description: 'CUP scritto in minuscolo'
-  input: 'g17h03000130001'
-  expected:
-    outcome: INVALIDO_FORMATO
-    failed_rules: [R2, R3, R5]
-
 - id: invalid-charset
   description: 'CUP con carattere non ammesso'
   input: 'G17H0300013000!'

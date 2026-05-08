@@ -37,18 +37,25 @@ Il bootstrap del repo e l'MVP `0.1.0` sono in release candidate:
 
 ## Regole Formali
 
-Il valore viene normalizzato con `trim` + uppercase, ma lunghezza e charset sono valutati sul valore solo `trim`, cosi un minuscolo resta errore di charset.
+Il valore viene normalizzato con `trim` + uppercase e le regole vengono applicate al valore normalizzato. Se la normalizzazione rimuove spazi bianchi o converte lettere in maiuscolo, il dettaglio mostra un avviso non bloccante.
 
-| Regola | Specifica |
-| --- | --- |
-| `R0` | valore vuoto dopo trim |
-| `R1` | lunghezza diversa da 15 caratteri dopo trim |
-| `R2` | charset diverso da lettere maiuscole A-Z e cifre 0-9 |
-| `R3` | prima posizione non alfabetica |
-| `R4` | posizioni 5-6 non sono un anno plausibile non futuro |
-| `R5` | quarta posizione non alfabetica |
+| Regola | Specifica                                            |
+| ------ | ---------------------------------------------------- |
+| `R0`   | valore vuoto dopo trim                               |
+| `R1`   | lunghezza diversa da 15 caratteri dopo trim          |
+| `R2`   | charset diverso da lettere maiuscole A-Z e cifre 0-9 |
+| `R3`   | prima posizione non alfabetica                       |
+| `R4`   | posizioni 5-6 non sono un anno plausibile non futuro |
+| `R5`   | quarta posizione non alfabetica                      |
 
 Se il valore e vuoto, l'unica regola fallita e `R0`. Se almeno una regola fallisce, l'esito e `INVALIDO_FORMATO`. Se tutte passano, l'esito e `FORMATO_VALIDO_DA_VERIFICARE`.
+
+Avvisi non bloccanti:
+
+| Avviso | Specifica                       |
+| ------ | ------------------------------- |
+| `N1`   | spazi bianchi rimossi dal CUP   |
+| `N2`   | lettere convertite in maiuscolo |
 
 ## Output
 
@@ -66,4 +73,3 @@ Se il valore e vuoto, l'unica regola fallita e `R0`. Se almeno una regola fallis
 5. Deploy Pages automatico su release pubblicata con tag `v*`.
 6. Lighthouse: Performance, Accessibility, Best Practices e SEO almeno 90.
 7. Repo con README, LICENSE EUPL-1.2, AGENTS.md e CODEOWNERS.
-
