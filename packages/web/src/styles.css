@@ -183,6 +183,14 @@ h2 {
   justify-content: space-between;
 }
 
+.preview-options {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 14px 18px;
+  align-items: end;
+  justify-content: flex-end;
+}
+
 #results-panel .section-head {
   margin-bottom: 16px;
 }

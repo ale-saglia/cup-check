@@ -29,6 +29,24 @@ export function hasHeader(row) {
   });
 }
 
+export function buildParsedRows(rawRows, headerPresent) {
+  const firstRow = rawRows[0] ?? [];
+  const headers = headerPresent ? firstRow : firstRow.map((_, index) => `Colonna ${index + 1}`);
+  const dataRows = headerPresent ? rawRows.slice(1) : rawRows;
+
+  return {
+    rawRows,
+    headers,
+    rows: dataRows.map((cells, index) => ({
+      originalRowNumber: headerPresent ? index + 2 : index + 1,
+      cells,
+    })),
+    headerPresent,
+    headerDetectedAutomatically: hasHeader(firstRow),
+    suggestedColumnIndex: detectCupColumn(headers),
+  };
+}
+
 async function parseCsv(file) {
   const text = await file.text();
 
@@ -48,18 +66,5 @@ async function parseXlsx(file) {
 
 function normalizeRows(rawRows) {
   const rows = rawRows.map((row) => row.map((cell) => String(cell ?? '')));
-  const firstRow = rows[0] ?? [];
-  const headerPresent = hasHeader(firstRow);
-  const headers = headerPresent ? firstRow : firstRow.map((_, index) => `Colonna ${index + 1}`);
-  const dataRows = headerPresent ? rows.slice(1) : rows;
-
-  return {
-    headers,
-    rows: dataRows.map((cells, index) => ({
-      originalRowNumber: headerPresent ? index + 2 : index + 1,
-      cells,
-    })),
-    headerPresent,
-    suggestedColumnIndex: detectCupColumn(headers),
-  };
+  return buildParsedRows(rows, hasHeader(rows[0] ?? []));
 }

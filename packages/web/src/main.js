@@ -1,4 +1,4 @@
-import { parseFile } from './parser.js';
+import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport, opencupUrl, PRODUCT_VERSION, resultDetail } from './report.js';
 import { textInputLines } from './text-input.js';
 import { OUTCOMES, validateCup, summarizeResults } from './validator.js';
@@ -11,6 +11,7 @@ const state = {
   filter: 'ALL',
   query: '',
   fileName: 'report',
+  displayFileName: 'report',
   skipMissingCup: true,
 };
 
@@ -74,10 +75,16 @@ app.innerHTML = `
         <div id="preview-controls" class="panel-body">
           <div class="section-head">
             <p id="file-meta"></p>
-          <label>
-            Colonna CUP
-            <select id="column-select"></select>
-          </label>
+            <div class="preview-options">
+              <label class="toggle">
+                <input id="header-toggle" type="checkbox" />
+                <span>La prima riga contiene intestazioni</span>
+              </label>
+              <label>
+                Colonna CUP
+                <select id="column-select"></select>
+              </label>
+            </div>
           </div>
           <div class="table-wrap">
             <table id="preview-table"></table>
@@ -85,7 +92,7 @@ app.innerHTML = `
           <div class="actions-row">
             <label class="toggle">
               <input id="skip-missing-cup" type="checkbox" checked />
-              <span>Ignora CUP assente</span>
+              <span>Ignora celle CUP assenti</span>
             </label>
             <button id="check-button" class="primary" type="button">Verifica</button>
           </div>
@@ -168,6 +175,7 @@ const resultsPanel = document.querySelector('#results-panel');
 const resultsToggle = document.querySelector('#results-toggle');
 const resultsToggleMeta = document.querySelector('#results-toggle-meta');
 const fileMeta = document.querySelector('#file-meta');
+const headerToggle = document.querySelector('#header-toggle');
 const columnSelect = document.querySelector('#column-select');
 const previewTable = document.querySelector('#preview-table');
 const checkButton = document.querySelector('#check-button');
@@ -248,6 +256,7 @@ fileInput.addEventListener('change', async (event) => {
   try {
     state.parsed = await parseFile(file);
     state.fileName = file.name.replace(/\.[^.]+$/, '');
+    state.displayFileName = file.name;
     state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
     renderPreview(file);
   } catch (error) {
@@ -258,6 +267,12 @@ fileInput.addEventListener('change', async (event) => {
 columnSelect.addEventListener('change', () => {
   state.selectedColumnIndex = Number(columnSelect.value);
   renderPreviewTable();
+});
+
+headerToggle.addEventListener('change', () => {
+  state.parsed = buildParsedRows(state.parsed.rawRows, headerToggle.checked);
+  state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
+  renderPreviewData();
 });
 
 checkButton.addEventListener('click', () => {
@@ -314,8 +329,14 @@ function renderPreview(file) {
   previewPanel.classList.remove('hidden');
   expandPanel(previewPanel, previewToggle);
   resultsPanel.classList.add('hidden');
-  fileMeta.textContent = `${file.name} - ${state.parsed.rows.length} righe dati`;
+  renderPreviewData(file.name);
+}
+
+function renderPreviewData(fileName = state.displayFileName) {
+  const headerMeta = headerDetectionMeta();
+  fileMeta.textContent = `${fileName} - ${state.parsed.rows.length} righe dati - ${headerMeta}`;
   previewToggleMeta.textContent = `${state.parsed.rows.length} righe`;
+  headerToggle.checked = state.parsed.headerPresent;
   skipMissingCupInput.checked = state.skipMissingCup;
   columnSelect.innerHTML = state.parsed.headers
     .map(
@@ -325,6 +346,18 @@ function renderPreview(file) {
     .join('');
   columnSelect.value = String(state.selectedColumnIndex);
   renderPreviewTable();
+}
+
+function headerDetectionMeta() {
+  if (state.parsed.headerDetectedAutomatically === state.parsed.headerPresent) {
+    return state.parsed.headerPresent
+      ? 'intestazione rilevata automaticamente'
+      : 'intestazione non rilevata automaticamente';
+  }
+
+  return state.parsed.headerPresent
+    ? 'intestazione impostata manualmente'
+    : 'prima riga trattata manualmente come dati';
 }
 
 function renderPreviewTable() {
@@ -431,6 +464,7 @@ function resetApp() {
   state.filter = 'ALL';
   state.query = '';
   state.fileName = 'report';
+  state.displayFileName = 'report';
   state.skipMissingCup = true;
 
   fileInput.value = '';
@@ -448,6 +482,7 @@ function resetApp() {
   filterSelect.value = 'ALL';
   searchInput.value = '';
   skipMissingCupInput.checked = true;
+  headerToggle.checked = false;
   previewPanel.classList.add('hidden');
   resultsPanel.classList.add('hidden');
   sessionStorage.removeItem('cup-check:last-results');
