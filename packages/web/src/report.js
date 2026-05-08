@@ -27,6 +27,14 @@ export function opencupUrl(cup) {
   return `https://opencup.gov.it/portale/progetto/-/cup/${encodeURIComponent(cup)}`;
 }
 
+export function opencupUrlForResult(result) {
+  if (!/^[A-Z0-9]{15}$/.test(result.normalizedValue)) {
+    return '';
+  }
+
+  return opencupUrl(result.normalizedValue);
+}
+
 export function buildCsvReport(results) {
   const headers = ['righe_originali', 'cup_normalizzato', 'esito', 'dettaglio', 'link_opencup'];
   const lines = [
@@ -37,7 +45,7 @@ export function buildCsvReport(results) {
         result.normalizedValue,
         result.outcome,
         resultDetail(result),
-        opencupUrl(result.normalizedValue),
+        opencupUrlForResult(result),
       ]
         .map(csvCell)
         .join(';'),

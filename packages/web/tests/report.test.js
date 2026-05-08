@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCsvReport, resultDetail } from '../src/report.js';
+import { buildCsvReport, opencupUrlForResult, resultDetail } from '../src/report.js';
 import { uniqueResultsByCup } from '../src/results.js';
 import { validateCup } from '../src/validator.js';
 
@@ -23,5 +23,23 @@ describe('resultDetail', () => {
 
     expect(csv).toContain('righe_originali;cup_normalizzato;esito;dettaglio;link_opencup');
     expect(csv).toContain('2, 7;A12B23000000001;FORMATO_VALIDO_DA_VERIFICARE');
+  });
+
+  it('keeps OpenCUP links for manually checkable invalid CUP-shaped values', () => {
+    const result = validateCup('A12B99000000001', 3, { currentYear: 2026 });
+
+    expect(result.outcome).toBe('INVALIDO_FORMATO');
+    expect(opencupUrlForResult(result)).toBe(
+      'https://opencup.gov.it/portale/progetto/-/cup/A12B99000000001',
+    );
+  });
+
+  it('omits OpenCUP links for values that are not CUP-shaped', () => {
+    const result = validateCup('non un cup', 4, { currentYear: 2026 });
+    const csv = buildCsvReport([result]);
+
+    expect(opencupUrlForResult(result)).toBe('');
+    expect(csv).toContain('4;NON UN CUP;INVALIDO_FORMATO;');
+    expect(csv.trim().endsWith(';')).toBe(true);
   });
 });

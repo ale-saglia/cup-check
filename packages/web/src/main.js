@@ -1,5 +1,5 @@
 import { buildParsedRows, parseFile } from './parser.js';
-import { buildCsvReport, opencupUrl, PRODUCT_VERSION, resultDetail } from './report.js';
+import { buildCsvReport, opencupUrlForResult, PRODUCT_VERSION, resultDetail } from './report.js';
 import { resultRowsLabel, uniqueResultsByCup } from './results.js';
 import { textInputLines } from './text-input.js';
 import { OUTCOMES, validateCup, summarizeResults } from './validator.js';
@@ -434,6 +434,12 @@ function renderResultsTable() {
     rows.length > renderedRows.length
       ? `<caption>Mostrate ${renderedRows.length} di ${rows.length} righe filtrate</caption>`
       : '';
+  const opencupCell = (result) => {
+    const url = opencupUrlForResult(result);
+    return url
+      ? `<a href="${url}" target="_blank" rel="noreferrer">Apri</a>`
+      : '<span aria-label="Link OpenCUP non disponibile">-</span>';
+  };
 
   resultsTable.innerHTML = `
     ${resultLimitNote}
@@ -455,7 +461,7 @@ function renderResultsTable() {
               <td><code>${escapeHtml(result.normalizedValue)}</code></td>
               <td><span class="badge ${result.outcome === OUTCOMES.INVALID ? 'bad' : 'warn'}">${result.outcome}</span></td>
               <td title="${escapeHtml(resultDetail(result))}"><div class="detail-cell">${escapeHtml(resultDetail(result))}</div></td>
-              <td><a href="${opencupUrl(result.normalizedValue)}" target="_blank" rel="noreferrer">Apri</a></td>
+              <td>${opencupCell(result)}</td>
             </tr>
           `,
         )
