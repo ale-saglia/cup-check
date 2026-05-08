@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import JSZip from 'jszip';
+import { DOMParser } from '@xmldom/xmldom';
 import { buildParsedRows, detectCupColumn, hasHeader, parseFile } from '../src/parser.js';
+
+globalThis.DOMParser = DOMParser;
 
 describe('detectCupColumn', () => {
   it('selects the first header containing CUP', () => {
@@ -101,4 +105,165 @@ describe('parseFile', () => {
     expect(parsed.headerPresent).toBe(true);
     expect(overridden.rows[0]).toEqual({ originalRowNumber: 1, cells: ['NON_E_UN_CUP', 'nota'] });
   });
+
+  it('parses CSV when the CUP column is not first', async () => {
+    const file = new File(['id,Codice CUP,note\n42,G17H03000130001,ok'], 'cups.csv', {
+      type: 'text/csv',
+    });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headers).toEqual(['id', 'Codice CUP', 'note']);
+    expect(parsed.suggestedColumnIndex).toBe(1);
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: ['42', 'G17H03000130001', 'ok'] }]);
+  });
+
+  it('keeps empty CSV rows and mixed numeric/text cells', async () => {
+    const file = new File(['CUP,quantita,note\nG17H03000130001,12,testo\n,,\nA58C15000390001,7,ok'], 'cups.csv', {
+      type: 'text/csv',
+    });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.rows).toEqual([
+      { originalRowNumber: 2, cells: ['G17H03000130001', '12', 'testo'] },
+      { originalRowNumber: 3, cells: ['', '', ''] },
+      { originalRowNumber: 4, cells: ['A58C15000390001', '7', 'ok'] },
+    ]);
+  });
+
+  it('parses XLSX with header', async () => {
+    const file = await workbookFile([
+      ['CUP', 'note'],
+      ['G17H03000130001', 'ok'],
+    ]);
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headerPresent).toBe(true);
+    expect(parsed.headers).toEqual(['CUP', 'note']);
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: ['G17H03000130001', 'ok'] }]);
+  });
+
+  it('parses XLSX without header', async () => {
+    const file = await workbookFile([['G17H03000130001'], ['A58C15000390001']]);
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headerPresent).toBe(false);
+    expect(parsed.headers).toEqual(['Colonna 1']);
+    expect(parsed.rows.map((row) => row.originalRowNumber)).toEqual([1, 2]);
+  });
+
+  it('keeps raw XLSX rows so an invalid first row can be restored as data', async () => {
+    const file = await workbookFile([
+      ['NON_E_UN_CUP', 'nota'],
+      ['G17H03000130001', 'ok'],
+    ]);
+
+    const parsed = await parseFile(file);
+    const overridden = buildParsedRows(parsed.rawRows, false);
+
+    expect(parsed.headerPresent).toBe(true);
+    expect(overridden.rows[0]).toEqual({ originalRowNumber: 1, cells: ['NON_E_UN_CUP', 'nota'] });
+  });
+
+  it('parses XLSX when the CUP column is not first', async () => {
+    const file = await workbookFile([
+      ['id', 'Codice CUP', 'note'],
+      [42, 'G17H03000130001', 'ok'],
+    ]);
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headers).toEqual(['id', 'Codice CUP', 'note']);
+    expect(parsed.suggestedColumnIndex).toBe(1);
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: ['42', 'G17H03000130001', 'ok'] }]);
+  });
+
+  it('keeps empty XLSX rows and mixed numeric/text cells', async () => {
+    const file = await workbookFile([
+      ['CUP', 'quantita', 'note'],
+      ['G17H03000130001', 12, 'testo'],
+      ['', '', ''],
+      ['A58C15000390001', 7, 'ok'],
+    ]);
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.rows).toEqual([
+      { originalRowNumber: 2, cells: ['G17H03000130001', '12', 'testo'] },
+      { originalRowNumber: 3, cells: ['', '', ''] },
+      { originalRowNumber: 4, cells: ['A58C15000390001', '7', 'ok'] },
+    ]);
+  });
 });
+
+async function workbookFile(rows, name = 'cups.xlsx') {
+  const zip = new JSZip();
+  zip.file(
+    '[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/><Override PartName="/xl/worksheets/sheet1.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/></Types>`,
+  );
+  zip.file(
+    '_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+  );
+  zip.file(
+    'xl/workbook.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets><sheet name="CUP" sheetId="1" r:id="rId1"/></sheets></workbook>`,
+  );
+  zip.file(
+    'xl/_rels/workbook.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet1.xml"/></Relationships>`,
+  );
+  zip.file(
+    'xl/worksheets/sheet1.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${sheetRows(rows)}</sheetData></worksheet>`,
+  );
+
+  return new File([await zip.generateAsync({ type: 'arraybuffer' })], name, {
+    type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+  });
+}
+
+function sheetRows(rows) {
+  return rows
+    .map((row, rowIndex) => {
+      const cells = row
+        .map((value, cellIndex) => {
+          const ref = `${columnName(cellIndex + 1)}${rowIndex + 1}`;
+          if (typeof value === 'number') {
+            return `<c r="${ref}"><v>${value}</v></c>`;
+          }
+          return `<c r="${ref}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+        })
+        .join('');
+      return `<row r="${rowIndex + 1}">${cells}</row>`;
+    })
+    .join('');
+}
+
+function columnName(number) {
+  let name = '';
+  let current = number;
+  while (current > 0) {
+    const remainder = (current - 1) % 26;
+    name = String.fromCharCode(65 + remainder) + name;
+    current = Math.floor((current - 1) / 26);
+  }
+  return name;
+}
+
+function escapeXml(value) {
+  return String(value)
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;');
+}
