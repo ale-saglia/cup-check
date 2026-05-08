@@ -1,5 +1,6 @@
 import { parseFile } from './parser.js';
 import { buildCsvReport, opencupUrl, PRODUCT_VERSION, resultDetail } from './report.js';
+import { textInputLines } from './text-input.js';
 import { OUTCOMES, validateCup, summarizeResults } from './validator.js';
 import './styles.css';
 
@@ -220,11 +221,7 @@ resultsToggle.addEventListener('click', () => {
 });
 
 textCheckButton.addEventListener('click', () => {
-  const lines = cupTextarea.value
-    .split('\n')
-    .map((l) => l.trim())
-    .filter((l) => l.length > 0)
-    .filter((l) => !l.toLowerCase().includes('cup'));
+  const lines = textInputLines(cupTextarea.value);
 
   if (lines.length === 0) {
     alert('Nessun CUP trovato. Incolla almeno un codice, uno per riga.');
