@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.1.0 - Unreleased
+## 0.1.0 - 2026-05-08
 
 - MVP web statico per validazione formale CUP.
 - Supporto input CSV, XLSX e testo incollato.

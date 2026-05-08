@@ -99,7 +99,7 @@ result = validate_format("G17H03000130001")
 | Workflow | Trigger | Effetto |
 | --- | --- | --- |
 | `ci.yml` | PR e push su `main` | lint, test, build |
-| `release-web.yml` | release published con tag `v*` | build e deploy Pages |
+| `release-web.yml` | push tag `v*` o release published | build e deploy Pages |
 | `release-python.yml` | futuro, da `0.2.0` | publish PyPI |
 | `refresh-dataset.yml` | futuro, da `0.3.0` | refresh dataset OpenCUP |
 
@@ -112,4 +112,3 @@ make release-check
 make web-dev
 make web-preview
 ```
-
