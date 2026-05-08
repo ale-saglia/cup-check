@@ -9,7 +9,7 @@ describe('resultDetail', () => {
 
     expect(result.outcome).toBe('FORMATO_VALIDO_DA_VERIFICARE');
     expect(resultDetail(result)).toBe(
-      'Formato valido; esistenza non verificata. Avvisi non bloccanti: N1 - spazi bianchi rimossi dal CUP; N2 - lettere convertite in maiuscolo',
+      'FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata. Avvisi non bloccanti: N1 - spazi bianchi rimossi dal CUP; N2 - lettere convertite in maiuscolo',
     );
   });
 

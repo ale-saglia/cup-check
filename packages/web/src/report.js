@@ -10,7 +10,7 @@ export function resultDetail(result) {
     return `Regole fallite: ${result.failedRules.map(formatRule).join('; ')}.${warnings}`;
   }
 
-  return `Formato valido; esistenza non verificata.${warnings}`;
+  return `FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata.${warnings}`;
 }
 
 export function formatRule(rule) {

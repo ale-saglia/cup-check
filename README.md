@@ -4,7 +4,7 @@ Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
 
 `cup-check` e una web app statica per controllare liste di CUP direttamente nel browser. Carichi un CSV/XLSX o incolli una lista di codici, scegli la colonna CUP quando serve e ottieni un report riga per riga esportabile in CSV.
 
-La verifica `0.1.0` e solo formale: segnala se il codice rispetta le regole strutturali note, ma non attesta l'esistenza nel Sistema CUP.
+La verifica `0.1.0` e solo formale: segnala se il codice rispetta le regole strutturali note con esito `FORMATO_VALIDO_DA_VERIFICARE`, ma non attesta l'esistenza nel Sistema CUP.
 
 ## Stato
 
@@ -38,7 +38,7 @@ Gli unici esiti della `0.1.0` sono:
 - `INVALIDO_FORMATO`
 - `FORMATO_VALIDO_DA_VERIFICARE`
 
-Un CUP con formato valido non viene dichiarato esistente. Per attestare l'esistenza serve una fonte autoritativa o, da una versione futura, un dataset OpenCUP esatto e dichiarato nel perimetro.
+Un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE` e non viene dichiarato esistente. Per attestare l'esistenza serve una fonte autoritativa o, da una versione futura, un dataset OpenCUP esatto e dichiarato nel perimetro.
 
 ## Quickstart sviluppo
 

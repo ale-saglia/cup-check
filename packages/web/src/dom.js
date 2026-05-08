@@ -16,8 +16,8 @@ export function mountApp(root = document.querySelector('#app')) {
 
       <main class="shell" aria-labelledby="title">
         <section class="project-note" aria-labelledby="title">
-          <p id="title">cup-check è uno strumento statico per controllare liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
-          Il servizio aiuta a individuare codici non validi e a produrre un report esportabile per revisione, audit o successive verifiche manuali.</p>
+          <p id="title">cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
+          Il servizio aiuta a individuare codici formalmente invalidi e codici <code>FORMATO_VALIDO_DA_VERIFICARE</code>, producendo un report esportabile per revisione, audit o successive verifiche manuali.</p>
           <p>Il controllo non sostituisce le fonti autoritative: consulta i <button id="open-limits-desc" class="link-button" type="button">Limiti del controllo</button> per capire cosa viene verificato e cosa resta escluso.</p>
         </section>
 
@@ -101,7 +101,7 @@ export function mountApp(root = document.querySelector('#app')) {
                 <select id="filter-select">
                   <option value="ALL">Tutti</option>
                   <option value="${OUTCOMES.INVALID}">Invalidi</option>
-                  <option value="${OUTCOMES.CHECK}">Formato valido</option>
+                  <option value="${OUTCOMES.CHECK}">FORMATO_VALIDO_DA_VERIFICARE</option>
                 </select>
               </label>
               <label>
@@ -132,7 +132,7 @@ export function mountApp(root = document.querySelector('#app')) {
       <dialog id="limits-dialog" class="limits-dialog" aria-labelledby="limits-title">
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
-          <p>La versione ${PRODUCT_VERSION} verifica solo la correttezza formale del CUP. Un codice con formato valido non viene dichiarato esistente.</p>
+          <p>La versione ${PRODUCT_VERSION} verifica solo la correttezza formale del CUP. Un codice formalmente valido resta sempre <code>FORMATO_VALIDO_DA_VERIFICARE</code> e non viene dichiarato esistente.</p>
           <p>Per attestare l'esistenza del progetto serve una fonte autoritativa, come il Sistema CUP o il portale OpenCUP quando applicabile.</p>
         </div>
         <form method="dialog">
