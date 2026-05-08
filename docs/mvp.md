@@ -2,7 +2,7 @@
 
 ## Stato
 
-Il bootstrap del repo e l'MVP `0.1.0` sono in release candidate:
+Il bootstrap del repo e l'MVP `0.1.0` sono completati; la linea web e pronta per il rilascio `0.1.1`:
 
 - web app Vite vanilla JS;
 - parser CSV/XLSX;

@@ -1,6 +1,6 @@
 # Progetto
 
-> Stato: release candidate - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
+> Stato: pronto per rilascio `0.1.1` - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
 
 `cup-check` e uno strumento per la verifica massiva e locale dei Codici Unici di Progetto (CUP).
 
@@ -22,4 +22,3 @@ La documentazione di progetto e divisa qui:
 ## Postura Epistemica
 
 Il prodotto preferisce segnalare un CUP come "da verificare" piuttosto che dichiarare valido un CUP fasullo. Nessun esito di esistenza viene prodotto senza una fonte autoritativa o un dataset esatto che ne delimiti chiaramente il perimetro. Strutture probabilistiche, come Bloom filter, non possono essere fonte primaria di esiti utente.
-
