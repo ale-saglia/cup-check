@@ -312,6 +312,7 @@ exportButton.addEventListener('click', () => {
 
 function renderPreview(file) {
   collapsePanel(filePanel, fileToggle);
+  collapsePanel(textPanel, textToggle);
   fileToggleMeta.textContent = file.name;
   previewPanel.classList.remove('hidden');
   expandPanel(previewPanel, previewToggle);

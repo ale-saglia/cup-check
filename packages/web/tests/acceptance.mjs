@@ -26,6 +26,7 @@ try {
 
   assert(result.controllerAfterOnlineReload, 'service worker non controlla la pagina dopo il reload online');
   assert(result.summary.includes(`${ROW_COUNT} righe`), `riepilogo inatteso: ${result.summary}`);
+  assert(result.textPanelCollapsedAfterUpload, 'il pannello testo resta aperto dopo upload file');
   assert(
     result.totalUploadToResultsMs < MAX_TOTAL_MS,
     `upload + verifica + render troppo lenti: ${result.totalUploadToResultsMs} ms`,
@@ -62,6 +63,9 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     const started = Date.now();
     await page.setInputFiles('#file-input', xlsxPath);
     await page.waitForSelector('#preview-panel:not(.hidden)');
+    out.textPanelCollapsedAfterUpload =
+      (await page.locator('#text').evaluate((element) => element.classList.contains('collapsed'))) &&
+      (await page.locator('#text-toggle').getAttribute('aria-expanded')) === 'false';
     await page.locator('#skip-missing-cup').uncheck();
     await page.click('#check-button');
     await page.waitForSelector('#results-panel:not(.hidden)');
