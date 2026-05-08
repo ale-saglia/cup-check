@@ -9,9 +9,9 @@ Istruzioni operative per agenti di coding su questo repo.
 - Preferire modifiche piccole, testate e coerenti con la roadmap.
 - Non aggiungere servizi server-side nell'MVP.
 
-## Commit message
+## Messaggi di commit
 
-Usare Conventional Commits:
+Usare Conventional Commits con descrizioni in italiano. Il `type` resta quello standard in inglese (`feat`, `fix`, `docs`, ecc.):
 
 ```text
 <type>(<scope>): <descrizione breve>
@@ -39,9 +39,9 @@ Type consigliati:
 Esempi:
 
 ```text
-docs: split project documentation into docs
-chore: remove python workspace placeholders
-fix(web): keep acceptance threshold stable in ci
-test(fixtures): add lowercase cup edge case
-feat(web): add pasted cup input
+docs: dividi la documentazione di progetto
+chore: rimuovi placeholder python dal workspace
+fix(web): stabilizza soglia di accettazione in ci
+test(fixtures): aggiungi caso cup minuscolo
+feat(web): aggiungi input cup incollato
 ```
