@@ -20,6 +20,17 @@ Release candidate per `0.1.0`.
 - Funziona offline dopo la prima visita.
 - Non invia i dati a server esterni nell'MVP.
 
+## Privacy
+
+File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app
+non carica i CUP, i file o i report su un backend applicativo, perche nell'MVP
+non esiste un backend: il sito e composto da asset statici serviti da GitHub
+Pages.
+
+Il caricamento iniziale dell'app scarica soltanto questi asset statici. I link
+esterni, come OpenCUP o il repository GitHub, sono normali collegamenti aperti
+solo su azione dell'utente e distinti dalla validazione locale.
+
 ## Limiti Del Controllo
 
 Gli unici esiti della `0.1.0` sono:
