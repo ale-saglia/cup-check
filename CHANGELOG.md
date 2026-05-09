@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.2.0 - 2026-05-09
 
 - Avvia lo scaffold `0.2.0` della libreria Python `cup-check`.
 - Aggiunge API `validate_format` e `validate_many` con tipi pubblici per outcome, regole, warning e risultato.

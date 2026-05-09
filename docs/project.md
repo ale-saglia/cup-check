@@ -1,6 +1,6 @@
 # Progetto
 
-> Stato: sviluppo `0.2.0` avviato - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
+> Stato: pronto per rilascio `0.2.0` - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
 
 `cup-check` e uno strumento per la verifica massiva e locale dei Codici Unici di Progetto (CUP).
 
