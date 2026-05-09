@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.2.1 - 2026-05-09
+
+- Aggiunge favicon, manifest collegato e `robots.txt` per stabilizzare Lighthouse su web.
+- Aggiunge fallback statico `404.html` con redirect alla homepage per GitHub Pages.
+- Rafforza il test Lighthouse con un controllo esplicito della superficie PWA.
+
 ## 0.2.0 - 2026-05-09
 
 - Avvia lo scaffold `0.2.0` della libreria Python `cup-check`.
