@@ -34,8 +34,12 @@ function readAppVersion() {
     if (tag) {
       return tag.replace(/^v/, '');
     }
-  } catch {
+  } catch (error) {
     // Local archives or CI checkouts without tags get a non-release build marker.
+    console.warn(
+      `Unable to derive app version from git tags; using ${fallbackVersion}.`,
+      error instanceof Error ? error.message : error,
+    );
   }
 
   return fallbackVersion;
