@@ -90,5 +90,6 @@ jobs:
             --title "Dataset OpenCUP ${TAG}" \
             --notes "Dataset OpenCUP aggiornato al ${SNAPSHOT}." \
             --latest=false \
+            --clobber \
             dist/dataset/dataset-manifest.json \
             "${CHUNK_FILES[@]}"
