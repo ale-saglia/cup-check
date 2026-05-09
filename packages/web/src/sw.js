@@ -1,8 +1,11 @@
 const CACHE_NAME = 'cup-check-v__APP_VERSION__';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest'];
+// eslint-disable-next-line no-undef -- injected by the Vite service worker plugin.
+const PRECACHE_ASSETS = __PRECACHE_ASSETS__;
+const PRECACHE_URLS = [...new Set([...APP_SHELL, ...PRECACHE_ASSETS])];
 
 self.addEventListener('install', (event) => {
-  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(APP_SHELL)));
+  event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
   self.skipWaiting();
 });
 

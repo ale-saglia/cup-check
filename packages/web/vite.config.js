@@ -42,7 +42,10 @@ function readAppVersion() {
 }
 
 function serviceWorkerPlugin(version) {
-  const source = () => readFileSync(resolve(webDir, 'src/sw.js'), 'utf8').replaceAll('__APP_VERSION__', version);
+  const source = (precacheAssets = []) =>
+    readFileSync(resolve(webDir, 'src/sw.js'), 'utf8')
+      .replaceAll('__APP_VERSION__', version)
+      .replace('__PRECACHE_ASSETS__', JSON.stringify(precacheAssets));
 
   return {
     name: 'cup-check-service-worker',
@@ -57,11 +60,17 @@ function serviceWorkerPlugin(version) {
         response.end(source());
       });
     },
-    generateBundle() {
+    generateBundle(_options, bundle) {
+      const precacheAssets = Object.values(bundle)
+        .map((file) => file.fileName)
+        .filter((fileName) => fileName !== 'sw.js')
+        .filter((fileName) => !fileName.endsWith('.map'))
+        .map((fileName) => `./${fileName}`);
+
       this.emitFile({
         type: 'asset',
         fileName: 'sw.js',
-        source: source(),
+        source: source(precacheAssets),
       });
     },
   };
