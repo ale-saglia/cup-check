@@ -37,3 +37,13 @@
     outcome: INVALIDO_FORMATO
     failed_rules: [R0]
     warnings: []
+
+- id: edge-century-rollover-r4
+  description: 'R4 documenta il limite intrinseco dell''anno CUP a due cifre'
+  input: 'G17H01000130001'
+  options:
+    current_year: 2100
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R4]
+    warnings: []

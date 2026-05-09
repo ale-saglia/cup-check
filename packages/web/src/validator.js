@@ -71,6 +71,8 @@ export function validateCup(value, row = null, options = {}) {
 
   const yearToken = normalizedValue.slice(4, 6);
   const year = Number.parseInt(yearToken, 10);
+  // Il formato CUP espone l'anno con due sole cifre: R4 lo confronta quindi
+  // con le due cifre finali dell'anno corrente, preservando questo limite intrinseco.
   if (!/^\d{2}$/.test(yearToken) || year > currentTwoDigitYear) {
     failedRules.push(RULES.YEAR);
   }

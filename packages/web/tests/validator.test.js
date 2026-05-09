@@ -17,7 +17,8 @@ const cases = fixtureFiles.flatMap((fileName) => {
 
 describe('validateCup', () => {
   it.each(cases)('$fileName / $id', (testCase) => {
-    const result = validateCup(testCase.input, null, { currentYear: 2026 });
+    const currentYear = testCase.options?.current_year ?? 2026;
+    const result = validateCup(testCase.input, null, { currentYear });
 
     expect(result.outcome).toBe(testCase.expected.outcome);
     expect(result.failedRules).toEqual(testCase.expected.failed_rules);

@@ -19,7 +19,9 @@ def fixture_cases() -> list[dict[str, object]]:
 
 def test_fixture_parity() -> None:
     for test_case in fixture_cases():
-        result = validate_format(test_case["input"], current_year=2026)
+        options = test_case.get("options", {})
+        current_year = options.get("current_year", 2026)
+        result = validate_format(test_case["input"], current_year=current_year)
         expected = test_case["expected"]
 
         assert result.outcome == expected["outcome"], test_case["id"]

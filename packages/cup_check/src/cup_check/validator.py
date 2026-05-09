@@ -48,6 +48,8 @@ def validate_format(
 
     year_token = normalized_value[4:6]
     two_digit_year = (current_year if current_year is not None else datetime.now(UTC).year) % 100
+    # Il formato CUP espone l'anno con due sole cifre: R4 lo confronta quindi
+    # con le due cifre finali dell'anno corrente, preservando questo limite intrinseco.
     if _TWO_DIGIT_YEAR.fullmatch(year_token) is None or int(year_token) > two_digit_year:
         failed_rules.append(Rule.R4)
 
