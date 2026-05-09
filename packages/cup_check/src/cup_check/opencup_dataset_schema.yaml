@@ -1,0 +1,99 @@
+schema_version: 1
+table: cups
+category_sets:
+  natura:
+    manifest_key: natura_categories
+columns:
+  - target: cup
+    destination: true
+    sqlite_column: cup
+    sqlite_type: TEXT
+    primary_key: true
+    source: CUP
+    type: cup
+  - target: natura
+    destination: false
+    sqlite_column: natura_index
+    sqlite_type: TINYINT
+    source:
+      - NATURA_DIPE
+      - NATURA
+    type: category
+    category_set: natura
+  - target: year_suffix
+    destination: false
+    sqlite_column: year_suffix
+    sqlite_type: YEAR
+    nullable: false
+    check: year_suffix BETWEEN 0 AND 99
+    source: CUP
+    type: cup_year_suffix
+  - target: piva_cf_titolare
+    destination: false
+    sqlite_column: piva_cf_titolare
+    sqlite_type: TEXT
+    source: PIVA_CODFISCALE_SOG_TITOLARE
+    type: optional_text
+  - target: piva_cf_beneficiario
+    destination: false
+    sqlite_column: piva_cf_beneficiario
+    sqlite_type: TEXT
+    source: PIVA_CF_BENEFICIARIO
+    type: optional_text
+  - target: costo_progetto_cents
+    destination: false
+    sqlite_column: costo_progetto_cents
+    sqlite_type: INTEGER
+    source: COSTO_PROGETTO
+    type: money_cents
+  - target: finanziamento_progetto_cents
+    destination: false
+    sqlite_column: finanziamento_progetto_cents
+    sqlite_type: INTEGER
+    source: FINANZIAMENTO_PROGETTO
+    type: money_cents
+  - target: descrizione_full
+    destination: false
+    sqlite_column: descrizione_full
+    sqlite_type: TEXT
+    source:
+      - DESCRIZIONE_SINTETICA_CUP
+      - DESCRIZIONE_INTERVENTO
+      - STRUTTURA_INFRASTRUTTURA
+      - INDIRIZZO_INTERVENTO
+    type: joined_text
+  - target: attivo
+    destination: false
+    sqlite_column: attivo
+    sqlite_type: BOOLEAN
+    nullable: false
+    default: 0
+    check: attivo IN (0, 1)
+    source: STATO_PROGETTO
+    type: bool_equals
+    true_values:
+      - ATTIVO
+  - target: data_chiusura_revoca
+    destination: false
+    sqlite_column: data_chiusura_revoca
+    sqlite_type: DATE
+    source: DATA_CHIUSURA_REVOCA
+    type: date
+  - target: cup_master
+    destination: false
+    sqlite_column: cup_master
+    sqlite_type: TEXT
+    source: CUP_MASTER
+    type: optional_cup
+  - target: updated_on
+    destination: false
+    sqlite_column: updated_on_sort
+    sqlite_type: TEXT
+    nullable: false
+    source:
+      - DATA_AGGIORNAMENTO
+      - DATA_ULTIMO_AGGIORNAMENTO
+      - DATA_ULTIMA_MODIFICA_SSC
+      - DATA_ULTIMA_MODIFICA_UTENTE
+      - DATA_CHIUSURA_REVOCA
+    type: first_date

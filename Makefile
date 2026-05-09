@@ -2,6 +2,7 @@ SHELL := /bin/bash
 
 WEB_DIR := packages/web
 PYTHON_DIR := packages/cup_check
+DATA_DIR := data
 WEB_PORT ?= 5173
 WEB_PREVIEW_PORT ?= 4173
 
@@ -79,6 +80,17 @@ python-test: ## Esegue i test pytest del package Python
 .PHONY: python-build
 python-build: ## Genera sdist e wheel del package Python
 	cd $(PYTHON_DIR) && uv build
+
+$(DATA_DIR)/OpendataProgetti.zip:
+	mkdir -p $(DATA_DIR)
+	cd $(PYTHON_DIR) && uv run python -c "from cup_check.opencup_dataset import download_projects_zip; download_projects_zip('../../$(DATA_DIR)/OpendataProgetti.zip')"
+
+.PHONY: dataset-download
+dataset-download: $(DATA_DIR)/OpendataProgetti.zip ## Scarica il dump OpenCUP in data/OpendataProgetti.zip
+
+.PHONY: dataset-build
+dataset-build: $(DATA_DIR)/OpendataProgetti.zip ## Genera data/cups.sqlite dal dump OpenCUP
+	cd $(PYTHON_DIR) && uv run python -c "from cup_check.opencup_dataset import build_sqlite_from_projects_zip; build_sqlite_from_projects_zip('../../$(DATA_DIR)/OpendataProgetti.zip', '../../$(DATA_DIR)/cups.sqlite')"
 
 .PHONY: clean
 clean: web-clean ## Rimuove artefatti generati
