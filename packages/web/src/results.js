@@ -15,6 +15,7 @@ export function uniqueResultsByCup(results) {
 
     existing.inputRows.push(result.inputRow);
     existing.occurrenceCount += 1;
+    // A normalized CUP is validated deterministically, so duplicates should produce the same failedRules; keep the merge defensive for future fields.
     existing.failedRules = uniqueValues([...existing.failedRules, ...result.failedRules]);
     existing.warnings = uniqueValues([...(existing.warnings ?? []), ...(result.warnings ?? [])]);
   });
