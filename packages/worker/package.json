@@ -1,0 +1,12 @@
+{
+  "name": "@cup-check/worker",
+  "private": true,
+  "license": "EUPL-1.2",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "wrangler": "^3"
+  }
+}

@@ -1,0 +1,8 @@
+name = "cup-check-lookup"
+main = "src/index.js"
+compatibility_date = "2025-01-01"
+
+[[d1_databases]]
+binding = "DB"
+database_name = "cup-check-dataset"
+database_id = "d4d3c1c9-9541-430a-bb60-3defca00c348"

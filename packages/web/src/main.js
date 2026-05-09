@@ -1,12 +1,12 @@
 import { initDialogs, showDetailDialog } from './dialogs.js';
-import { createLookup } from './dataset-loader.js';
+import { hasDataset, lookupMany } from './dataset-loader.js';
 import { mountApp } from './dom.js';
 import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport } from './report.js';
 import {
   collapsePanel,
+  renderDatasetChecking,
   renderDatasetError,
-  renderDatasetProgress,
   renderDatasetReady,
   renderPreview,
   renderPreviewData,
@@ -26,24 +26,28 @@ const dom = mountApp();
 
 initDialogs(dom);
 
-let datasetLookup = null;
+if (hasDataset) {
+  renderDatasetReady(dom);
+} else {
+  renderDatasetError(dom);
+}
 
-if (!import.meta.env.VITE_DISABLE_DATASET) {
-  createLookup((loaded, total) => {
-    renderDatasetProgress(dom, loaded, total);
-  })
-    .then((lookup) => {
-      datasetLookup = lookup;
-      renderDatasetReady(dom, lookup.nRecords);
-      if (state.results.some((r) => r.outcome === OUTCOMES.CHECK)) {
-        const started = performance.now();
-        state.results = applyDbLookup(state.results, (cup) => lookup.lookup(cup));
-        renderResults(state, dom, performance.now() - started);
-      }
-    })
-    .catch(() => {
-      renderDatasetError(dom);
-    });
+async function applyLookup(results) {
+  if (!hasDataset) return results;
+  const cupsToCheck = results
+    .filter((r) => r.outcome === OUTCOMES.CHECK)
+    .map((r) => r.normalizedValue);
+  if (cupsToCheck.length === 0) return results;
+  renderDatasetChecking(dom);
+  try {
+    const map = await lookupMany(cupsToCheck);
+    return applyDbLookup(results, (cup) => map[cup] ?? false);
+  } catch {
+    renderDatasetError(dom);
+    return results;
+  } finally {
+    if (hasDataset) renderDatasetReady(dom);
+  }
 }
 
 dom.fileToggle.addEventListener('click', () => {
@@ -62,7 +66,7 @@ dom.resultsToggle.addEventListener('click', () => {
   togglePanel(dom.resultsPanel, dom.resultsToggle);
 });
 
-dom.textCheckButton.addEventListener('click', () => {
+dom.textCheckButton.addEventListener('click', async () => {
   const lines = textInputLines(dom.cupTextarea.value);
 
   if (lines.length === 0) {
@@ -72,10 +76,8 @@ dom.textCheckButton.addEventListener('click', () => {
 
   const startedAt = performance.now();
   const results = lines.map((line, index) => validateCup(line, index + 1));
-  state.results = uniqueResultsByCup(results);
-  if (datasetLookup) {
-    state.results = applyDbLookup(state.results, (cup) => datasetLookup.lookup(cup));
-  }
+  const unique = uniqueResultsByCup(results);
+  state.results = await applyLookup(unique);
   state.sourceRowCount = results.length;
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
@@ -114,7 +116,7 @@ dom.headerToggle.addEventListener('change', () => {
   renderPreviewData(state, dom);
 });
 
-dom.checkButton.addEventListener('click', () => {
+dom.checkButton.addEventListener('click', async () => {
   const startedAt = performance.now();
   const rowsToValidate = state.skipMissingCup
     ? state.parsed.rows.filter((row) => !isMissingCup(row))
@@ -122,10 +124,8 @@ dom.checkButton.addEventListener('click', () => {
   const results = rowsToValidate.map((row) =>
     validateCup(row.cells[state.selectedColumnIndex], row.originalRowNumber),
   );
-  state.results = uniqueResultsByCup(results);
-  if (datasetLookup) {
-    state.results = applyDbLookup(state.results, (cup) => datasetLookup.lookup(cup));
-  }
+  const unique = uniqueResultsByCup(results);
+  state.results = await applyLookup(unique);
   state.sourceRowCount = results.length;
   collapsePanel(dom.previewPanel, dom.previewToggle);
   renderResults(state, dom, performance.now() - startedAt);

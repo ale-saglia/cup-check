@@ -4,15 +4,12 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 
 const MAX_RENDERED_RESULT_ROWS = 500;
 
-export function renderDatasetProgress(dom, loaded, total) {
-  const pct = Math.round((loaded / total) * 100);
-  const loadedMb = Math.round(loaded / 1024 / 1024);
-  const totalMb = Math.round(total / 1024 / 1024);
-  dom.datasetStatusBar.textContent = `Dataset OpenCUP · scaricamento ${pct}% (${loadedMb} / ${totalMb} MB)…`;
+export function renderDatasetReady(dom) {
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · disponibile';
 }
 
-export function renderDatasetReady(dom, nRecords) {
-  dom.datasetStatusBar.textContent = `Dataset OpenCUP · pronto — ${nRecords.toLocaleString('it-IT')} CUP disponibili`;
+export function renderDatasetChecking(dom) {
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · verifica in corso…';
 }
 
 export function renderDatasetError(dom) {
