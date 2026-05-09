@@ -60,7 +60,8 @@ uv run pytest
 ```
 
 Oppure apri il repo in Dev Containers / Codespaces. Il container include Node.js 22,
-npm, uv, make, ripgrep, Chromium e Lighthouse; al primo avvio esegue `make setup`.
+npm, uv, make, ripgrep, GitHub CLI, Chromium e Lighthouse; al primo avvio esegue
+`make setup`.
 
 Comandi principali:
 
