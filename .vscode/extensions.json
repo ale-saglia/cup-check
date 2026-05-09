@@ -3,8 +3,5 @@
     "charliermarsh.ruff",
     "dbaeumer.vscode-eslint",
     "esbenp.prettier-vscode",
-    "ms-python.python",
-    "spmeesseman.vscode-taskexplorer",
-    "vitest.explorer"
-  ]
+    "ms-python.python"]
 }
