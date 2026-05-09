@@ -1,6 +1,8 @@
 export const OUTCOMES = {
   INVALID: 'INVALIDO_FORMATO',
   CHECK: 'FORMATO_VALIDO_DA_VERIFICARE',
+  FOUND: 'TROVATO',
+  NOT_FOUND: 'NON_TROVATO',
 };
 
 export const RULES = {
@@ -108,19 +110,21 @@ export function validateBatch(values, options = {}) {
 
 export function summarizeResults(results, durationMs = 0) {
   const total = results.length;
-  const invalid = results.filter((result) => result.outcome === OUTCOMES.INVALID).length;
-  const toCheck = total - invalid;
-
+  const counts = {
+    [OUTCOMES.INVALID]: 0,
+    [OUTCOMES.CHECK]: 0,
+    [OUTCOMES.FOUND]: 0,
+    [OUTCOMES.NOT_FOUND]: 0,
+  };
+  for (const result of results) {
+    if (result.outcome in counts) counts[result.outcome] += 1;
+  }
   return {
     total,
     durationMs,
-    counts: {
-      [OUTCOMES.INVALID]: invalid,
-      [OUTCOMES.CHECK]: toCheck,
-    },
-    percentages: {
-      [OUTCOMES.INVALID]: total === 0 ? 0 : invalid / total,
-      [OUTCOMES.CHECK]: total === 0 ? 0 : toCheck / total,
-    },
+    counts,
+    percentages: Object.fromEntries(
+      Object.entries(counts).map(([k, v]) => [k, total === 0 ? 0 : v / total]),
+    ),
   };
 }

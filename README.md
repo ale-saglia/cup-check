@@ -6,7 +6,7 @@ Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
 
 `cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni.
 
-La verifica e solo formale: segnala se il codice rispetta le regole strutturali note con esito `FORMATO_VALIDO_DA_VERIFICARE`, ma non attesta l'esistenza nel Sistema CUP.
+La verifica ha due livelli: controllo formale del formato (regole `R0`–`R5`) e verifica di esistenza nel dataset OpenCUP pubblicato. Un CUP formalmente valido e presente nel dataset riceve esito `TROVATO`; se assente, `NON_TROVATO`. Il dataset viene scaricato in background da GitHub Pages alla prima visita e cachato offline dal service worker.
 
 ## Stato
 
@@ -14,34 +14,31 @@ Il progetto e rilasciato come web app statica e package Python.
 
 ## Cosa Fa
 
-- Valida CUP da file CSV.
-- Valida CUP da file XLSX.
+- Valida CUP da file CSV e XLSX.
 - Valida CUP incollati come testo, uno per riga.
-- Mostra risultati filtrabili.
-- Esporta report CSV.
+- Verifica l'esistenza di ogni CUP nel dataset OpenCUP (`TROVATO` / `NON_TROVATO`).
+- Scarica il dataset (~246 MB) in background e lo cacha per le visite successive.
+- Mostra risultati filtrabili per esito e testo.
+- Esporta report CSV con esito riga per riga.
 - Funziona offline dopo la prima visita.
 - Espone una libreria Python installabile come `cup-check`.
-- Non invia i dati a server esterni nell'MVP.
 
 ## Privacy
 
-File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app
-non carica i CUP, i file o i report su un backend applicativo, perche nell'MVP
-non esiste un backend: il sito e composto da asset statici serviti da GitHub
-Pages.
+File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app non carica i CUP, i file o i report su un backend applicativo.
 
-Il caricamento iniziale dell'app scarica soltanto questi asset statici. I link
-esterni, come OpenCUP o il repository GitHub, sono normali collegamenti aperti
-solo su azione dell'utente e distinti dalla validazione locale.
+Alla prima visita il browser scarica anche il dataset OpenCUP (~246 MB) da GitHub Pages per consentire la verifica di esistenza. Il dataset e pubblico e non contiene dati personali degli utenti. Dopo il download iniziale il service worker lo serve dalla cache locale, senza ulteriori richieste di rete.
 
 ## Limiti Del Controllo
 
-Gli unici esiti della verifica formale sono:
+Gli esiti possibili sono:
 
-- `INVALIDO_FORMATO`
-- `FORMATO_VALIDO_DA_VERIFICARE`
+- `INVALIDO_FORMATO` — il CUP non rispetta le regole strutturali.
+- `TROVATO` — formato valido e presente nel dataset OpenCUP incluso in questa versione.
+- `NON_TROVATO` — formato valido ma assente dal dataset. Il CUP potrebbe esistere in progetti non ancora pubblicati o aggiornati nel dataset.
+- `FORMATO_VALIDO_DA_VERIFICARE` — formato valido, dataset non ancora scaricato.
 
-Un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE` e non viene dichiarato esistente. Per attestare l'esistenza serve una fonte autoritativa o, da una versione futura, un dataset OpenCUP esatto e dichiarato nel perimetro.
+Il dataset e un'istantanea pubblica di OpenCUP, non una fonte autoritativa in tempo reale. Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il portale OpenCUP.
 
 ## Quickstart sviluppo
 

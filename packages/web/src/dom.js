@@ -17,7 +17,7 @@ export function mountApp(root = document.querySelector('#app')) {
       <main class="shell" aria-labelledby="title">
         <section class="project-note" aria-labelledby="title">
           <p id="title">cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
-          Il servizio aiuta a individuare codici formalmente invalidi e codici <code>FORMATO_VALIDO_DA_VERIFICARE</code>, producendo un report esportabile per revisione, audit o successive verifiche manuali.</p>
+          Il servizio verifica il formato dei Codici Unici di Progetto e ne controlla l'esistenza nel dataset OpenCUP, producendo un report esportabile per revisione, audit o rendicontazione.</p>
           <p>Il controllo non sostituisce le fonti autoritative: consulta i <button id="open-limits-desc" class="link-button" type="button">Limiti del controllo</button> per capire cosa viene verificato e cosa resta escluso.</p>
         </section>
 
@@ -48,6 +48,8 @@ export function mountApp(root = document.querySelector('#app')) {
           </div>
         </div>
       </section>
+
+      <div id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></div>
 
       <section class="workspace" aria-label="Verifica CUP">
         <section id="preview-panel" class="control-panel hidden" aria-labelledby="preview-title">
@@ -100,8 +102,10 @@ export function mountApp(root = document.querySelector('#app')) {
                 Esito
                 <select id="filter-select">
                   <option value="ALL">Tutti</option>
+                  <option value="${OUTCOMES.FOUND}">Trovati</option>
+                  <option value="${OUTCOMES.NOT_FOUND}">Non trovati</option>
+                  <option value="${OUTCOMES.CHECK}">Da verificare</option>
                   <option value="${OUTCOMES.INVALID}">Invalidi</option>
-                  <option value="${OUTCOMES.CHECK}">FORMATO_VALIDO_DA_VERIFICARE</option>
                 </select>
               </label>
               <label>
@@ -132,8 +136,8 @@ export function mountApp(root = document.querySelector('#app')) {
       <dialog id="limits-dialog" class="limits-dialog" aria-labelledby="limits-title">
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
-          <p>La versione ${PRODUCT_VERSION} verifica solo la correttezza formale del CUP. Un codice formalmente valido resta sempre <code>FORMATO_VALIDO_DA_VERIFICARE</code> e non viene dichiarato esistente.</p>
-          <p>Per attestare l'esistenza del progetto serve una fonte autoritativa, come il Sistema CUP o il portale OpenCUP quando applicabile.</p>
+          <p>Il controllo di esistenza confronta ogni CUP con il dataset OpenCUP incluso in questa versione (${PRODUCT_VERSION}). Un CUP marcato <code>NON_TROVATO</code> potrebbe esistere in progetti non ancora pubblicati o aggiornati nel dataset.</p>
+          <p>Per attestare l'esistenza del progetto resta necessaria una fonte autoritativa, come il Sistema CUP o il portale OpenCUP.</p>
         </div>
         <form method="dialog">
           <button class="secondary" type="submit">Chiudi</button>
@@ -175,5 +179,6 @@ export function mountApp(root = document.querySelector('#app')) {
     limitsDialog: root.querySelector('#limits-dialog'),
     detailDialog: root.querySelector('#detail-dialog'),
     detailDialogText: root.querySelector('#detail-dialog-label'),
+    datasetStatusBar: root.querySelector('#dataset-status-bar'),
   };
 }

@@ -18,6 +18,8 @@
   --invalid-bg: #fff1f1;
   --check: #5c4813;
   --check-bg: #fff8dc;
+  --found: #145214;
+  --found-bg: #edfaed;
 }
 
 * {
@@ -391,6 +393,22 @@ td.selected {
 .badge.warn {
   background: var(--check-bg);
   color: var(--check);
+}
+
+.badge.good {
+  background: var(--found-bg);
+  color: var(--found);
+}
+
+.dataset-status-bar {
+  font-size: 0.82rem;
+  color: var(--muted);
+  padding: 6px 0 2px;
+  min-height: 1.4em;
+}
+
+.dataset-status-bar:empty {
+  display: none;
 }
 
 .hidden {

@@ -1,6 +1,32 @@
 import { describe, expect, it } from 'vitest';
-import { resultRowsLabel, uniqueResultsByCup } from '../src/results.js';
-import { validateCup } from '../src/validator.js';
+import { applyDbLookup, resultRowsLabel, uniqueResultsByCup } from '../src/results.js';
+import { OUTCOMES, validateCup } from '../src/validator.js';
+
+describe('applyDbLookup', () => {
+  it('turns CHECK into FOUND when the lookup returns true', () => {
+    const results = uniqueResultsByCup([validateCup('G17H03000130001', 1, { currentYear: 2026 })]);
+
+    const updated = applyDbLookup(results, () => true);
+
+    expect(updated[0].outcome).toBe(OUTCOMES.FOUND);
+  });
+
+  it('turns CHECK into NOT_FOUND when the lookup returns false', () => {
+    const results = uniqueResultsByCup([validateCup('G17H03000130001', 1, { currentYear: 2026 })]);
+
+    const updated = applyDbLookup(results, () => false);
+
+    expect(updated[0].outcome).toBe(OUTCOMES.NOT_FOUND);
+  });
+
+  it('leaves INVALID results unchanged', () => {
+    const results = uniqueResultsByCup([validateCup('TOOSHORT', 1, { currentYear: 2026 })]);
+
+    const updated = applyDbLookup(results, () => true);
+
+    expect(updated[0].outcome).toBe(OUTCOMES.INVALID);
+  });
+});
 
 describe('uniqueResultsByCup', () => {
   it('keeps CUPs ordered by first occurrence and aggregates duplicate rows', () => {

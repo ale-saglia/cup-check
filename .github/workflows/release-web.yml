@@ -36,6 +36,25 @@ jobs:
           cache-dependency-path: packages/web/package-lock.json
       - run: npm ci
       - run: npm run build
+      - name: Include latest dataset in Pages deployment
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG=$(gh release list \
+            --repo "${{ github.repository }}" \
+            --json tagName \
+            --jq '[.[].tagName | select(startswith("dataset-"))] | sort | last')
+          gh release download "$TAG" \
+            --dir packages/web/dist/dataset \
+            --repo "${{ github.repository }}"
+          node -e "
+            const fs = require('fs');
+            const p = 'packages/web/dist/dataset/dataset-manifest.json';
+            const m = JSON.parse(fs.readFileSync(p));
+            m.chunks.base_url = 'https://ale-saglia.github.io/cup-check/dataset';
+            fs.writeFileSync(p, JSON.stringify(m));
+          "
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

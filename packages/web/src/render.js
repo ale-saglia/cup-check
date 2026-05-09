@@ -4,6 +4,21 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 
 const MAX_RENDERED_RESULT_ROWS = 500;
 
+export function renderDatasetProgress(dom, loaded, total) {
+  const pct = Math.round((loaded / total) * 100);
+  const loadedMb = Math.round(loaded / 1024 / 1024);
+  const totalMb = Math.round(total / 1024 / 1024);
+  dom.datasetStatusBar.textContent = `Dataset OpenCUP · scaricamento ${pct}% (${loadedMb} / ${totalMb} MB)…`;
+}
+
+export function renderDatasetReady(dom, nRecords) {
+  dom.datasetStatusBar.textContent = `Dataset OpenCUP · pronto — ${nRecords.toLocaleString('it-IT')} CUP disponibili`;
+}
+
+export function renderDatasetError(dom) {
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · non disponibile — solo verifica formato';
+}
+
 export function renderPreview(state, dom, file) {
   collapsePanel(dom.filePanel, dom.fileToggle);
   collapsePanel(dom.textPanel, dom.textToggle);
@@ -56,9 +71,14 @@ export function renderResults(state, dom, durationMs) {
   dom.resultsPanel.classList.remove('hidden');
   expandPanel(dom.resultsPanel, dom.resultsToggle);
   const data = summarizeResults(state.results, durationMs);
-  const invalid = data.counts[OUTCOMES.INVALID];
-  const valid = data.counts[OUTCOMES.CHECK];
-  dom.summary.textContent = `${data.total} CUP unici da ${state.sourceRowCount} righe - ${valid} da verificare - ${invalid} invalidi - ${Math.round(data.durationMs)} ms`;
+  const { [OUTCOMES.INVALID]: invalid, [OUTCOMES.CHECK]: check, [OUTCOMES.FOUND]: found, [OUTCOMES.NOT_FOUND]: notFound } = data.counts;
+  const parts = [`${data.total} CUP unici da ${state.sourceRowCount} righe`];
+  if (found > 0 || notFound > 0) {
+    parts.push(`${found} trovati`, `${notFound} non trovati`);
+  }
+  if (check > 0) parts.push(`${check} da verificare`);
+  parts.push(`${invalid} invalidi`, `${Math.round(data.durationMs)} ms`);
+  dom.summary.textContent = parts.join(' · ');
   dom.resultsToggleMeta.textContent = `${data.total} CUP unici`;
   renderResultsTable(state, dom);
 }
@@ -101,7 +121,7 @@ export function renderResultsTable(state, dom) {
             <tr>
               <td>${renderRowsCell(result)}</td>
               <td><code>${escapeHtml(result.normalizedValue)}</code></td>
-              <td><span class="badge ${result.outcome === OUTCOMES.INVALID ? 'bad' : 'warn'}">${result.outcome}</span></td>
+              <td><span class="badge ${badgeClass(result.outcome)}">${result.outcome}</span></td>
               <td title="${escapeHtml(resultDetail(result))}"><div class="detail-cell">${escapeHtml(resultDetail(result))}</div></td>
               <td>${opencupCell(result)}</td>
             </tr>
@@ -175,6 +195,12 @@ function renderRowsCell(result) {
 
   const rowsLabel = resultRowsLabel(result);
   return `<button class="link-button multiple-rows-button" type="button" data-rows="${escapeHtml(rowsLabel)}" aria-label="Mostra tutte le righe per il CUP">${escapeHtml(rows[0])}++</button>`;
+}
+
+function badgeClass(outcome) {
+  if (outcome === OUTCOMES.FOUND) return 'good';
+  if (outcome === OUTCOMES.INVALID || outcome === OUTCOMES.NOT_FOUND) return 'bad';
+  return 'warn';
 }
 
 function escapeHtml(value) {

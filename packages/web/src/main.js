@@ -1,9 +1,13 @@
 import { initDialogs, showDetailDialog } from './dialogs.js';
+import { createLookup } from './dataset-loader.js';
 import { mountApp } from './dom.js';
 import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport } from './report.js';
 import {
   collapsePanel,
+  renderDatasetError,
+  renderDatasetProgress,
+  renderDatasetReady,
   renderPreview,
   renderPreviewData,
   renderPreviewTable,
@@ -12,15 +16,33 @@ import {
   resetView,
   togglePanel,
 } from './render.js';
-import { uniqueResultsByCup } from './results.js';
+import { applyDbLookup, uniqueResultsByCup } from './results.js';
 import { state, resetState } from './state.js';
 import { textInputLines } from './text-input.js';
-import { validateCup } from './validator.js';
+import { OUTCOMES, validateCup } from './validator.js';
 import './styles.css';
 
 const dom = mountApp();
 
 initDialogs(dom);
+
+let datasetLookup = null;
+
+createLookup((loaded, total) => {
+  renderDatasetProgress(dom, loaded, total);
+})
+  .then((lookup) => {
+    datasetLookup = lookup;
+    renderDatasetReady(dom, lookup.nRecords);
+    if (state.results.some((r) => r.outcome === OUTCOMES.CHECK)) {
+      const started = performance.now();
+      state.results = applyDbLookup(state.results, (cup) => lookup.lookup(cup));
+      renderResults(state, dom, performance.now() - started);
+    }
+  })
+  .catch(() => {
+    renderDatasetError(dom);
+  });
 
 dom.fileToggle.addEventListener('click', () => {
   togglePanel(dom.filePanel, dom.fileToggle);
@@ -49,6 +71,9 @@ dom.textCheckButton.addEventListener('click', () => {
   const startedAt = performance.now();
   const results = lines.map((line, index) => validateCup(line, index + 1));
   state.results = uniqueResultsByCup(results);
+  if (datasetLookup) {
+    state.results = applyDbLookup(state.results, (cup) => datasetLookup.lookup(cup));
+  }
   state.sourceRowCount = results.length;
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
@@ -96,6 +121,9 @@ dom.checkButton.addEventListener('click', () => {
     validateCup(row.cells[state.selectedColumnIndex], row.originalRowNumber),
   );
   state.results = uniqueResultsByCup(results);
+  if (datasetLookup) {
+    state.results = applyDbLookup(state.results, (cup) => datasetLookup.lookup(cup));
+  }
   state.sourceRowCount = results.length;
   collapsePanel(dom.previewPanel, dom.previewToggle);
   renderResults(state, dom, performance.now() - startedAt);

@@ -1,4 +1,4 @@
-import { RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
+import { OUTCOMES, RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
 
 export function resultDetail(result) {
@@ -8,6 +8,14 @@ export function resultDetail(result) {
 
   if (result.failedRules.length > 0) {
     return `Regole fallite: ${result.failedRules.map(formatRule).join('; ')}.${warnings}`;
+  }
+
+  if (result.outcome === OUTCOMES.FOUND) {
+    return `TROVATO: CUP presente nel dataset OpenCUP.${warnings}`;
+  }
+
+  if (result.outcome === OUTCOMES.NOT_FOUND) {
+    return `NON_TROVATO: CUP non presente nel dataset OpenCUP.${warnings}`;
   }
 
   return `FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata.${warnings}`;
