@@ -3,8 +3,16 @@
   "short_name": "cup-check",
   "description": "Verifica formale locale di Codici Unici di Progetto.",
   "start_url": "./",
+  "scope": "./",
   "display": "standalone",
   "background_color": "#f6f7f9",
   "theme_color": "#165d59",
-  "icons": []
+  "icons": [
+    {
+      "src": "./favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
 }

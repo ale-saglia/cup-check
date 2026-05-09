@@ -1,5 +1,5 @@
 const CACHE_NAME = 'cup-check-v__APP_VERSION__';
-const APP_SHELL = ['./', './index.html', './manifest.webmanifest'];
+const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
 // eslint-disable-next-line no-undef -- injected by the Vite service worker plugin.
 const PRECACHE_ASSETS = __PRECACHE_ASSETS__;
 const PRECACHE_URLS = [...new Set([...APP_SHELL, ...PRECACHE_ASSETS])];

@@ -1,0 +1,14 @@
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="robots" content="noindex" />
+    <meta http-equiv="refresh" content="0; url=/" />
+    <title></title>
+    <script>
+      const homePath = location.pathname.startsWith('/cup-check/') ? '/cup-check/' : '/';
+      location.replace(`${homePath}${location.search}${location.hash}`);
+    </script>
+  </head>
+  <body></body>
+</html>

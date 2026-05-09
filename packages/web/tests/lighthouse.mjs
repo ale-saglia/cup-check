@@ -34,7 +34,9 @@ try {
     }
   }
 
-  console.log(JSON.stringify(scores, null, 2));
+  const pwa = await checkPwaSurface(url);
+
+  console.log(JSON.stringify({ ...scores, pwa }, null, 2));
 } finally {
   stopServer(server);
   await rm(outputDir, { recursive: true, force: true });
@@ -81,6 +83,38 @@ async function waitForHttp(url) {
     await delay(100);
   }
   throw new Error(`preview non raggiungibile: ${url}`);
+}
+
+async function checkPwaSurface(url) {
+  const manifestUrl = new URL('./manifest.webmanifest', url);
+  const manifestResponse = await fetch(manifestUrl);
+  if (!manifestResponse.ok) {
+    throw new Error(`manifest non raggiungibile: ${manifestResponse.status}`);
+  }
+
+  const manifest = await manifestResponse.json();
+  const requiredManifestFields = ['name', 'short_name', 'start_url', 'scope', 'display', 'theme_color', 'background_color'];
+  const missingFields = requiredManifestFields.filter((field) => !manifest[field]);
+  if (missingFields.length > 0) {
+    throw new Error(`manifest incompleto: mancano ${missingFields.join(', ')}`);
+  }
+
+  if (!Array.isArray(manifest.icons) || manifest.icons.length === 0) {
+    throw new Error('manifest incompleto: manca almeno una icona');
+  }
+
+  await assertOk(new URL('./sw.js', url), 'service worker');
+  await assertOk(new URL('./favicon.svg', url), 'favicon');
+  await assertOk(new URL('./robots.txt', url), 'robots.txt');
+
+  return 'checked';
+}
+
+async function assertOk(resourceUrl, label) {
+  const response = await fetch(resourceUrl);
+  if (!response.ok) {
+    throw new Error(`${label} non raggiungibile: ${response.status}`);
+  }
 }
 
 async function getFreePort() {
