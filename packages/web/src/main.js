@@ -28,21 +28,23 @@ initDialogs(dom);
 
 let datasetLookup = null;
 
-createLookup((loaded, total) => {
-  renderDatasetProgress(dom, loaded, total);
-})
-  .then((lookup) => {
-    datasetLookup = lookup;
-    renderDatasetReady(dom, lookup.nRecords);
-    if (state.results.some((r) => r.outcome === OUTCOMES.CHECK)) {
-      const started = performance.now();
-      state.results = applyDbLookup(state.results, (cup) => lookup.lookup(cup));
-      renderResults(state, dom, performance.now() - started);
-    }
+if (!import.meta.env.VITE_DISABLE_DATASET) {
+  createLookup((loaded, total) => {
+    renderDatasetProgress(dom, loaded, total);
   })
-  .catch(() => {
-    renderDatasetError(dom);
-  });
+    .then((lookup) => {
+      datasetLookup = lookup;
+      renderDatasetReady(dom, lookup.nRecords);
+      if (state.results.some((r) => r.outcome === OUTCOMES.CHECK)) {
+        const started = performance.now();
+        state.results = applyDbLookup(state.results, (cup) => lookup.lookup(cup));
+        renderResults(state, dom, performance.now() - started);
+      }
+    })
+    .catch(() => {
+      renderDatasetError(dom);
+    });
+}
 
 dom.fileToggle.addEventListener('click', () => {
   togglePanel(dom.filePanel, dom.fileToggle);
