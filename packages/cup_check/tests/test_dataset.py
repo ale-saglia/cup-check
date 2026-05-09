@@ -1,0 +1,105 @@
+from __future__ import annotations
+
+import json
+
+import pytest
+
+from cup_check import DatasetManifest, load_dataset_manifest
+
+
+def manifest_mapping() -> dict[str, object]:
+    return {
+        "schema_version": 1,
+        "dataset_tag": "dataset-2026-05",
+        "released_at": "2026-05-05T03:14:00Z",
+        "sources_snapshot_date": "2026-05-01",
+        "schema": {
+            "table": "cups",
+            "version": 1,
+        },
+        "chunks": {
+            "base_url": "https://github.com/ale-saglia/cup-check/releases/download/dataset-2026-05",
+            "files": ["cups.sqlite.000", "cups.sqlite.001"],
+            "chunk_size_bytes": 52428800,
+            "total_size_bytes": 104857600,
+        },
+        "sha256": "abcd",
+        "n_records": 9842317,
+        "min_software_version": "0.3.0",
+        "natura_categories": ["Acquisto beni", "Lavori pubblici"],
+    }
+
+
+def test_dataset_manifest_from_mapping() -> None:
+    manifest = DatasetManifest.from_mapping(manifest_mapping())
+
+    assert manifest.schema_version == 1
+    assert manifest.dataset_tag == "dataset-2026-05"
+    assert manifest.schema.table == "cups"
+    assert manifest.schema.version == 1
+    assert manifest.chunks.files == ("cups.sqlite.000", "cups.sqlite.001")
+    assert manifest.n_records == 9842317
+    assert manifest.natura_categories == ("Acquisto beni", "Lavori pubblici")
+
+
+def test_load_dataset_manifest_from_json_file(tmp_path) -> None:
+    manifest_path = tmp_path / "dataset-manifest.json"
+    manifest_path.write_text(json.dumps(manifest_mapping()), encoding="utf-8")
+
+    manifest = load_dataset_manifest(manifest_path)
+
+    assert manifest.chunks.base_url.endswith("/dataset-2026-05")
+    assert manifest.min_software_version == "0.3.0"
+
+
+def test_manifest_requires_top_level_keys() -> None:
+    value = manifest_mapping()
+    del value["chunks"]
+
+    with pytest.raises(ValueError, match="missing keys: chunks"):
+        DatasetManifest.from_mapping(value)
+
+
+def test_manifest_requires_non_empty_chunk_files() -> None:
+    value = manifest_mapping()
+    value["chunks"] = {
+        "base_url": "https://example.test/dataset",
+        "files": [],
+        "chunk_size_bytes": 52428800,
+        "total_size_bytes": 104857600,
+    }
+
+    with pytest.raises(ValueError, match="chunks.files"):
+        DatasetManifest.from_mapping(value)
+
+
+def test_manifest_requires_object_fields() -> None:
+    value = manifest_mapping()
+    value["schema"] = "cups"
+
+    with pytest.raises(ValueError, match="schema must be an object"):
+        DatasetManifest.from_mapping(value)
+
+
+def test_manifest_requires_non_empty_strings() -> None:
+    value = manifest_mapping()
+    value["dataset_tag"] = ""
+
+    with pytest.raises(ValueError, match="dataset_tag must be a non-empty string"):
+        DatasetManifest.from_mapping(value)
+
+
+def test_manifest_requires_non_negative_integers() -> None:
+    value = manifest_mapping()
+    value["n_records"] = -1
+
+    with pytest.raises(ValueError, match="n_records must be a non-negative integer"):
+        DatasetManifest.from_mapping(value)
+
+
+def test_manifest_requires_list_of_non_empty_strings_for_natura_categories() -> None:
+    value = manifest_mapping()
+    value["natura_categories"] = ["Lavori pubblici", ""]
+
+    with pytest.raises(ValueError, match="natura_categories must be a list of non-empty strings"):
+        DatasetManifest.from_mapping(value)
