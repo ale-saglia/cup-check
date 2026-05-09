@@ -12,7 +12,8 @@
 | Test web                   | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate                    |
 | Lint/format                | ESLint, Prettier, EditorConfig | Stile coerente                                     |
 | Fixture                    | YAML                           | Leggibili e consumabili da JS/Python               |
-| SQLite in browser          | sql.js (Emscripten/WASM)       | Lookup sul dataset OpenCUP senza server            |
+| Dataset storage            | Cloudflare D1                  | SQLite serverless, free tier, CDN Cloudflare       |
+| Lookup API                 | Cloudflare Workers             | POST /lookup batch, free tier 100K req/giorno      |
 | Hosting                    | GitHub Pages                   | CORS nativi, zero costi operativi                  |
 | Python library             | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
 
@@ -45,7 +46,7 @@ cup-check/
     └── fixtures/
 ```
 
-Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e chunk SQLite pubblicati su GitHub Pages insieme alla web app.
+Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e chunk SQLite pubblicati su GitHub Releases (per la libreria Python) e carica il dataset su Cloudflare D1 (per la web app tramite Worker).
 
 ## Fixture
 
@@ -112,7 +113,7 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 | `ci.yml`               | PR e push su `main`                  | lint, test, build                                    |
 | `release-web.yml`      | push tag `v*` o release published    | build web, include dataset da releases, deploy Pages |
 | `release-python.yml`   | release software pubblicata          | build e publish PyPI                                 |
-| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila SQLite, pubblica release    |
+| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila SQLite, release + D1 upload |
 
 Il trigger `release: published` in `release-web.yml` copre anche le release dataset: quando `release-dataset.yml` pubblica un nuovo dataset, Pages viene aggiornata automaticamente con i chunk nuovi.
 

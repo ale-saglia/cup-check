@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 0006](0006-dataset-lookup-cloudflare-workers-d1.md)
 
 ## Context
 

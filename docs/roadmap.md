@@ -5,7 +5,7 @@
 | `0.1.0` | MVP web | Format check, report CSV, web app statica, fixture YAML, regole `R0`-`R5` | nessuna |
 | `0.1.x` | Hardening | Bug fix, polish UX, auto-detect colonne, fixture aggiuntivi | nessuna |
 | `0.2.0` | Libreria Python | `pip install cup-check`, API `validate_format`, parity sui fixture, nessun parser file nel core | account PyPI |
-| `0.3.0` | Dataset OpenCUP self-hosted | Pipeline mensile, SQLite chunked, release `dataset-YYYY-MM`, range request via `sql.js-httpvfs` per verifica esistenza CUP, `OpenCupChecker`, nuovi esiti OpenCUP | nessuna |
+| `0.3.0` | Dataset OpenCUP + lookup Worker | Pipeline mensile, SQLite → Cloudflare D1, Worker `POST /lookup`, verifica esistenza CUP da web, chunk su GitHub Releases per `OpenCupChecker` Python, nuovi esiti OpenCUP | account Cloudflare |
 | `0.4.0` | Coerenza atto | Espansione schema dataset (stato, natura, P.IVA/CF, importi, descrizione); estensione range request per campi aggiuntivi; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
 | `0.5.0` | UX & a11y | tema scuro, WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
 | `0.6.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
@@ -29,12 +29,13 @@
 1. Pipeline download bulk OpenCUP.
 2. Estrazione e dedup CUP, gestione revocati.
 3. SQLite ottimizzato `WITHOUT ROWID`, schema iniziale con sola colonna `cup`.
-4. Chunking in asset da pubblicare su GitHub Releases.
-5. `dataset-manifest.json`.
-6. Integrazione web tramite HTTP Range request e `sql.js-httpvfs`: query limitata all'esistenza del CUP (`SELECT 1 FROM cups WHERE cup = ?`), nessun campo aggiuntivo.
-7. `OpenCupChecker` Python con download/cache locale.
-8. Nuovi esiti `TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
-9. ADR per release dataset separata e SQLite chunked.
+4. Chunk su GitHub Releases e `dataset-manifest.json` (per `OpenCupChecker` Python).
+5. Upload dataset su Cloudflare D1 tramite Wrangler.
+6. Cloudflare Worker `POST /lookup` che accetta `{ cups: string[] }` e restituisce `{ [cup]: boolean }`.
+7. Integrazione web: singola fetch al Worker con tutti i CUP unici; nessun WASM nel browser.
+8. `OpenCupChecker` Python con download/cache locale dei chunk.
+9. Nuovi esiti `TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
+10. ADR per scelta D1+Workers (ADR 0006).
 
 ## Milestone `0.4.0`
 

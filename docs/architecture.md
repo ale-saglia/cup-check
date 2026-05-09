@@ -25,44 +25,49 @@ Nel MVP tutta la validazione avviene nel browser:
 
 Non esistono componenti server-side nell'MVP.
 
-## Architettura 0.3.0 (implementata)
+## Architettura 0.3.0
 
 La release `0.2.0` introduce il package Python importabile `packages/cup_check` con parity test sugli stessi fixture.
 
-Da `0.3.0` il dataset OpenCUP viene pubblicato come SQLite chunked su GitHub Pages e la web app esegue la verifica di esistenza direttamente nel browser:
+Da `0.3.0` il dataset OpenCUP viene pubblicato su Cloudflare D1 e la web app interroga un Cloudflare Worker con una singola richiesta batch:
 
 ```text
 GitHub repo
   ├─ packages/web
   ├─ packages/cup_check
+  ├─ packages/worker       (nuovo)
   ├─ tests/fixtures
   └─ GitHub Actions
-        │ release v* o dataset published
+        │ release dataset-YYYY-MM
+        ├──────────────────────────────────────┐
+        ▼                                      ▼
+GitHub Releases                       Cloudflare D1
+  └─ cups.sqlite.* + manifest            └─ tabella cups
+
+        │ release v*
         ▼
 GitHub Pages
-  ├─ HTML + vanilla JS + Service Worker
-  └─ dataset/
-       ├─ dataset-manifest.json
-       ├─ cups.sqlite.000
-       └─ cups.sqlite.00N
-              │ fetch (CORS nativo da Pages)
-              ▼
-        Browser utente
-          └─ sql.js (SQLite/WASM)
-               └─ SELECT 1 FROM cups WHERE cup = ?
+  └─ HTML + vanilla JS + Service Worker
+        │ POST /lookup { cups: [...] }
+        ▼
+  Cloudflare Worker
+        │ SELECT cup FROM cups WHERE cup IN (...)
+        ▼
+  Cloudflare D1
 ```
 
 Flusso di deploy:
 
-1. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila SQLite chunked, pubblica su GitHub Releases e crea una release `dataset-YYYY-MM`.
+1. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila SQLite, pubblica chunk su GitHub Releases (`dataset-YYYY-MM`) e carica il dataset su D1 tramite Wrangler.
 2. La pubblicazione della release triggera `release-web.yml` via `release: published`.
-3. `release-web.yml` builda la web app, scarica i chunk da GitHub Releases, riscrive `base_url` del manifest con l'URL di Pages, deploya il tutto su GitHub Pages.
-4. Il browser scarica il manifest da Pages, poi i chunk in sequenza con progress, assembla il buffer in memoria, apre il database con sql.js.
-5. Il service worker cacha tutti i chunk dopo il primo download; le visite successive sono completamente offline.
+3. `release-web.yml` builda la web app e deploya su GitHub Pages.
+4. Il browser invia una singola `POST /lookup` al Worker con tutti i CUP unici; riceve una mappa `{ [cup]: boolean }`.
+5. La libreria Python scarica e cacia localmente i chunk da GitHub Releases per uso offline.
 
 Componenti principali aggiunti in `0.3.0`:
 
-- `packages/web/src/dataset-loader.js` — fetch manifest, download chunk con progress, inizializzazione sql.js, prepared statement per lookup.
+- `packages/worker/` — Cloudflare Worker con endpoint `POST /lookup`.
+- `packages/web/src/dataset-loader.js` — singola fetch al Worker, nessun WASM.
 - `packages/web/src/results.js#applyDbLookup` — trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO`/`NON_TROVATO`.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
 - Test di integrazione (`INTEGRATION_TESTS=1 pytest -m integration`) verificano manifest e chunk del release pubblicato.
