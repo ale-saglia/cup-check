@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.2.2 - 2026-05-09
+
+- Aggiorna il workflow Pages per includere il dataset OpenCUP più recente nel deploy.
+
 ## 0.2.1 - 2026-05-09
 
 - Aggiunge favicon, manifest collegato e `robots.txt` per stabilizzare Lighthouse su web.
