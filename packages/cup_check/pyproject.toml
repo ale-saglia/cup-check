@@ -49,6 +49,9 @@ addopts = "--cov=cup_check --cov-report=term-missing --cov-fail-under=90"
 testpaths = ["tests"]
 tmp_path_retention_count = 0
 tmp_path_retention_policy = "none"
+markers = [
+  "integration: test con accesso di rete al release pubblicato (esegui con INTEGRATION_TESTS=1)",
+]
 
 [tool.ruff]
 line-length = 100
