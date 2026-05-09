@@ -6,6 +6,7 @@ import { fileURLToPath } from 'node:url';
 
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
+const fallbackVersion = '0.0.0-dev';
 const appVersion = readAppVersion();
 
 export default defineConfig({
@@ -34,11 +35,10 @@ function readAppVersion() {
       return tag.replace(/^v/, '');
     }
   } catch {
-    // Local archives or CI checkouts without tags fall back to package metadata.
+    // Local archives or CI checkouts without tags get a non-release build marker.
   }
 
-  const packageJson = JSON.parse(readFileSync(resolve(webDir, 'package.json'), 'utf8'));
-  return packageJson.version;
+  return fallbackVersion;
 }
 
 function serviceWorkerPlugin(version) {

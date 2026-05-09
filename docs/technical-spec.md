@@ -105,7 +105,7 @@ result = validate_format("G17H03000130001")
 | `release-python.yml`  | futuro, da `0.2.0`                | publish PyPI            |
 | `refresh-dataset.yml` | futuro, da `0.3.0`                | refresh dataset OpenCUP |
 
-La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa `packages/web/package.json` come fallback. La stessa versione alimenta il cache name del service worker.
+La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 
 ## Comandi
 
