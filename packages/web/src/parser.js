@@ -52,6 +52,7 @@ async function parseCsv(file) {
 
   return new Promise((resolve, reject) => {
     Papa.parse(text, {
+      // Preserve empty rows so row numbers in validation results match the original file.
       skipEmptyLines: false,
       complete: (result) => resolve(normalizeRows(result.data)),
       error: reject,
