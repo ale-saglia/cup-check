@@ -86,8 +86,10 @@ jobs:
           TAG="${{ needs.build.outputs.dataset_tag }}"
           SNAPSHOT="${{ needs.build.outputs.snapshot_date }}"
           CHUNK_FILES=($(ls dist/dataset/cups.sqlite.*))
-          gh release delete "$TAG" --cleanup-tag --yes 2>/dev/null || true
+          gh release delete "$TAG" --cleanup-tag --yes \
+            --repo "${{ github.repository }}" 2>/dev/null || true
           gh release create "$TAG" \
+            --repo "${{ github.repository }}" \
             --title "Dataset OpenCUP ${TAG}" \
             --notes "Dataset OpenCUP aggiornato al ${SNAPSHOT}." \
             --latest=false \
