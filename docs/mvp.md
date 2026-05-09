@@ -2,7 +2,7 @@
 
 ## Stato
 
-Il bootstrap del repo e l'MVP `0.1.0` sono completati; la linea web e pronta per il rilascio `0.1.1`:
+Il bootstrap del repo e l'MVP `0.1.0` sono completati; la linea web statica include:
 
 - web app Vite vanilla JS;
 - parser CSV/XLSX;
@@ -28,7 +28,7 @@ Il bootstrap del repo e l'MVP `0.1.0` sono completati; la linea web e pronta per
 
 ## Fuori Scope
 
-- Libreria Python importabile, rinviata a `0.2.0`.
+- Libreria Python importabile, consegnata nella release `0.2.0`.
 - CLI dedicata; se servira, sara un wrapper sottile sopra la libreria.
 - Verifica esistenza, rinviata a `0.3.0` per il perimetro OpenCUP.
 - Verifica importi, anagrafiche, BDAP, ANAC, OpenCoesione.

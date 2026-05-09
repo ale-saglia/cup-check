@@ -13,7 +13,7 @@ Ogni modifica alle regole di validazione deve partire da un aggiornamento dei fi
 - Nell'MVP nessun dato dell'utente lascia il browser.
 - I CUP sono codici amministrativi e non dati personali direttamente identificativi.
 - Nessun segreto nell'MVP.
-- Da `0.2.0`, publish PyPI preferibilmente con Trusted Publishing OIDC.
+- Il publish PyPI usa preferibilmente Trusted Publishing OIDC.
 - Eventuali API autoritative future devono documentare in modo esplicito quali CUP vengono inviati fuori dal browser o dal processo locale.
 
 ## Release

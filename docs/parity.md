@@ -9,7 +9,7 @@ cd packages/web
 npm test
 ```
 
-Da `0.2.0`, gli stessi fixture in `tests/fixtures/*.yaml` saranno letti anche dalla libreria Python.
+Gli stessi fixture in `tests/fixtures/*.yaml` sono letti anche dalla libreria Python.
 
 Regole:
 

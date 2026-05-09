@@ -12,7 +12,7 @@
 | `0.7.0` | API autoritativa | completamento per nature non pubblicate, checker puntuale con credenziali o proxy documentato | API key |
 | `1.0.0` | Produzione stabile | documentazione utente, hardening, dichiarazione accessibilita, eventuale Developers Italia | da valutare |
 
-## Prossima Milestone: `0.2.0`
+## Milestone `0.2.0`
 
 1. Scaffold `packages/cup_check` pubblicato come `cup-check`.
 2. Tipi pubblici per outcome, regole e risultato.

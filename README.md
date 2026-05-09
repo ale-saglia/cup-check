@@ -2,13 +2,13 @@
 
 Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
 
-`cup-check` e una web app statica per controllare liste di CUP direttamente nel browser. Carichi un CSV/XLSX o incolli una lista di codici, scegli la colonna CUP quando serve e ottieni un report riga per riga esportabile in CSV.
+`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni.
 
-La verifica `0.1.1` e solo formale: segnala se il codice rispetta le regole strutturali note con esito `FORMATO_VALIDO_DA_VERIFICARE`, ma non attesta l'esistenza nel Sistema CUP.
+La verifica e solo formale: segnala se il codice rispetta le regole strutturali note con esito `FORMATO_VALIDO_DA_VERIFICARE`, ma non attesta l'esistenza nel Sistema CUP.
 
 ## Stato
 
-Pronto per il rilascio `0.1.1`.
+Il progetto e rilasciato come web app statica e package Python.
 
 ## Cosa Fa
 
@@ -18,6 +18,7 @@ Pronto per il rilascio `0.1.1`.
 - Mostra risultati filtrabili.
 - Esporta report CSV.
 - Funziona offline dopo la prima visita.
+- Espone una libreria Python installabile come `cup-check`.
 - Non invia i dati a server esterni nell'MVP.
 
 ## Privacy
@@ -33,7 +34,7 @@ solo su azione dell'utente e distinti dalla validazione locale.
 
 ## Limiti Del Controllo
 
-Gli unici esiti della `0.1.1` sono:
+Gli unici esiti della verifica formale sono:
 
 - `INVALIDO_FORMATO`
 - `FORMATO_VALIDO_DA_VERIFICARE`
@@ -48,8 +49,16 @@ npm install
 npm run dev
 ```
 
+Per la libreria Python:
+
+```bash
+cd packages/cup_check
+uv sync --dev
+uv run pytest
+```
+
 Oppure apri il repo in Dev Containers / Codespaces. Il container include Node.js 22,
-npm, make, ripgrep, Chromium e Lighthouse; al primo avvio esegue `make setup`.
+npm, uv, make, ripgrep, Chromium e Lighthouse; al primo avvio esegue `make setup`.
 
 Comandi principali:
 
@@ -57,6 +66,7 @@ Comandi principali:
 make help
 make check
 make release-check
+make python-build
 make web-dev
 make web-preview
 ```
@@ -82,8 +92,9 @@ I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale del validatore
 
 - `tests/fixtures/`: specifica funzionale YAML condivisa.
 - `packages/web/`: web app Vite vanilla JS.
+- `packages/cup_check/`: libreria Python pubblicata come `cup-check`.
 - `docs/`: documentazione di progetto, architettura, roadmap, fonti dati e governance.
-- `.github/workflows/`: CI e deploy Pages su release.
+- `.github/workflows/`: CI, deploy Pages e publish PyPI su release.
 
 ## Documentazione
 

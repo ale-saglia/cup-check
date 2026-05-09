@@ -13,7 +13,7 @@
 | Lint/format                | ESLint, Prettier, EditorConfig | Stile coerente                                     |
 | Fixture                    | YAML                           | Leggibili e consumabili da JS/Python               |
 | Hosting                    | GitHub Pages                   | Vincolo MVP                                        |
-| Python library, da `0.2.0` | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
+| Python library             | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
 
 ## Struttura Repo
 
@@ -63,7 +63,7 @@ Regole:
 
 - aggiornare i fixture prima dell'implementazione quando cambia una regola;
 - non duplicare fixture per linguaggio;
-- da `0.2.0`, web e libreria Python devono produrre gli stessi esiti sugli stessi fixture.
+- web e libreria Python devono produrre gli stessi esiti sugli stessi fixture.
 
 ## Contratto Validatore
 
@@ -89,7 +89,7 @@ export function validateCup(value, row = null, options = {}) { ... }
 export function validateBatch(values, options = {}) { ... }
 ```
 
-API Python `0.2.0`:
+API Python:
 
 ```python
 from cup_check import validate_format

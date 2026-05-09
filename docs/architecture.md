@@ -27,7 +27,7 @@ Non esistono componenti server-side nell'MVP.
 
 ## Architettura Intermedia 0.3.0
 
-Da `0.2.0` verra introdotto il package Python importabile `packages/cup_check` con parity test sugli stessi fixture. La CLI resta eventuale e sottile, costruibile sopra la libreria se emergera un bisogno reale.
+La release `0.2.0` introduce il package Python importabile `packages/cup_check` con parity test sugli stessi fixture. La CLI resta eventuale e sottile, costruibile sopra la libreria se emergera un bisogno reale.
 
 Da `0.3.0` il dataset OpenCUP verra pubblicato come SQLite chunked su GitHub Releases:
 

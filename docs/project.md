@@ -1,10 +1,10 @@
 # Progetto
 
-> Stato: pronto per rilascio `0.2.0` - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
+> Stato: `0.2.0` rilasciata - Target MVP: `0.1.0` - Owner: Alessandro - Repo: `ale-saglia/cup-check`
 
 `cup-check` e uno strumento per la verifica massiva e locale dei Codici Unici di Progetto (CUP).
 
-L'MVP e una web app statica servita da GitHub Pages: carica CSV/XLSX o testo incollato, valida il formato dei CUP direttamente nel browser e produce un report esportabile. La verifica `0.1.0` e solo formale: un CUP con formato valido resta sempre `FORMATO_VALIDO_DA_VERIFICARE`, non "esistente".
+Il progetto include una web app statica servita da GitHub Pages e una libreria Python importabile. La verifica resta solo formale: un CUP con formato valido resta sempre `FORMATO_VALIDO_DA_VERIFICARE`, non "esistente".
 
 La documentazione di progetto e divisa qui:
 
