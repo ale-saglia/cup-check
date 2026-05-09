@@ -28,15 +28,20 @@ export default {
     }
 
     const found = new Set();
-    for (let i = 0; i < cups.length; i += CHUNK_SIZE) {
-      const chunk = cups.slice(i, i + CHUNK_SIZE);
-      const placeholders = chunk.map(() => '?').join(', ');
-      const { results } = await env.DB.prepare(
-        `SELECT cup FROM cups WHERE cup IN (${placeholders})`,
-      )
-        .bind(...chunk)
-        .all();
-      for (const row of results) found.add(row.cup);
+    try {
+      for (let i = 0; i < cups.length; i += CHUNK_SIZE) {
+        const chunk = cups.slice(i, i + CHUNK_SIZE);
+        const placeholders = chunk.map(() => '?').join(', ');
+        const { results } = await env.DB.prepare(
+          `SELECT cup FROM cups WHERE cup IN (${placeholders})`,
+        )
+          .bind(...chunk)
+          .all();
+        for (const row of results) found.add(row.cup);
+      }
+    } catch (err) {
+      console.error('D1 query failed:', err);
+      return reply(JSON.stringify({ error: 'database unavailable' }), 503);
     }
 
     const out = {};
