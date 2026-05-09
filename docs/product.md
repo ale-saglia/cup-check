@@ -12,6 +12,8 @@ Nella PA italiana il CUP e un identificatore obbligatorio per gli atti di finanz
 
 `cup-check` nasce per offrire uno strumento leggero che aiuti funzionari e tecnici a individuare rapidamente errori formali prima di successive verifiche manuali o autoritative.
 
+L'evoluzione prevista e incrementale: nelle prime milestone il prodotto risponde alla domanda "questo CUP ha un formato corretto ed e presente nel perimetro dati disponibile?". In una milestone successiva diventa anche uno strumento di coerenza dell'atto, cioe aiuta a rispondere alla domanda "questo CUP, questa P.IVA/CF, questo importo e questa descrizione sembrano riferirsi allo stesso progetto?". Questa seconda domanda intercetta errori piu costosi, come inversioni di CUP tra righe o progetti durante copia-incolla e rendicontazioni.
+
 ## Stakeholder
 
 - Funzionari PA che gestiscono atti contenenti CUP.
@@ -26,6 +28,7 @@ Nella PA italiana il CUP e un identificatore obbligatorio per gli atti di finanz
 - Produrre report esportabili con esito riga per riga.
 - Restare offline-first dopo la prima visita.
 - Da `0.3.0`, verificare l'esistenza nel perimetro pubblicato da OpenCUP tramite dataset esatto self-hosted.
+- Da `0.4.0`, segnalare possibili incoerenze tra CUP e dati associati nell'atto, come soggetto titolare/beneficiario, importo e descrizione progetto.
 - In una milestone successiva, valutare verifica puntuale tramite fonte autoritativa/API.
 
 ## Vincoli
@@ -44,6 +47,6 @@ Nella PA italiana il CUP e un identificatore obbligatorio per gli atti di finanz
 - Proporzionalita: nessuna tecnologia senza un problema specifico.
 - Onesta sui limiti: UI e API devono dichiarare cosa e cosa non viene verificato.
 - Asimmetria di rischio: i falsi positivi sono peggio dei falsi negativi cautelativi.
+- Cautela sui controlli sostanziali: le discrepanze tra atto e dataset sono sempre "da verificare", mai giudizi automatici di incoerenza definitiva.
 - Stack appropriato: JavaScript minimale nel browser, Python dove serve integrazione o pipeline.
 - Degradazione graceful: se una fonte esterna fallisce, il check locale resta disponibile.
-
