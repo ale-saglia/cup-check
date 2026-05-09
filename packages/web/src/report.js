@@ -65,7 +65,8 @@ function csvCell(value) {
 
 function protectCsvFormula(text) {
   if (/^[=+\-@]/.test(text)) {
-    return `'${text}`;
+    // A leading tab keeps spreadsheet apps from interpreting the cell as a formula.
+    return `\t${text}`;
   }
 
   return text;

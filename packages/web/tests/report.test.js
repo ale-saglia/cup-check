@@ -43,7 +43,7 @@ describe('resultDetail', () => {
     expect(csv.trim().endsWith(';')).toBe(true);
   });
 
-  it('prefixes formula-like CSV cells with an apostrophe', () => {
+  it('prefixes formula-like CSV cells with a tab', () => {
     const csv = buildCsvReport([
       {
         inputRow: '=1+1',
@@ -54,7 +54,7 @@ describe('resultDetail', () => {
       },
     ]);
 
-    expect(csv).toContain("'=1+1;'+SUM(1,1);'-FORMULA;");
+    expect(csv).toContain('\t=1+1;\t+SUM(1,1);\t-FORMULA;');
     expect(csv).toContain('Avvisi non bloccanti: @WARNING - avviso non documentato');
   });
 });
