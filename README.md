@@ -1,5 +1,7 @@
 # cup-check
 
+Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. `cup-check` aiuta enti, consulenti e team tecnici a intercettare subito gli errori formali prima di caricare o condividere elenchi di Codici Unici di Progetto.
+
 Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
 
 `cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni.
