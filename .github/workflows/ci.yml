@@ -23,3 +23,24 @@ jobs:
       - run: npm run lint
       - run: npm test -- --run
       - run: npm run build
+
+  python:
+    name: Python lint and test
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: packages/cup_check
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/cup_check/uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --dev --locked
+      - run: uv run ruff check .
+      - run: uv run pytest

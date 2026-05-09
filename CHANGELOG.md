@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+- Avvia lo scaffold `0.2.0` della libreria Python `cup-check`.
+- Aggiunge API `validate_format` e `validate_many` con tipi pubblici per outcome, regole, warning e risultato.
+- Aggiunge parity test Python sugli stessi fixture YAML del web.
+- Aggiunge il workflow di publish PyPI con Trusted Publishing OIDC.
+
 ## 0.1.1 - 2026-05-08
 
 - Accetta i CUP minuscoli dopo normalizzazione e segnala gli avvisi non bloccanti.

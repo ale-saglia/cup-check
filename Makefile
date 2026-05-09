@@ -1,6 +1,7 @@
 SHELL := /bin/bash
 
 WEB_DIR := packages/web
+PYTHON_DIR := packages/cup_check
 WEB_PORT ?= 5173
 WEB_PREVIEW_PORT ?= 4173
 
@@ -11,10 +12,10 @@ help: ## Mostra i comandi disponibili
 	@awk 'BEGIN {FS = ":.*##"; printf "\nComandi disponibili:\n"} /^[a-zA-Z0-9_.-]+:.*##/ {printf "  \033[36m%-20s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 
 .PHONY: setup
-setup: web-install ## Installa le dipendenze di sviluppo
+setup: web-install python-install ## Installa le dipendenze di sviluppo
 
 .PHONY: check
-check: web-lint web-test web-build web-audit ## Esegue tutte le verifiche locali veloci
+check: web-lint web-test web-build web-audit python-lint python-test ## Esegue tutte le verifiche locali veloci
 
 .PHONY: release-check
 release-check: check web-acceptance web-lighthouse ## Esegue anche le prove browser/Lighthouse per il rilascio
@@ -63,6 +64,22 @@ web-audit: ## Controlla vulnerabilita nelle dipendenze runtime web
 web-clean: ## Rimuove la build web
 	rm -rf $(WEB_DIR)/dist
 
+.PHONY: python-install
+python-install: ## Installa le dipendenze del package Python
+	cd $(PYTHON_DIR) && uv sync --dev
+
+.PHONY: python-lint
+python-lint: ## Esegue Ruff sul package Python
+	cd $(PYTHON_DIR) && uv run ruff check .
+
+.PHONY: python-test
+python-test: ## Esegue i test pytest del package Python
+	cd $(PYTHON_DIR) && uv run pytest
+
+.PHONY: python-build
+python-build: ## Genera sdist e wheel del package Python
+	cd $(PYTHON_DIR) && uv build
+
 .PHONY: clean
 clean: web-clean ## Rimuove artefatti generati
-	rm -rf .pytest_cache .ruff_cache
+	rm -rf .pytest_cache .ruff_cache $(PYTHON_DIR)/.pytest_cache $(PYTHON_DIR)/.ruff_cache $(PYTHON_DIR)/.coverage $(PYTHON_DIR)/dist

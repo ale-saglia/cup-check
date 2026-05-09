@@ -37,13 +37,14 @@ cup-check/
 │   ├── glossary.md
 │   └── adr/
 ├── packages/
+│   ├── cup_check/
 │   └── web/
 ├── samples/
 └── tests/
     └── fixtures/
 ```
 
-Da `0.2.0` e previsto `packages/cup_check/` per la libreria Python. Da `0.3.0` sono previsti `pipeline/` e `dataset-manifest.json`.
+Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` sono previsti `pipeline/` e `dataset-manifest.json`.
 
 ## Fixture
 
@@ -88,7 +89,7 @@ export function validateCup(value, row = null, options = {}) { ... }
 export function validateBatch(values, options = {}) { ... }
 ```
 
-API Python prevista da `0.2.0`:
+API Python `0.2.0`:
 
 ```python
 from cup_check import validate_format
@@ -96,13 +97,15 @@ from cup_check import validate_format
 result = validate_format("G17H03000130001")
 ```
 
+La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core.
+
 ## Workflow
 
 | Workflow              | Trigger                           | Effetto                 |
 | --------------------- | --------------------------------- | ----------------------- |
 | `ci.yml`              | PR e push su `main`               | lint, test, build       |
 | `release-web.yml`     | push tag `v*` o release published | build e deploy Pages    |
-| `release-python.yml`  | futuro, da `0.2.0`                | publish PyPI            |
+| `release-python.yml`  | release software pubblicata       | build e publish PyPI    |
 | `refresh-dataset.yml` | futuro, da `0.3.0`                | refresh dataset OpenCUP |
 
 La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
@@ -113,6 +116,7 @@ La build web ricava la versione dal tag software Git piu vicino che rispetta `v[
 make setup
 make check
 make release-check
+make python-build
 make web-dev
 make web-preview
 ```
