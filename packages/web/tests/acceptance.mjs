@@ -7,7 +7,7 @@ import { writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import JSZip from 'jszip';
 import { chromium } from 'playwright';
-import { findChromePath } from './chrome-path.mjs';
+import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
 
 const ROW_COUNT = 10000;
 const MAX_TOTAL_MS = 5000;
@@ -39,8 +39,13 @@ try {
 }
 
 async function runBrowserAcceptance(baseUrl, xlsxPath) {
+  const chromePath = await findChromePath();
+  if (!chromePath) {
+    throw new Error(CHROME_NOT_FOUND_MESSAGE);
+  }
+
   const browser = await chromium.launch({
-    executablePath: (await findChromePath()) || undefined,
+    executablePath: chromePath,
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });

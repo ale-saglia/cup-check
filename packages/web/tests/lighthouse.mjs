@@ -5,7 +5,7 @@ import { readFile, mkdtemp, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { findChromePath } from './chrome-path.mjs';
+import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
 
 const MIN_SCORE = 90;
 const port = await getFreePort();
@@ -43,7 +43,7 @@ try {
 async function runLighthouse(url, outputPath) {
   const chromePath = await findChromePath();
   if (!chromePath) {
-    throw new Error('Chrome/Chromium non trovato. Nel devcontainer ricostruito e atteso /usr/bin/chromium.');
+    throw new Error(CHROME_NOT_FOUND_MESSAGE);
   }
   const child = spawn(
     'lighthouse',
