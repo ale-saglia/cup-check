@@ -4,7 +4,7 @@ export function textInputLines(value) {
     .map((line) => line.trim())
     .filter((line) => line.length > 0);
 
-  if (lines[0] === 'CUP') {
+  if (lines[0]?.toLowerCase() === 'cup') {
     return lines.slice(1);
   }
 
