@@ -44,7 +44,7 @@ cup-check/
     └── fixtures/
 ```
 
-Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` sono previsti `pipeline/` e `dataset-manifest.json`.
+Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica riusabile per costruire il dataset OpenCUP vive nel package Python, mentre il workflow mensile produrra `dataset-manifest.json` e asset chunked fuori dal repository.
 
 ## Fixture
 

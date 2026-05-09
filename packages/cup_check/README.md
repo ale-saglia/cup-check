@@ -21,3 +21,14 @@ from cup_check import validate_many
 
 results = validate_many(["G17H03000130001", "117H03000130001"])
 ```
+
+Da `0.3.0`, il package include anche il contratto tipizzato per leggere il
+`dataset-manifest.json` delle release OpenCUP self-hosted:
+
+```python
+from cup_check import load_dataset_manifest
+
+manifest = load_dataset_manifest("dataset-manifest.json")
+print(manifest.dataset_tag)
+print(manifest.chunks.files)
+```

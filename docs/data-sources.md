@@ -6,6 +6,22 @@ La web app non chiama API e non verifica l'esistenza dei CUP. I link OpenCUP nel
 
 La verifica su dataset OpenCUP self-hosted e prevista da `0.3.0`. La verifica autoritativa via API Sogei resta una milestone successiva e opzionale.
 
+## Fonte OpenCUP
+
+La fonte primaria per la milestone `0.3.0` e la pagina OpenCUP
+[Accesso agli open data](https://www.opencup.gov.it/portale/web/opencup/accesso-agli-open-data).
+
+Alla verifica del 2026-05-09, la pagina dichiara l'aggiornamento di maggio 2026 con CUP
+relativi a tutte le nature aggiornati al `01.05.2026`. Il dataset progetti e pubblicato come
+zip di 7 CSV:
+
+```text
+https://www.opencup.gov.it/portale/documents/21195/299152/OpendataProgetti.zip/
+```
+
+Il file reale scaricato il 2026-05-09 contiene CSV con campi quotati, separatore punto e
+virgola (`;`) e testo UTF-8.
+
 ## Dataset OpenCUP Self-Hosted
 
 Il pattern previsto e uno SQLite esatto pubblicato come asset di release `dataset-YYYY-MM`. Il database logico puo essere diviso in chunk binari per evitare file enormi nel repo:
@@ -21,30 +37,24 @@ Schema iniziale previsto per il lookup di esistenza:
 
 ```sql
 CREATE TABLE cups (
-  cup TEXT PRIMARY KEY,
-  natura TEXT,
-  anno INTEGER,
-  area TEXT,
-  revocato INTEGER NOT NULL DEFAULT 0
+  cup TEXT PRIMARY KEY
 ) WITHOUT ROWID;
 ```
 
-Per la verifica di coerenza atto, lo schema dovra essere esteso solo dopo un PoC sul bulk reale. Il candidato attuale e:
+`cup` e la chiave primaria del dataset. Se la build trova duplicati nel bulk OpenCUP,
+segnala un warning e mantiene il record con data di aggiornamento piu recente.
 
-```sql
-CREATE TABLE cups (
-  cup TEXT PRIMARY KEY,
-  piva_cf_titolare TEXT,
-  piva_cf_beneficiario TEXT,
-  costo_progetto_cents INTEGER,
-  finanziamento_progetto_cents INTEGER,
-  descrizione_full TEXT,
-  anno_decisione INTEGER,
-  stato_progetto TEXT,
-  data_chiusura_revoca TEXT,
-  natura_dipe TEXT
-) WITHOUT ROWID;
-```
+Per la `0.3.0` la tabella destinazione contiene solo `cup`, sufficiente al lookup esatto di
+presenza nel perimetro OpenCUP. Gli altri campi sono gia dichiarati nel mapping come
+`destination: false`, cosi possono essere abilitati in modo esplicito nella `0.4.0`.
+
+La trasformazione CSV -> SQLite e dichiarata in
+`packages/cup_check/src/cup_check/opencup_dataset_schema.yaml`: ogni colonna destinazione
+indica la colonna sorgente OpenCUP e il tipo di normalizzazione (`cup`, `category`,
+`money_cents`, `date`, `bool_equals`, ecc.). Il flag `destination` controlla se il campo entra
+nella tabella finale `cups`. Gli importi `*_cents` sono interi in centesimi:
+evitano arrotondamenti floating point e restano ampiamente dentro il limite `INTEGER` a 64 bit
+di SQLite.
 
 Colonne candidate dal bulk OpenCUP:
 
@@ -105,6 +115,9 @@ La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 G
   },
   "sha256": "abcd...ef01",
   "n_records": 9842317,
-  "min_software_version": "0.3.0"
+  "min_software_version": "0.3.0",
+  "natura_categories": ["Acquisto beni", "Lavori pubblici"]
 }
 ```
+
+Il contratto architetturale e fissato in [ADR 0005](adr/0005-dataset-release-sqlite-chunked.md). La libreria Python espone un loader tipizzato del manifest per riusare la stessa struttura nella pipeline e nel futuro `OpenCupChecker`.
