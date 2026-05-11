@@ -7,6 +7,7 @@ import {
   collapsePanel,
   renderDatasetChecking,
   renderDatasetError,
+  renderDatasetProgress,
   renderDatasetReady,
   renderDatasetSearching,
   renderPreview,
@@ -33,7 +34,9 @@ const datasetPromise = initializeDataset();
 async function initializeDataset() {
   renderDatasetSearching(dom);
   try {
-    const loadedDataset = await loadLatestDataset();
+    const loadedDataset = await loadLatestDataset({
+      onProgress: (progress) => renderDatasetProgress(dom, progress),
+    });
     dataset = loadedDataset;
     renderDatasetReady(dom, loadedDataset.manifest);
     return loadedDataset;

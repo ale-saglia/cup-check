@@ -5,8 +5,8 @@ const MIN_SCHEMA_VERSION = 1;
 
 let datasetPromise = null;
 
-export function loadLatestDataset() {
-  datasetPromise ??= loadDataset();
+export function loadLatestDataset(options = {}) {
+  datasetPromise ??= loadDataset(options);
   return datasetPromise;
 }
 
@@ -43,11 +43,13 @@ async function discoverLatestFromGitHub(fetchFn) {
   };
 }
 
-export async function loadDataset({ fetchFn = fetch, initSql = initDefaultSql } = {}) {
+export async function loadDataset({ fetchFn = fetch, initSql = initDefaultSql, onProgress = () => {} } = {}) {
   const latest = await discoverLatestDataset(fetchFn);
   const manifest = await fetchJson(fetchFn, latest.manifest_url);
   validateManifest(manifest);
-  const sqliteBytes = await downloadCupIndex(fetchFn, manifest.cup_index);
+  const sqliteBytes = await downloadCupIndex(fetchFn, manifest.cup_index, (progress) =>
+    onProgress({ ...progress, datasetTag: manifest.dataset_tag }),
+  );
   const SQL = await initSql();
   const db = new SQL.Database(sqliteBytes);
 
@@ -77,17 +79,56 @@ async function initDefaultSql(options) {
   return initSqlJs({ locateFile: () => sqlWasmUrl, ...options });
 }
 
-async function downloadCupIndex(fetchFn, cupIndex) {
+async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
+  let loadedBytes = 0;
+  const reportProgress = (deltaBytes) => {
+    loadedBytes += deltaBytes;
+    onProgress({
+      loadedBytes,
+      totalBytes: cupIndex.total_size_bytes,
+      percent: Math.min(100, Math.floor((loadedBytes / cupIndex.total_size_bytes) * 100)),
+    });
+  };
+
+  onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
   const chunks = await Promise.all(
     cupIndex.files.map(async (file) => {
       const response = await fetchFn(`${cupIndex.base_url}/${file}`);
       if (!response.ok) throw new Error(`dataset chunk ${file}: HTTP ${response.status}`);
-      return new Uint8Array(await response.arrayBuffer());
+      return readResponseBytes(response, reportProgress);
     }),
   );
   const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
   if (totalSize !== cupIndex.total_size_bytes) {
     throw new Error('dataset chunk size mismatch');
+  }
+
+  const out = new Uint8Array(totalSize);
+  let offset = 0;
+  for (const chunk of chunks) {
+    out.set(chunk, offset);
+    offset += chunk.byteLength;
+  }
+  return out;
+}
+
+async function readResponseBytes(response, onBytes) {
+  if (!response.body?.getReader) {
+    const bytes = new Uint8Array(await response.arrayBuffer());
+    onBytes(bytes.byteLength);
+    return bytes;
+  }
+
+  const reader = response.body.getReader();
+  const chunks = [];
+  let totalSize = 0;
+
+  while (true) {
+    const { done, value } = await reader.read();
+    if (done) break;
+    chunks.push(value);
+    totalSize += value.byteLength;
+    onBytes(value.byteLength);
   }
 
   const out = new Uint8Array(totalSize);

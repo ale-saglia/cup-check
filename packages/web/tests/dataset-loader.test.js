@@ -53,6 +53,12 @@ describe('loadDataset', () => {
     const firstChunk = sqliteBytes.slice(0, 128);
     const secondChunk = sqliteBytes.slice(128);
     const fetchFn = mockFetch({
+      './dataset-latest.json': {
+        dataset_tag: 'dataset-2026-05',
+        manifest_url: 'https://example.test/dataset-manifest.json',
+        sources_snapshot_date: '2026-05-01',
+        released_at: '2026-05-05T03:14:00Z',
+      },
       'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
         {
           tag_name: 'dataset-2026-05',
@@ -85,15 +91,20 @@ describe('loadDataset', () => {
       'https://example.test/release/cup-index.sqlite.000': firstChunk,
       'https://example.test/release/cup-index.sqlite.001': secondChunk,
     });
+    const progressEvents = [];
 
     const dataset = await loadDataset({
       fetchFn,
       initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      onProgress: (progress) => progressEvents.push(progress.percent),
     });
 
     expect(dataset.manifest.dataset_tag).toBe('dataset-2026-05');
     expect(dataset.hasCup('G17H03000130001')).toBe(true);
     expect(dataset.hasCup('H11B22001230001')).toBe(false);
+    expect(progressEvents.at(0)).toBe(0);
+    expect(progressEvents.at(-1)).toBe(100);
+    expect(progressEvents).toEqual([...progressEvents].sort((a, b) => a - b));
     dataset.close();
   });
 });

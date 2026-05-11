@@ -10,8 +10,13 @@ export function renderDatasetSearching(dom) {
 
 export function renderDatasetReady(dom, manifest = null) {
   dom.datasetStatusBar.textContent = manifest
-    ? `Dataset OpenCUP · ${manifest.dataset_tag} · snapshot ${manifest.sources_snapshot_date}`
+    ? `Dataset OpenCUP · ${manifest.dataset_tag}`
     : 'Dataset OpenCUP · non caricato - solo verifica formato';
+}
+
+export function renderDatasetProgress(dom, progress) {
+  const label = progress.datasetTag ? `${progress.datasetTag} · ${progress.percent}%` : `${progress.percent}%`;
+  dom.datasetStatusBar.textContent = `Dataset OpenCUP · ${label}`;
 }
 
 export function renderDatasetChecking(dom) {
