@@ -128,4 +128,9 @@ make release-check
 make python-build
 make web-dev
 make web-preview
+make web-preview-dataset
 ```
+
+`make web-preview-dataset` richiede un dataset gia generato in `dist/dataset/`; copia
+`dataset-latest.json`, `dataset-manifest.json` e i chunk nella build web con URL relativi,
+cosi la preview Codespaces esercita il caricamento dataset same-origin.

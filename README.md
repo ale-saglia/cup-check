@@ -68,7 +68,12 @@ make release-check
 make python-build
 make web-dev
 make web-preview
+make web-preview-dataset
 ```
+
+`make web-preview-dataset` usa il dataset locale in `dist/dataset/`, lo copia nella build web
+con URL relativi e avvia la preview statica. Serve per provare in Codespaces lo stesso
+percorso same-origin usato da GitHub Pages.
 
 `make release-check` aggiunge alle verifiche veloci un test browser con upload XLSX
 da 10.000 righe, reload offline PWA e controllo Lighthouse con soglie MVP.

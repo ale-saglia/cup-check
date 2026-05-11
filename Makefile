@@ -33,6 +33,11 @@ web-dev: ## Avvia Vite in sviluppo
 web-preview: web-build ## Builda e serve la preview statica Vite
 	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT)
 
+.PHONY: web-preview-dataset
+web-preview-dataset: web-build ## Builda e serve la preview includendo il dataset locale in dist/dataset
+	node scripts/prepare_web_preview_dataset.mjs
+	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT)
+
 .PHONY: web-lint
 web-lint: ## Esegue ESLint sul package web
 	cd $(WEB_DIR) && npm run lint
