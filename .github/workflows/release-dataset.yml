@@ -127,7 +127,12 @@ jobs:
             --json tagName,publishedAt \
             --jq '[.[] | select(.tagName | test("^v[0-9]"))] | sort_by(.publishedAt) | last | .tagName')"
           if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
-            echo "No software release v* was found." >&2
+            echo "No published GitHub Release v* found, falling back to latest git tag." >&2
+            SOFTWARE_TAG="$(gh api "repos/${{ github.repository }}/tags" \
+              --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name) | last | .name')"
+          fi
+          if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
+            echo "No software tag v* was found." >&2
             exit 1
           fi
           echo "tag=${SOFTWARE_TAG}" >> "$GITHUB_OUTPUT"
