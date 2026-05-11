@@ -118,7 +118,7 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 | `release-python.yml`   | release software pubblicata          | build e publish PyPI                                 |
 | `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset e aggiorna Pages dal web pinnato |
 
-La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery.
+La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery; anche in questo caso il `manifest_url` punta a GitHub Pages per evitare blocchi CORS. Se il dataset non è ancora pubblicato su Pages il lookup degrada in modo cautelativo.
 
 La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 

@@ -59,5 +59,7 @@ disponibile, la verifica degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 - Il workflow dataset dipende dall'artefatto web dell'ultima release `v*` o, in sua assenza,
   deve ricostruire la web app facendo checkout di quella stessa tag.
 - Se GitHub Pages non espone `dataset-latest.json`, il lookup OpenCUP degrada al fallback
-  GitHub Releases API; in caso di rate limit o CORS non viene applicato e gli esiti restano
-  cautelativi.
+  GitHub Releases API per scoprire il tag dataset più recente; il `manifest_url` viene però
+  costruito su GitHub Pages (non `browser_download_url`) per evitare blocchi CORS. In caso
+  di rate limit o se il dataset non è ancora stato pubblicato su Pages, il lookup non viene
+  applicato e gli esiti restano cautelativi.
