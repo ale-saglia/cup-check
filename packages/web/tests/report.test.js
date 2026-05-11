@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildCsvReport, opencupUrlForResult, resultDetail } from '../src/report.js';
-import { applyDbLookup, uniqueResultsByCup } from '../src/results.js';
-import { OUTCOMES, validateCup } from '../src/validator.js';
+import { uniqueResultsByCup } from '../src/results.js';
+import { validateCup } from '../src/validator.js';
 
 describe('resultDetail', () => {
   it('shows non-blocking normalization warnings for valid CUPs', () => {
@@ -41,31 +41,6 @@ describe('resultDetail', () => {
     expect(opencupUrlForResult(result)).toBe('');
     expect(csv).toContain('4;NON UN CUP;INVALIDO_FORMATO;');
     expect(csv.trim().endsWith(';')).toBe(true);
-  });
-
-  it('describes TROVATO outcome', () => {
-    const base = validateCup('G17H03000130001', 1, { currentYear: 2026 });
-    const [result] = applyDbLookup([base], () => true);
-
-    expect(result.outcome).toBe(OUTCOMES.FOUND);
-    expect(resultDetail(result)).toBe('TROVATO: CUP presente nel dataset OpenCUP.');
-  });
-
-  it('describes NON_TROVATO outcome', () => {
-    const base = validateCup('G17H03000130001', 1, { currentYear: 2026 });
-    const [result] = applyDbLookup([base], () => false);
-
-    expect(result.outcome).toBe(OUTCOMES.NOT_FOUND);
-    expect(resultDetail(result)).toBe('NON_TROVATO: CUP non presente nel dataset OpenCUP.');
-  });
-
-  it('includes TROVATO in CSV export', () => {
-    const base = validateCup('G17H03000130001', 1, { currentYear: 2026 });
-    const results = applyDbLookup([{ ...base, inputRows: [1], occurrenceCount: 1 }], () => true);
-
-    const csv = buildCsvReport(results);
-
-    expect(csv).toContain('1;G17H03000130001;TROVATO;TROVATO: CUP presente nel dataset OpenCUP.');
   });
 
   it('prefixes formula-like CSV cells with a tab', () => {

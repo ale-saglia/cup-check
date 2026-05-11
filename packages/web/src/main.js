@@ -1,12 +1,9 @@
 import { initDialogs, showDetailDialog } from './dialogs.js';
-import { hasDataset, lookupMany } from './dataset-loader.js';
 import { mountApp } from './dom.js';
 import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport } from './report.js';
 import {
   collapsePanel,
-  renderDatasetChecking,
-  renderDatasetError,
   renderDatasetReady,
   renderPreview,
   renderPreviewData,
@@ -16,39 +13,17 @@ import {
   resetView,
   togglePanel,
 } from './render.js';
-import { applyDbLookup, uniqueResultsByCup } from './results.js';
+import { uniqueResultsByCup } from './results.js';
 import { state, resetState } from './state.js';
 import { textInputLines } from './text-input.js';
-import { OUTCOMES, validateCup } from './validator.js';
+import { validateCup } from './validator.js';
 import './styles.css';
 
 const dom = mountApp();
 
 initDialogs(dom);
 
-if (hasDataset) {
-  renderDatasetReady(dom);
-} else {
-  renderDatasetError(dom);
-}
-
-async function applyLookup(results) {
-  if (!hasDataset) return results;
-  const cupsToCheck = results
-    .filter((r) => r.outcome === OUTCOMES.CHECK)
-    .map((r) => r.normalizedValue);
-  if (cupsToCheck.length === 0) return results;
-  renderDatasetChecking(dom);
-  try {
-    const map = await lookupMany(cupsToCheck);
-    return applyDbLookup(results, (cup) => map[cup] ?? false);
-  } catch {
-    renderDatasetError(dom);
-    return results;
-  } finally {
-    if (hasDataset) renderDatasetReady(dom);
-  }
-}
+renderDatasetReady(dom);
 
 dom.fileToggle.addEventListener('click', () => {
   togglePanel(dom.filePanel, dom.fileToggle);
@@ -77,7 +52,7 @@ dom.textCheckButton.addEventListener('click', async () => {
   const startedAt = performance.now();
   const results = lines.map((line, index) => validateCup(line, index + 1));
   const unique = uniqueResultsByCup(results);
-  state.results = await applyLookup(unique);
+  state.results = unique;
   state.sourceRowCount = results.length;
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
@@ -125,7 +100,7 @@ dom.checkButton.addEventListener('click', async () => {
     validateCup(row.cells[state.selectedColumnIndex], row.originalRowNumber),
   );
   const unique = uniqueResultsByCup(results);
-  state.results = await applyLookup(unique);
+  state.results = unique;
   state.sourceRowCount = results.length;
   collapsePanel(dom.previewPanel, dom.previewToggle);
   renderResults(state, dom, performance.now() - startedAt);

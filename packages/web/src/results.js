@@ -1,12 +1,3 @@
-import { OUTCOMES } from './validator.js';
-
-export function applyDbLookup(results, lookupFn) {
-  return results.map((result) => {
-    if (result.outcome !== OUTCOMES.CHECK) return result;
-    return { ...result, outcome: lookupFn(result.normalizedValue) ? OUTCOMES.FOUND : OUTCOMES.NOT_FOUND };
-  });
-}
-
 export function uniqueResultsByCup(results) {
   const grouped = new Map();
 

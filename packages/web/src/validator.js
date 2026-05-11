@@ -1,8 +1,6 @@
 export const OUTCOMES = {
   INVALID: 'INVALIDO_FORMATO',
   CHECK: 'FORMATO_VALIDO_DA_VERIFICARE',
-  FOUND: 'TROVATO',
-  NOT_FOUND: 'NON_TROVATO',
 };
 
 export const RULES = {
@@ -113,8 +111,6 @@ export function summarizeResults(results, durationMs = 0) {
   const counts = {
     [OUTCOMES.INVALID]: 0,
     [OUTCOMES.CHECK]: 0,
-    [OUTCOMES.FOUND]: 0,
-    [OUTCOMES.NOT_FOUND]: 0,
   };
   for (const result of results) {
     if (result.outcome in counts) counts[result.outcome] += 1;

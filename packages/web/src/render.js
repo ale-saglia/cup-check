@@ -5,15 +5,15 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 const MAX_RENDERED_RESULT_ROWS = 500;
 
 export function renderDatasetReady(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · disponibile';
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · in progettazione per la 0.3.0 - solo verifica formato';
 }
 
 export function renderDatasetChecking(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · verifica in corso…';
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · solo verifica formato';
 }
 
 export function renderDatasetError(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · non disponibile — solo verifica formato';
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · solo verifica formato';
 }
 
 export function renderPreview(state, dom, file) {
@@ -68,11 +68,8 @@ export function renderResults(state, dom, durationMs) {
   dom.resultsPanel.classList.remove('hidden');
   expandPanel(dom.resultsPanel, dom.resultsToggle);
   const data = summarizeResults(state.results, durationMs);
-  const { [OUTCOMES.INVALID]: invalid, [OUTCOMES.CHECK]: check, [OUTCOMES.FOUND]: found, [OUTCOMES.NOT_FOUND]: notFound } = data.counts;
+  const { [OUTCOMES.INVALID]: invalid, [OUTCOMES.CHECK]: check } = data.counts;
   const parts = [`${data.total} CUP unici da ${state.sourceRowCount} righe`];
-  if (found > 0 || notFound > 0) {
-    parts.push(`${found} trovati`, `${notFound} non trovati`);
-  }
   if (check > 0) parts.push(`${check} da verificare`);
   parts.push(`${invalid} invalidi`, `${Math.round(data.durationMs)} ms`);
   dom.summary.textContent = parts.join(' · ');
@@ -195,8 +192,7 @@ function renderRowsCell(result) {
 }
 
 function badgeClass(outcome) {
-  if (outcome === OUTCOMES.FOUND) return 'good';
-  if (outcome === OUTCOMES.INVALID || outcome === OUTCOMES.NOT_FOUND) return 'bad';
+  if (outcome === OUTCOMES.INVALID) return 'bad';
   return 'warn';
 }
 

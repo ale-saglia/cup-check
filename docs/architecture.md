@@ -62,8 +62,8 @@ Flusso di deploy:
 
 Componenti principali aggiunti in `0.3.0`:
 
-- `packages/web/src/dataset-loader.js` — download/cache dell'indice CUP statico e lookup locale.
-- `packages/web/src/results.js#applyDbLookup` — trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
+- loader dataset web da introdurre dopo la PoC — download/cache dell'indice CUP statico e lookup locale.
+- modulo lookup dataset web da definire dopo la PoC dell'indice statico — trasformera esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
 - Test di integrazione (`INTEGRATION_TESTS=1 pytest -m integration`) verificano manifest e chunk del release pubblicato.
 

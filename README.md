@@ -6,7 +6,7 @@ Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
 
 `cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni.
 
-La verifica ha due livelli: controllo formale del formato (regole `R0`–`R5`) e verifica di esistenza nel dataset OpenCUP pubblicato. Un CUP formalmente valido e presente nel dataset riceve esito `TROVATO`; se assente, `NON_TROVATO`. Il dataset viene scaricato in background da GitHub Pages alla prima visita e cachato offline dal service worker.
+La verifica corrente controlla solo il formato (regole `R0`–`R5`). Un CUP formalmente valido riceve esito `FORMATO_VALIDO_DA_VERIFICARE`: l'esistenza del progetto resta da verificare su fonti autoritative o, dalla 0.3.0, sul dataset OpenCUP statico in progettazione.
 
 ## Stato
 
@@ -16,8 +16,6 @@ Il progetto e rilasciato come web app statica e package Python.
 
 - Valida CUP da file CSV e XLSX.
 - Valida CUP incollati come testo, uno per riga.
-- Verifica l'esistenza di ogni CUP nel dataset OpenCUP (`TROVATO` / `NON_TROVATO`).
-- Scarica il dataset (~246 MB) in background e lo cacha per le visite successive.
 - Mostra risultati filtrabili per esito e testo.
 - Esporta report CSV con esito riga per riga.
 - Funziona offline dopo la prima visita.
@@ -27,18 +25,16 @@ Il progetto e rilasciato come web app statica e package Python.
 
 File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app non carica i CUP, i file o i report su un backend applicativo.
 
-Alla prima visita il browser scarica anche il dataset OpenCUP (~246 MB) da GitHub Pages per consentire la verifica di esistenza. Il dataset e pubblico e non contiene dati personali degli utenti. Dopo il download iniziale il service worker lo serve dalla cache locale, senza ulteriori richieste di rete.
+La versione corrente non chiama API di lookup e non scarica dataset OpenCUP per verificare l'esistenza. Il dataset statico 0.3.0 sara distribuito come asset pubblico e cacheabile, senza servizi server-side.
 
 ## Limiti Del Controllo
 
 Gli esiti possibili sono:
 
 - `INVALIDO_FORMATO` — il CUP non rispetta le regole strutturali.
-- `TROVATO` — formato valido e presente nel dataset OpenCUP incluso in questa versione.
-- `NON_TROVATO` — formato valido ma assente dal dataset. Il CUP potrebbe esistere in progetti non ancora pubblicati o aggiornati nel dataset.
-- `FORMATO_VALIDO_DA_VERIFICARE` — formato valido, dataset non ancora scaricato.
+- `FORMATO_VALIDO_DA_VERIFICARE` — il CUP rispetta le regole strutturali, ma l'esistenza non viene attestata.
 
-Il dataset e un'istantanea pubblica di OpenCUP, non una fonte autoritativa in tempo reale. Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il portale OpenCUP.
+Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il portale OpenCUP. Gli esiti OpenCUP cautelativi sono previsti dalla 0.3.0, dopo l'introduzione di un indice statico esatto.
 
 ## Quickstart sviluppo
 

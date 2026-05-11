@@ -17,7 +17,7 @@ export function mountApp(root = document.querySelector('#app')) {
       <main class="shell" aria-labelledby="title">
         <section class="project-note" aria-labelledby="title">
           <p id="title">cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
-          Il servizio verifica il formato dei Codici Unici di Progetto e ne controlla l'esistenza nel dataset OpenCUP, producendo un report esportabile per revisione, audit o rendicontazione.</p>
+          Il servizio verifica il formato dei Codici Unici di Progetto e produce un report esportabile per revisione, audit o rendicontazione.</p>
           <p>Il controllo non sostituisce le fonti autoritative: consulta i <button id="open-limits-desc" class="link-button" type="button">Limiti del controllo</button> per capire cosa viene verificato e cosa resta escluso.</p>
         </section>
 
@@ -102,8 +102,6 @@ export function mountApp(root = document.querySelector('#app')) {
                 Esito
                 <select id="filter-select">
                   <option value="ALL">Tutti</option>
-                  <option value="${OUTCOMES.FOUND}">Trovati</option>
-                  <option value="${OUTCOMES.NOT_FOUND}">Non trovati</option>
                   <option value="${OUTCOMES.CHECK}">Da verificare</option>
                   <option value="${OUTCOMES.INVALID}">Invalidi</option>
                 </select>
@@ -136,7 +134,8 @@ export function mountApp(root = document.querySelector('#app')) {
       <dialog id="limits-dialog" class="limits-dialog" aria-labelledby="limits-title">
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
-          <p>Il controllo di esistenza confronta ogni CUP con il dataset OpenCUP incluso in questa versione (${PRODUCT_VERSION}). Un CUP marcato <code>NON_TROVATO</code> potrebbe esistere in progetti non ancora pubblicati o aggiornati nel dataset.</p>
+          <p>Questa versione controlla solo il formato dei CUP. Un CUP formalmente valido viene marcato <code>FORMATO_VALIDO_DA_VERIFICARE</code>, senza attestare l'esistenza del progetto.</p>
+          <p>Il lookup su dataset OpenCUP statico e esatto e previsto dalla 0.3.0, senza servizi server-side.</p>
           <p>Per attestare l'esistenza del progetto resta necessaria una fonte autoritativa, come il Sistema CUP o il portale OpenCUP.</p>
         </div>
         <form method="dialog">

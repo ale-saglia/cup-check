@@ -5,7 +5,7 @@
 | `0.1.0` | MVP web | Format check, report CSV, web app statica, fixture YAML, regole `R0`-`R5` | nessuna |
 | `0.1.x` | Hardening | Bug fix, polish UX, auto-detect colonne, fixture aggiuntivi | nessuna |
 | `0.2.0` | Libreria Python | `pip install cup-check`, API `validate_format`, parity sui fixture, nessun parser file nel core | account PyPI |
-| `0.3.0` | Dataset OpenCUP statico + lookup browser | Pipeline mensile, indice CUP esatto su GitHub Releases, verifica esistenza CUP da web e Python, cache locale/browser, nuovi esiti OpenCUP | nessuna |
+| `0.3.0` | Dataset OpenCUP statico + lookup browser | PoC indice CUP statico, pipeline mensile, indice CUP esatto su GitHub Releases, verifica esistenza CUP da web e Python, cache locale/browser, nuovi esiti OpenCUP | nessuna |
 | `0.4.0` | Coerenza atto | Dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
 | `0.5.0` | UX & a11y | tema scuro, WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
 | `0.6.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
@@ -35,7 +35,7 @@
 7. `OpenCupChecker` Python con download/cache locale dell'indice.
 8. Manifest con hash, dimensioni, snapshot fonte e compatibilita minima software.
 9. Nuovi esiti `TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
-10. ADR per strategia statica GitHub Releases + browser lookup (ADR 0007).
+10. ADR per strategia statica GitHub Releases + browser lookup (ADR 0007) e PoC indice statico (ADR 0008).
 
 ## Milestone `0.4.0`
 

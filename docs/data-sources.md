@@ -83,7 +83,7 @@ Queste decisioni non vanno fissate senza misure su un campione reale:
 - valori assenti: normalizzare segnaposto come `DATO NON PRESENTE` e `***************` a `NULL`;
 - stato/revoca: non escludere CUP chiusi o revocati, ma riportare il dettaglio nel risultato.
 
-La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 GB, da confermare con PoC. Per evitare di scaricare sempre tutto, la `0.4.0` pubblichera un dataset dettagli shardato: il browser usa l'indice CUP per capire quali chunk dettagli servono ai CUP caricati e scarica solo quelli necessari. GitHub Releases resta lo storage preferito anche a questa scala, con asset pubblici e manifest versionato. Storage esterni come Cloudflare R2, Turso o HuggingFace Datasets restano opzioni di fallback solo se GitHub Releases diventasse insufficiente.
+La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 GB, da confermare con PoC. Per evitare di scaricare sempre tutto, la `0.4.0` pubblichera un dataset dettagli shardato: il browser usa l'indice CUP per capire quali chunk dettagli servono ai CUP caricati e scarica solo quelli necessari. GitHub Releases resta lo storage preferito anche a questa scala, con asset pubblici e manifest versionato. Storage statici esterni restano opzioni di fallback solo se GitHub Releases diventasse insufficiente.
 
 ## Esiti Futuri
 

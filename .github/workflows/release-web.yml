@@ -36,8 +36,6 @@ jobs:
           cache-dependency-path: packages/web/package-lock.json
       - run: npm ci
       - run: npm run build
-        env:
-          VITE_LOOKUP_WORKER_URL: ${{ vars.LOOKUP_WORKER_URL }}
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
