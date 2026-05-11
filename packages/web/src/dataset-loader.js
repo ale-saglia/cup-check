@@ -1,5 +1,6 @@
 const LATEST_DATASET_URL = './dataset-latest.json';
 const GITHUB_RELEASES_URL = 'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100';
+const PAGES_DATASETS_URL = 'https://ale-saglia.github.io/cup-check/datasets';
 const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
 const MIN_SCHEMA_VERSION = 1;
 
@@ -30,14 +31,13 @@ async function discoverLatestFromGitHub(fetchFn) {
   const release = releases
     .filter((item) => DATASET_TAG_PATTERN.test(item?.tag_name ?? ''))
     .sort((a, b) => b.tag_name.localeCompare(a.tag_name))[0];
-  const manifestAsset = release?.assets?.find((asset) => asset?.name === 'dataset-manifest.json');
-  if (!release || !manifestAsset?.browser_download_url) {
+  if (!release) {
     throw new Error('latest dataset release not found');
   }
 
   return {
     dataset_tag: release.tag_name,
-    manifest_url: manifestAsset.browser_download_url,
+    manifest_url: `${PAGES_DATASETS_URL}/${release.tag_name}/dataset-manifest.json`,
     sources_snapshot_date: release.tag_name.replace('dataset-', '') + '-01',
     released_at: release.published_at ?? release.created_at ?? '',
   };
