@@ -1,5 +1,14 @@
 # Changelog
 
+## 0.3.0 - 2026-05-11
+
+- Aggiunge la generazione dell'indice OpenCUP SQLite chunked con manifest e puntatore latest.
+- Integra nella web app il lookup locale del dataset OpenCUP con `sql.js`, cache browser e fallback cautelativo.
+- Pubblica il workflow mensile/manuale per creare la release dataset e aggiornare GitHub Pages dal web pinnato.
+- Aggiunge `OpenCupChecker` Python con lookup OpenCUP su indice SQLite locale o scaricato in cache.
+- Aggiunge i contratti Python per manifest e latest dataset, piu test locali e di integrazione sul dataset pubblicato.
+- Documenta la strategia statica via GitHub Releases e Pages con ADR, roadmap e specifiche aggiornate.
+
 ## 0.2.2 - 2026-05-09
 
 - Aggiorna il workflow Pages per includere il dataset OpenCUP più recente nel deploy.
