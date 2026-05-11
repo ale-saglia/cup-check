@@ -4,7 +4,7 @@
 
 `cup-check` e uno strumento per la verifica massiva e locale dei Codici Unici di Progetto (CUP).
 
-Il progetto include una web app statica servita da GitHub Pages e una libreria Python importabile. La verifica resta solo formale: un CUP con formato valido resta sempre `FORMATO_VALIDO_DA_VERIFICARE`, non "esistente".
+Il progetto include una web app statica servita da GitHub Pages e una libreria Python importabile. La verifica formale resta separata dal lookup dataset: un CUP con formato valido e senza dataset disponibile resta `FORMATO_VALIDO_DA_VERIFICARE`.
 
 La documentazione di progetto e divisa qui:
 

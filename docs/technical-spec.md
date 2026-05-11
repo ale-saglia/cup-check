@@ -71,9 +71,9 @@ Regole:
 
 ```text
 Outcome    = INVALIDO_FORMATO
-           | FORMATO_VALIDO_DA_VERIFICARE   -- formato ok, esistenza non attestata
-           | TROVATO_OPENCUP                 -- futuro: CUP presente nel mirror OpenCUP
-           | NON_TROVATO_OPENCUP_DA_VERIFICARE -- futuro: CUP assente dal mirror OpenCUP
+           | FORMATO_VALIDO_DA_VERIFICARE   -- formato ok, dataset non disponibile
+           | TROVATO_OPENCUP                 -- CUP presente nel mirror OpenCUP
+           | NON_TROVATO_OPENCUP_DA_VERIFICARE -- CUP assente dal mirror OpenCUP
 FailedRule = R0 | R1 | R2 | R3 | R4 | R5
 Warning    = N1 | N2
 
@@ -87,7 +87,7 @@ ValidationResult = {
 }
 ```
 
-`validateCup` restituisce sempre `FORMATO_VALIDO_DA_VERIFICARE` per CUP formalmente validi. Gli esiti `TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE` saranno introdotti solo dopo la PoC dell'indice statico 0.3.0 descritta da ADR 0008.
+`validateCup` restituisce sempre `FORMATO_VALIDO_DA_VERIFICARE` per CUP formalmente validi. Il lookup dataset e separato: quando l'indice OpenCUP statico e disponibile, la web app trasforma gli esiti formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 
 Implementazione web:
 
@@ -111,11 +111,11 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 | Workflow               | Trigger                              | Effetto                                              |
 | ---------------------- | ------------------------------------ | ---------------------------------------------------- |
 | `ci.yml`               | PR e push su `main`                  | lint, test, build                                    |
-| `release-web.yml`      | push tag `v*` o release published    | build web statica e deploy Pages |
+| `release-web.yml`      | push tag `v*`                        | build web statica e deploy Pages |
 | `release-python.yml`   | release software pubblicata          | build e publish PyPI                                 |
 | `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset |
 
-Il trigger `release: published` in `release-web.yml` copre anche le release dataset: quando `release-dataset.yml` pubblica un nuovo dataset, Pages viene aggiornata automaticamente con i chunk nuovi.
+La web app resta pinnata alle release software `v*`. Le release dataset non ridistribuiscono Pages: il browser scopre dinamicamente l'ultimo tag `dataset-YYYY-MM` dalle GitHub Releases e usa `dataset-latest.json` solo come fallback statico.
 
 La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 

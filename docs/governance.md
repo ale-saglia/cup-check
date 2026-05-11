@@ -20,7 +20,7 @@ Ogni modifica alle regole di validazione deve partire da un aggiornamento dei fi
 
 - Software: tag `v*`, SemVer.
 - Dataset futuro: tag `dataset-YYYY-MM`, indipendente dalle release software.
-- `release-web.yml` deploya GitHub Pages quando viene pushato un tag `v*` o pubblicata una release software.
+- `release-web.yml` deploya GitHub Pages quando viene pushato un tag `v*`.
 - `release-python.yml` pubblica su PyPI quando viene pubblicata una release software, usando Trusted Publishing OIDC e l'environment GitHub `pypi`.
 
 ## Definition Of Done

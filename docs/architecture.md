@@ -40,13 +40,13 @@ GitHub repo
         │ release dataset-YYYY-MM
         ▼
 GitHub Releases
-  └─ cup-index.* + manifest
+  └─ cup-index.sqlite.* + dataset-manifest.json
 
         │ release v*
         ▼
 GitHub Pages
   └─ HTML + vanilla JS + Service Worker
-        │ fetch dataset-manifest.json + cup-index.*
+        │ fetch GitHub Releases API, dataset-manifest.json + cup-index.sqlite.*
         ▼
 Browser utente
   └─ lookup locale sui CUP unici
@@ -55,15 +55,15 @@ Browser utente
 Flusso di deploy:
 
 1. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk su GitHub Releases (`dataset-YYYY-MM`).
-2. La pubblicazione della release triggera `release-web.yml` via `release: published`.
-3. `release-web.yml` builda la web app e deploya su GitHub Pages.
-4. Il browser scarica e cacha l'indice, poi verifica localmente i CUP unici.
+2. La release dataset non ridistribuisce la web app.
+3. `release-web.yml` builda e deploya GitHub Pages solo su tag software `v*`.
+4. Il browser scopre dinamicamente l'ultimo dataset dalle GitHub Releases, scarica e cacha l'indice, poi verifica localmente i CUP unici.
 5. La libreria Python scarica e cacha localmente gli stessi asset da GitHub Releases per uso offline.
 
 Componenti principali aggiunti in `0.3.0`:
 
-- loader dataset web da introdurre dopo la PoC — download/cache dell'indice CUP statico e lookup locale.
-- modulo lookup dataset web da definire dopo la PoC dell'indice statico — trasformera esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
+- `packages/web/src/dataset-loader.js` — discovery ultimo dataset, download/cache dei chunk SQLite, inizializzazione `sql.js` e lookup locale.
+- `packages/web/src/results.js#applyDatasetLookup` — trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
 - Test di integrazione (`INTEGRATION_TESTS=1 pytest -m integration`) verificano manifest e chunk del release pubblicato.
 
