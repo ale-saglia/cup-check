@@ -5,6 +5,7 @@ PYTHON_DIR := packages/cup_check
 DATA_DIR := data
 WEB_PORT ?= 5173
 WEB_PREVIEW_PORT ?= 4173
+DATASET_SNAPSHOT_DATE ?= $(shell date -u +%Y-%m-01)
 
 .DEFAULT_GOAL := help
 
@@ -96,6 +97,14 @@ dataset-download: $(DATA_DIR)/OpendataProgetti.zip ## Scarica il dump OpenCUP in
 .PHONY: dataset-build
 dataset-build: $(DATA_DIR)/OpendataProgetti.zip ## Genera data/cup-index.sqlite dal dump OpenCUP
 	cd $(PYTHON_DIR) && uv run python -c "from cup_check.opencup_dataset import build_sqlite_from_projects_zip; build_sqlite_from_projects_zip('../../$(DATA_DIR)/OpendataProgetti.zip', '../../$(DATA_DIR)/cup-index.sqlite')"
+
+.PHONY: dataset-release-local
+dataset-release-local: ## Genera dist/dataset per la preview locale con chunk e manifest
+	SNAPSHOT_DATE="$(DATASET_SNAPSHOT_DATE)"; \
+	cd $(PYTHON_DIR) && uv run python ../../scripts/build_dataset.py \
+		"$$SNAPSHOT_DATE" \
+		"../../dist/dataset" \
+		"./datasets/dataset-$${SNAPSHOT_DATE:0:7}"
 
 .PHONY: clean
 clean: web-clean ## Rimuove artefatti generati

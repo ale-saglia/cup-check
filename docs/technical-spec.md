@@ -126,10 +126,16 @@ make setup
 make check
 make release-check
 make python-build
+make dataset-release-local
 make web-dev
 make web-preview
 make web-preview-dataset
 ```
+
+`make dataset-release-local` genera `dist/dataset/` con `dataset-latest.json`,
+`dataset-manifest.json` e chunk `cup-index.sqlite.*`, scaricando prima il dump OpenCUP.
+La data snapshot predefinita e il primo giorno del mese UTC corrente; puo essere sovrascritta
+con `DATASET_SNAPSHOT_DATE=YYYY-MM-DD`.
 
 `make web-preview-dataset` richiede un dataset gia generato in `dist/dataset/`; copia
 `dataset-latest.json`, `dataset-manifest.json` e i chunk nella build web con URL relativi,

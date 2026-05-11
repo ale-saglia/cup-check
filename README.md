@@ -66,10 +66,15 @@ make help
 make check
 make release-check
 make python-build
+make dataset-release-local
 make web-dev
 make web-preview
 make web-preview-dataset
 ```
+
+`make dataset-release-local` scarica il dump OpenCUP e genera `dist/dataset/` con manifest
+e chunk SQLite per prove locali. Il download e grande: usalo solo quando serve rigenerare
+il dataset.
 
 `make web-preview-dataset` usa il dataset locale in `dist/dataset/`, lo copia nella build web
 con URL relativi e avvia la preview statica. Serve per provare in Codespaces lo stesso
