@@ -1,6 +1,3 @@
-import initSqlJs from 'sql.js';
-import sqlWasmUrl from 'sql.js/dist/sql-wasm.wasm?url';
-
 const LATEST_DATASET_URL = './dataset-latest.json';
 const GITHUB_RELEASES_URL = 'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100';
 const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
@@ -15,14 +12,13 @@ export function loadLatestDataset() {
 
 export async function discoverLatestDataset(fetchFn = fetch) {
   try {
-    return await discoverLatestFromGitHub(fetchFn);
+    const latest = await fetchJson(fetchFn, LATEST_DATASET_URL);
+    if (isLatestPointer(latest)) return latest;
   } catch {
-    // Fallback to the static pointer bundled with the pinned web release.
+    // Fallback to GitHub API discovery when the static pointer is unavailable.
   }
 
-  const latest = await fetchJson(fetchFn, LATEST_DATASET_URL);
-  if (isLatestPointer(latest)) return latest;
-  throw new Error('dataset latest pointer is invalid');
+  return discoverLatestFromGitHub(fetchFn);
 }
 
 async function discoverLatestFromGitHub(fetchFn) {
@@ -47,12 +43,12 @@ async function discoverLatestFromGitHub(fetchFn) {
   };
 }
 
-export async function loadDataset({ fetchFn = fetch, initSql = initSqlJs } = {}) {
+export async function loadDataset({ fetchFn = fetch, initSql = initDefaultSql } = {}) {
   const latest = await discoverLatestDataset(fetchFn);
   const manifest = await fetchJson(fetchFn, latest.manifest_url);
   validateManifest(manifest);
   const sqliteBytes = await downloadCupIndex(fetchFn, manifest.cup_index);
-  const SQL = await initSql({ locateFile: () => sqlWasmUrl });
+  const SQL = await initSql();
   const db = new SQL.Database(sqliteBytes);
 
   return {
@@ -71,6 +67,14 @@ export async function loadDataset({ fetchFn = fetch, initSql = initSqlJs } = {})
       db.close();
     },
   };
+}
+
+async function initDefaultSql(options) {
+  const [{ default: initSqlJs }, { default: sqlWasmUrl }] = await Promise.all([
+    import('sql.js'),
+    import('sql.js/dist/sql-wasm.wasm?url'),
+  ]);
+  return initSqlJs({ locateFile: () => sqlWasmUrl, ...options });
 }
 
 async function downloadCupIndex(fetchFn, cupIndex) {

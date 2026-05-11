@@ -46,9 +46,19 @@ function readAppVersion() {
 }
 
 function serviceWorkerPlugin(version) {
+  const buildId = (precacheAssets = []) => {
+    const source = precacheAssets.join('|') || 'dev';
+    let hash = 0;
+    for (let index = 0; index < source.length; index += 1) {
+      hash = (hash * 31 + source.charCodeAt(index)) >>> 0;
+    }
+    return hash.toString(36);
+  };
+
   const source = (precacheAssets = []) =>
     readFileSync(resolve(webDir, 'src/sw.js'), 'utf8')
       .replaceAll('__APP_VERSION__', version)
+      .replaceAll('__BUILD_ID__', buildId(precacheAssets))
       .replace('__PRECACHE_ASSETS__', JSON.stringify(precacheAssets));
 
   return {

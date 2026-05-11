@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cup-check-v__APP_VERSION__';
+const CACHE_NAME = 'cup-check-v__APP_VERSION__-__BUILD_ID__';
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
 // eslint-disable-next-line no-undef -- injected by the Vite service worker plugin.
 const PRECACHE_ASSETS = __PRECACHE_ASSETS__;
@@ -26,6 +26,7 @@ self.addEventListener('fetch', (event) => {
   event.respondWith(
     fetch(event.request)
       .then((response) => {
+        if (!response.ok) return response;
         const copy = response.clone();
         caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
         return response;

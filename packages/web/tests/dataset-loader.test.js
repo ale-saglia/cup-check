@@ -5,9 +5,28 @@ import { discoverLatestDataset, loadDataset } from '../src/dataset-loader.js';
 const wasmPath = new URL('../node_modules/sql.js/dist/sql-wasm.wasm', import.meta.url).pathname;
 
 describe('discoverLatestDataset', () => {
-  it('uses the newest GitHub dataset release', async () => {
+  it('uses dataset-latest.json before remote discovery', async () => {
+    const latest = {
+      dataset_tag: 'dataset-2026-05',
+      manifest_url: 'https://example.test/dataset-manifest.json',
+      sources_snapshot_date: '2026-05-01',
+      released_at: '2026-05-05T03:14:00Z',
+    };
+
     const result = await discoverLatestDataset(
       mockFetch({
+        './dataset-latest.json': latest,
+        'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': notFound(),
+      }),
+    );
+
+    expect(result).toEqual(latest);
+  });
+
+  it('falls back to the newest GitHub dataset release', async () => {
+    const result = await discoverLatestDataset(
+      mockFetch({
+        './dataset-latest.json': notFound(),
         'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
           {
             tag_name: 'dataset-2026-04',
@@ -25,24 +44,6 @@ describe('discoverLatestDataset', () => {
 
     expect(result.dataset_tag).toBe('dataset-2026-05');
     expect(result.manifest_url).toBe('https://example.test/may.json');
-  });
-
-  it('falls back to dataset-latest.json when GitHub discovery fails', async () => {
-    const latest = {
-      dataset_tag: 'dataset-2026-05',
-      manifest_url: 'https://example.test/dataset-manifest.json',
-      sources_snapshot_date: '2026-05-01',
-      released_at: '2026-05-05T03:14:00Z',
-    };
-
-    const result = await discoverLatestDataset(
-      mockFetch({
-        'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': notFound(),
-        './dataset-latest.json': latest,
-      }),
-    );
-
-    expect(result).toEqual(latest);
   });
 });
 
