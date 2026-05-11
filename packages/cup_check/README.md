@@ -32,3 +32,29 @@ manifest = load_dataset_manifest("dataset-manifest.json")
 print(manifest.dataset_tag)
 print(manifest.chunks.files)
 ```
+
+Per verificare la presenza nel perimetro OpenCUP con un indice SQLite locale:
+
+```python
+from cup_check import OpenCupChecker
+
+with OpenCupChecker.from_manifest(
+    "dataset-manifest.json",
+    sqlite_path="cup-index.sqlite",
+) as checker:
+    result = checker.check("G17H03000130001")
+
+print(result.outcome)
+```
+
+Per usare l'ultimo dataset pubblicato con cache locale:
+
+```python
+from cup_check import OpenCupChecker
+
+checker = OpenCupChecker.from_latest(cache_dir=".cup-check-cache")
+result = checker.check("G17H03000130001")
+```
+
+Se il dataset non e disponibile, il checker resta cautelativo e restituisce
+`FORMATO_VALIDO_DA_VERIFICARE` per i CUP formalmente validi.

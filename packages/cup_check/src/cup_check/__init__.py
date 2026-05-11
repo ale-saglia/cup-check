@@ -1,5 +1,6 @@
 """Validazione formale locale dei Codici Unici di Progetto."""
 
+from cup_check.checker import OpenCupChecker
 from cup_check.dataset import (
     DatasetChunks,
     DatasetCupIndex,
@@ -18,6 +19,7 @@ __all__ = [
     "DatasetLatest",
     "DatasetManifest",
     "DatasetSchema",
+    "OpenCupChecker",
     "Outcome",
     "Rule",
     "ValidationResult",
