@@ -24,29 +24,29 @@ virgola (`;`) e testo UTF-8.
 
 ## Dataset OpenCUP Self-Hosted
 
-Il pattern previsto e uno SQLite esatto pubblicato come asset di release `dataset-YYYY-MM`. Il database logico puo essere diviso in chunk binari per evitare file enormi nel repo:
+Il pattern previsto e un dataset esatto pubblicato come asset di release `dataset-YYYY-MM`. Per mantenere la web app statica e preparare i controlli sostanziali, il dataset e separato in due livelli:
 
 ```text
-cups.sqlite
-├── cups.sqlite.000
-├── cups.sqlite.001
-└── cups.sqlite.002
+dataset-YYYY-MM
+├── dataset-manifest.json
+├── cup-index.*
+└── details-*.sqlite
 ```
 
-Schema iniziale previsto per il lookup di esistenza:
+Nella `0.3.0` e obbligatorio solo l'indice CUP. Il dataset dettagli viene introdotto nella `0.4.0`.
+
+Schema logico dell'indice CUP:
 
 ```sql
-CREATE TABLE cups (
-  cup TEXT PRIMARY KEY
+CREATE TABLE cup_index (
+  cup TEXT PRIMARY KEY,
+  detail_chunk INTEGER
 ) WITHOUT ROWID;
 ```
 
-`cup` e la chiave primaria del dataset. Se la build trova duplicati nel bulk OpenCUP,
-segnala un warning e mantiene il record con data di aggiornamento piu recente.
+`cup` e la chiave primaria dell'indice. `detail_chunk` indica il chunk del dataset dettagli che contiene i dati completi del CUP; nella `0.3.0` puo essere assente o valorizzato a `NULL` finche non esiste il dataset dettagli. Se la build trova duplicati nel bulk OpenCUP, segnala un warning e mantiene il record con data di aggiornamento piu recente.
 
-Per la `0.3.0` la tabella destinazione contiene solo `cup`, sufficiente al lookup esatto di
-presenza nel perimetro OpenCUP. Gli altri campi sono gia dichiarati nel mapping come
-`destination: false`, cosi possono essere abilitati in modo esplicito nella `0.4.0`.
+Per la `0.3.0` l'indice contiene solo le informazioni necessarie al lookup esatto di presenza nel perimetro OpenCUP. Gli altri campi sono gia dichiarati nel mapping come `destination: false`, cosi possono essere abilitati in modo esplicito nel dataset dettagli della `0.4.0`.
 
 La trasformazione CSV -> SQLite e dichiarata in
 `packages/cup_check/src/cup_check/opencup_dataset_schema.yaml`: ogni colonna destinazione
@@ -83,7 +83,7 @@ Queste decisioni non vanno fissate senza misure su un campione reale:
 - valori assenti: normalizzare segnaposto come `DATO NON PRESENTE` e `***************` a `NULL`;
 - stato/revoca: non escludere CUP chiusi o revocati, ma riportare il dettaglio nel risultato.
 
-La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 GB, da confermare con PoC. GitHub Releases resta lo storage preferito anche a questa scala, con chunk pubblici e manifest versionato. Storage esterni come Turso, Cloudflare R2 o HuggingFace Datasets restano opzioni di fallback solo se GitHub Releases diventasse insufficiente.
+La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 GB, da confermare con PoC. Per evitare di scaricare sempre tutto, la `0.4.0` pubblichera un dataset dettagli shardato: il browser usa l'indice CUP per capire quali chunk dettagli servono ai CUP caricati e scarica solo quelli necessari. GitHub Releases resta lo storage preferito anche a questa scala, con asset pubblici e manifest versionato. Storage esterni come Cloudflare R2, Turso o HuggingFace Datasets restano opzioni di fallback solo se GitHub Releases diventasse insufficiente.
 
 ## Esiti Futuri
 
@@ -104,20 +104,29 @@ La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 G
   "released_at": "2026-05-05T03:14:00Z",
   "sources_snapshot_date": "2026-05-01",
   "schema": {
-    "table": "cups",
+    "table": "cup_index",
     "version": 1
   },
-  "chunks": {
+  "cup_index": {
     "base_url": "https://github.com/<owner>/cup-check/releases/download/dataset-2026-05",
-    "files": ["cups.sqlite.000", "cups.sqlite.001"],
+    "files": ["cup-index.000", "cup-index.001"],
     "chunk_size_bytes": 52428800,
-    "total_size_bytes": 104857600
+    "total_size_bytes": 104857600,
+    "sha256": "abcd...ef01"
   },
-  "sha256": "abcd...ef01",
+  "detail_store": {
+    "base_url": "https://github.com/<owner>/cup-check/releases/download/dataset-2026-05",
+    "shards": [
+      { "id": 0, "file": "details-000.sqlite", "sha256": "1234...abcd", "size_bytes": 73400320 },
+      { "id": 1, "file": "details-001.sqlite", "sha256": "5678...ef01", "size_bytes": 73400320 }
+    ]
+  },
   "n_records": 9842317,
   "min_software_version": "0.3.0",
   "natura_categories": ["Acquisto beni", "Lavori pubblici"]
 }
 ```
 
-Il contratto architetturale e fissato in [ADR 0005](adr/0005-dataset-release-sqlite-chunked.md). La libreria Python espone un loader tipizzato del manifest per riusare la stessa struttura nella pipeline e nel futuro `OpenCupChecker`.
+`detail_store` e opzionale nella `0.3.0` e diventa obbligatorio quando la `0.4.0` abilita i controlli di coerenza.
+
+Il contratto architetturale e fissato in [ADR 0007](adr/0007-dataset-statico-indice-dettagli.md). La libreria Python espone un loader tipizzato del manifest per riusare la stessa struttura nella pipeline e nel futuro `OpenCupChecker`.

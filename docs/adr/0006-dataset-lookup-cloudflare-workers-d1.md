@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Superseded by [ADR 0007](0007-dataset-statico-indice-dettagli.md)
 
 ## Context
 

@@ -2,7 +2,7 @@
 
 ## Status
 
-Superseded by [ADR 0006](0006-dataset-lookup-cloudflare-workers-d1.md)
+Superseded by [ADR 0007](0007-dataset-statico-indice-dettagli.md)
 
 ## Context
 
