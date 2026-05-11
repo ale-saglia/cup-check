@@ -2,12 +2,12 @@
 """Build the OpenCUP dataset release files.
 
 Usage:
-    python scripts/build_dataset.py <snapshot_date> <output_dir> <release_base_url>
+    python scripts/build_dataset.py <snapshot_date> <output_dir> <cup_index_base_url>
 
 Arguments:
     snapshot_date     Data snapshot OpenCUP, formato YYYY-MM-DD
     output_dir        Directory di output per i file generati
-    release_base_url  URL base per i chunk nel manifest (es. https://github.com/.../releases/download/tag)
+    cup_index_base_url  URL base per i chunk nel manifest (es. https://<owner>.github.io/cup-check/datasets/tag)
 """
 
 from __future__ import annotations
@@ -33,7 +33,7 @@ def _mb(n_bytes: int) -> str:
     return f"{n_bytes / 1024 / 1024:.1f} MB"
 
 
-def main(snapshot_date_str: str, output_dir: str, release_base_url: str) -> None:
+def main(snapshot_date_str: str, output_dir: str, cup_index_base_url: str) -> None:
     snapshot_date = date.fromisoformat(snapshot_date_str)
     dataset_tag = dataset_tag_for_snapshot(snapshot_date)
     output_path = Path(output_dir)
@@ -41,7 +41,7 @@ def main(snapshot_date_str: str, output_dir: str, release_base_url: str) -> None
     _log(f"=== Build dataset {dataset_tag} ===")
     _log(f"Snapshot: {snapshot_date_str}")
     _log(f"Output:   {output_path.resolve()}")
-    _log(f"Base URL: {release_base_url}")
+    _log(f"Base URL: {cup_index_base_url}")
 
     # Download
     zip_path = output_path / "OpendataProgetti.zip"
@@ -59,7 +59,7 @@ def main(snapshot_date_str: str, output_dir: str, release_base_url: str) -> None
         output_path,
         dataset_tag=dataset_tag,
         sources_snapshot_date=snapshot_date_str,
-        release_base_url=release_base_url,
+        release_base_url=cup_index_base_url,
     )
     elapsed = time.monotonic() - t0
     manifest = result.manifest
@@ -80,6 +80,6 @@ def main(snapshot_date_str: str, output_dir: str, release_base_url: str) -> None
 
 if __name__ == "__main__":
     if len(sys.argv) != 4:
-        print(f"Uso: {sys.argv[0]} <snapshot_date> <output_dir> <release_base_url>", file=sys.stderr)
+        print(f"Uso: {sys.argv[0]} <snapshot_date> <output_dir> <cup_index_base_url>", file=sys.stderr)
         sys.exit(1)
     main(sys.argv[1], sys.argv[2], sys.argv[3])
