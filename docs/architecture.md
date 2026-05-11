@@ -29,7 +29,7 @@ Non esistono componenti server-side nell'MVP.
 
 La release `0.2.0` introduce il package Python importabile `packages/cup_check` con parity test sugli stessi fixture.
 
-Da `0.3.0` il dataset OpenCUP viene pubblicato come asset statico su GitHub Releases. La web app resta servita da GitHub Pages e scarica un indice CUP esatto per verificare l'esistenza nel perimetro OpenCUP senza servizi server-side del progetto:
+Da `0.3.0` il dataset OpenCUP viene versionato su GitHub Releases e servito alla web app come asset statico su GitHub Pages. La web app resta servita da GitHub Pages e scarica un indice CUP esatto per verificare l'esistenza nel perimetro OpenCUP senza servizi server-side del progetto:
 
 ```text
 GitHub repo
@@ -40,13 +40,16 @@ GitHub repo
         │ release dataset-YYYY-MM
         ▼
 GitHub Releases
-  └─ cup-index.sqlite.* + dataset-manifest.json
+  ├─ web-dist.tar.gz per le release v*
+  └─ archivio dataset-manifest.json + cup-index.sqlite.* per dataset-YYYY-MM
 
         │ release v*
         ▼
 GitHub Pages
-  └─ HTML + vanilla JS + Service Worker
-        │ fetch GitHub Releases API, dataset-manifest.json + cup-index.sqlite.*
+  ├─ HTML + vanilla JS + Service Worker dall'ultima v*
+  ├─ dataset-latest.json
+  └─ datasets/dataset-YYYY-MM/cup-index.sqlite.*
+        │ fetch dataset-latest.json, dataset-manifest.json + cup-index.sqlite.*
         ▼
 Browser utente
   └─ lookup locale sui CUP unici
@@ -54,11 +57,11 @@ Browser utente
 
 Flusso di deploy:
 
-1. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk su GitHub Releases (`dataset-YYYY-MM`).
-2. La release dataset non ridistribuisce la web app.
-3. `release-web.yml` builda e deploya GitHub Pages solo su tag software `v*`.
-4. Il browser scopre dinamicamente l'ultimo dataset dalle GitHub Releases, scarica e cacha l'indice, poi verifica localmente i CUP unici.
-5. La libreria Python scarica e cacha localmente gli stessi asset da GitHub Releases per uso offline.
+1. `release-web.yml` builda la web app solo su tag software `v*`, deploya Pages e allega `web-dist.tar.gz` alla release software.
+2. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk nella release dataset (`dataset-YYYY-MM`).
+3. Lo stesso workflow dataset scarica `web-dist.tar.gz` dall'ultima release `v*` oppure, se manca, ricostruisce la web app facendo checkout di quella tag; poi aggiunge `dataset-latest.json` e `datasets/dataset-YYYY-MM/*` e ridistribuisce Pages.
+4. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` su Pages, scarica e cacha l'indice, poi verifica localmente i CUP unici.
+5. La libreria Python puo scaricare e cachare localmente gli stessi asset statici per uso offline.
 
 Componenti principali aggiunti in `0.3.0`:
 
@@ -74,7 +77,7 @@ La release `0.4.0` separa il dataset in due livelli:
 - **indice CUP**: contiene tutti i CUP pubblicati e, per ogni CUP, l'identificativo del chunk dettagli;
 - **dataset dettagli**: contiene i campi necessari ai controlli di coerenza e viene scaricato solo per i chunk richiesti dai CUP caricati dall'utente.
 
-Il browser scarica sempre l'indice solo quando serve la verifica OpenCUP. Scarica invece i chunk dettagli solo se l'utente richiede controlli sostanziali, come P.IVA/CF, importi o descrizione. Anche questa parte resta statica e distribuita tramite GitHub Releases.
+Il browser scarica sempre l'indice solo quando serve la verifica OpenCUP. Scarica invece i chunk dettagli solo se l'utente richiede controlli sostanziali, come P.IVA/CF, importi o descrizione. Anche questa parte resta statica e distribuita tramite asset versionati.
 
 ## Architettura Target
 

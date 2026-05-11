@@ -12,7 +12,7 @@
 | Test web                   | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate                    |
 | Lint/format                | ESLint, Prettier, EditorConfig | Stile coerente                                     |
 | Fixture                    | YAML                           | Leggibili e consumabili da JS/Python               |
-| Dataset storage            | GitHub Releases                | Asset statici versionati e indipendenti dal codice |
+| Dataset storage            | GitHub Releases + GitHub Pages | Release dataset versionate e asset statici consumabili dal browser |
 | Lookup                     | Browser + Service Worker       | Verifica locale su dataset esatto, senza backend   |
 | Hosting                    | GitHub Pages                   | CORS nativi, zero costi operativi                  |
 | Python library             | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
@@ -46,7 +46,7 @@ cup-check/
     └── fixtures/
 ```
 
-Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici pubblicati su GitHub Releases, consumati sia dalla web app sia dalla libreria Python.
+Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici versionati su GitHub Releases e pubblicati su GitHub Pages per il consumo browser.
 
 ## Fixture
 
@@ -111,11 +111,11 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 | Workflow               | Trigger                              | Effetto                                              |
 | ---------------------- | ------------------------------------ | ---------------------------------------------------- |
 | `ci.yml`               | PR e push su `main`                  | lint, test, build                                    |
-| `release-web.yml`      | push tag `v*`                        | build web statica e deploy Pages |
+| `release-web.yml`      | push tag `v*`                        | build web statica, deploy Pages e allega `web-dist.tar.gz` alla release |
 | `release-python.yml`   | release software pubblicata          | build e publish PyPI                                 |
-| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset |
+| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset e aggiorna Pages dal web pinnato |
 
-La web app resta pinnata alle release software `v*`. Le release dataset non ridistribuiscono Pages: il browser scopre dinamicamente l'ultimo tag `dataset-YYYY-MM` dalle GitHub Releases e usa `dataset-latest.json` solo come fallback statico.
+La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery.
 
 La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 

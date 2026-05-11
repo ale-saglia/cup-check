@@ -6,8 +6,8 @@ Accepted
 
 ## Context
 
-ADR 0007 ha riportato il lookup OpenCUP verso asset statici pubblicati su GitHub Releases,
-senza Cloudflare Workers, D1 o altri servizi server-side. Per arrivare rapidamente a una
+ADR 0007 ha riportato il lookup OpenCUP verso asset statici, senza Cloudflare Workers, D1 o
+altri servizi server-side. Per arrivare rapidamente a una
 prima 0.3.0 funzionante scegliamo un formato esplicito e misurabile, rinviando eventuali
 ottimizzazioni successive a dati reali di download, memoria e lookup.
 
@@ -29,16 +29,18 @@ CREATE TABLE cup_index (
 `detail_chunk` e sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla 0.4.0.
 
 La pipeline genera `cup-index.sqlite`, lo divide in `cup-index.sqlite.000`,
-`cup-index.sqlite.001`, ecc. e pubblica i chunk su GitHub Releases insieme a
-`dataset-manifest.json`. Il manifest usa la sezione `cup_index` per descrivere base URL,
-file, dimensioni e SHA-256 dell'indice ricomposto.
+`cup-index.sqlite.001`, ecc. e pubblica i chunk sia nella release dataset sia nello spazio
+statico GitHub Pages sotto `datasets/dataset-YYYY-MM/`. Il manifest usa la sezione
+`cup_index` per descrivere base URL, file, dimensioni e SHA-256 dell'indice ricomposto.
 
 La web app resta pinnata alle release software `v*` e recupera dinamicamente l'ultimo dataset
-disponibile dalle GitHub Releases. `dataset-latest.json` resta pubblicato come asset dataset
-e puo essere usato come fallback statico, ma una nuova release dataset non ridistribuisce
-GitHub Pages. Il browser scarica i chunk, ricompone lo SQLite in memoria e interroga
-`cup_index` tramite `sql.js`. Se il dataset non e disponibile, la verifica degrada a
-`FORMATO_VALIDO_DA_VERIFICARE`.
+disponibile leggendo prima `dataset-latest.json` da GitHub Pages. Le GitHub Releases restano
+archivio storico e fallback di discovery, ma il consumo browser operativo avviene da asset
+statici Pages per evitare rate limit e vincoli CORS sugli asset release. Una nuova release
+dataset puo quindi ridistribuire GitHub Pages, ma solo ricostruendo la pagina dall'artefatto
+immutabile dell'ultima release software `v*`, mai da `main`. Il browser scarica i chunk,
+ricompone lo SQLite in memoria e interroga `cup_index` tramite `sql.js`. Se il dataset non e
+disponibile, la verifica degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## Consequences
 
@@ -48,11 +50,14 @@ GitHub Pages. Il browser scarica i chunk, ricompone lo SQLite in memoria e inter
 - La pipeline conserva SQLite come formato semplice, ispezionabile e riusabile in Python.
 - `detail_chunk` prepara il contratto per i dettagli 0.4.0 senza pubblicarli subito.
 - La web app non richiede rebuild per scoprire un dataset piu recente.
-- Una release dataset non modifica il sito pubblicato, che resta legato ai tag `v*`.
+- Una release dataset aggiorna gli asset Pages del dataset senza promuovere codice web da HEAD.
 
 **Negativi/Trade-off:**
 
 - Il browser scarica e ricompone l'intero indice SQLite in memoria.
 - `sql.js` introduce una dipendenza WASM nel frontend.
-- Se GitHub Releases non e raggiungibile, il lookup OpenCUP usa `dataset-latest.json` solo se
-  disponibile nella build pinnata; altrimenti non viene applicato e gli esiti restano cautelativi.
+- Il workflow dataset dipende dall'artefatto web dell'ultima release `v*` o, in sua assenza,
+  deve ricostruire la web app facendo checkout di quella stessa tag.
+- Se GitHub Pages non espone `dataset-latest.json`, il lookup OpenCUP degrada al fallback
+  GitHub Releases API; in caso di rate limit o CORS non viene applicato e gli esiti restano
+  cautelativi.
