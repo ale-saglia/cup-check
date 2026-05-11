@@ -61,13 +61,14 @@ Flusso di deploy:
 2. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk nella release dataset (`dataset-YYYY-MM`).
 3. Lo stesso workflow dataset scarica `web-dist.tar.gz` dall'ultima release `v*` oppure, se manca, ricostruisce la web app facendo checkout di quella tag; poi aggiunge `dataset-latest.json` e `datasets/dataset-YYYY-MM/*` e ridistribuisce Pages.
 4. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` su Pages, scarica e cacha l'indice, poi verifica localmente i CUP unici.
-5. La libreria Python puo scaricare e cachare localmente gli stessi asset statici per uso offline.
+5. La libreria Python usa `OpenCupChecker` per scaricare e cachare localmente gli stessi asset statici, ricomporre l'indice SQLite e verificare i CUP via `sqlite3`.
 
 Componenti principali aggiunti in `0.3.0`:
 
 - `packages/web/src/dataset-loader.js` — discovery ultimo dataset, download/cache dei chunk SQLite, inizializzazione `sql.js` e lookup locale.
 - `packages/web/src/results.js#applyDatasetLookup` — trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
+- `packages/cup_check/src/cup_check/checker.py` — `OpenCupChecker` Python per lookup su indice locale o scaricato in cache.
 - Test di integrazione (`INTEGRATION_TESTS=1 pytest -m integration`) verificano manifest e chunk del release pubblicato.
 
 ## Architettura 0.4.0

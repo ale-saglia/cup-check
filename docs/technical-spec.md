@@ -46,7 +46,7 @@ cup-check/
     └── fixtures/
 ```
 
-Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici versionati su GitHub Releases e pubblicati su GitHub Pages per il consumo browser.
+Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici versionati su GitHub Releases e pubblicati su GitHub Pages per il consumo browser e Python.
 
 ## Fixture
 
@@ -99,12 +99,15 @@ export function validateBatch(values, options = {}) { ... }
 API Python:
 
 ```python
-from cup_check import validate_format
+from cup_check import OpenCupChecker, validate_format
 
 result = validate_format("G17H03000130001")
+
+with OpenCupChecker.from_latest(cache_dir=".cup-check-cache") as checker:
+    checked = checker.check("G17H03000130001")
 ```
 
-La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core.
+La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core. `validate_format` resta solo formale; `OpenCupChecker` scarica/cacha l'indice OpenCUP oppure apre un indice SQLite locale e trasforma i CUP formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`. Se il dataset non e disponibile, il checker degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## Workflow
 

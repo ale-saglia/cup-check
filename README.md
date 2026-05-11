@@ -55,6 +55,17 @@ uv sync --dev
 uv run pytest
 ```
 
+Esempio d'uso con lookup OpenCUP locale/cacheato:
+
+```python
+from cup_check import OpenCupChecker
+
+with OpenCupChecker.from_latest(cache_dir=".cup-check-cache") as checker:
+    result = checker.check("G17H03000130001")
+
+print(result.outcome)
+```
+
 Oppure apri il repo in Dev Containers / Codespaces. Il container include Node.js 22,
 npm, uv, make, ripgrep, GitHub CLI, Chromium e Lighthouse; al primo avvio esegue
 `make setup`.

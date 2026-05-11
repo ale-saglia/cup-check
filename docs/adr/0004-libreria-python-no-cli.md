@@ -17,7 +17,7 @@ Non introduciamo una CLI dedicata nelle milestone iniziali.
 La milestone Python pubblica il package `cup-check` su PyPI con API importabili:
 
 - `validate_format(...)` e `validate_many(...)` per la validazione formale;
-- `OpenCupChecker` in una milestone successiva per interrogare il dataset OpenCUP self-hosted;
+- `OpenCupChecker` da `0.3.0` per interrogare il dataset OpenCUP self-hosted con indice SQLite locale o scaricato in cache;
 - un eventuale checker autoritativo futuro, con credenziali fornite dall'utente.
 
 Il package non include parser CSV/XLSX nel core. Accetta stringhe o iterabili di stringhe; eventuali parser potranno vivere in extra opzionali.

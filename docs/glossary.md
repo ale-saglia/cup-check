@@ -12,7 +12,7 @@
 - **Postura epistemica**: vincoli su quando il prodotto puo dichiarare un fatto come vero.
 - **Release software**: tag `v*` SemVer che innesca deploy o publish software.
 - **Release dataset**: tag `dataset-YYYY-MM` per snapshot OpenCUP.
-- **Manifest dataset**: file futuro `dataset-manifest.json` che indica quale release dataset usare.
+- **Manifest dataset**: file `dataset-manifest.json` che descrive tag, snapshot, schema, chunk e compatibilita della release dataset.
 - **HTTP Range request**: richiesta HTTP di un intervallo di byte, utile per leggere parti di file grandi.
 - **Verifica di coerenza atto**: cross-check tra CUP e dati associati nell'atto, come P.IVA/CF, importo e descrizione progetto, contro il dataset disponibile.
 - **POSSIBILE_INCOERENZA_DA_VERIFICARE**: esito cautelativo che segnala una discrepanza tra dato dichiarato e dato registrato, senza dichiarare automaticamente l'atto incoerente.

@@ -132,4 +132,4 @@ La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 G
 
 `detail_store` e opzionale nella `0.3.0` e diventa obbligatorio quando la `0.4.0` abilita i controlli di coerenza.
 
-Il contratto architetturale e fissato in [ADR 0007](adr/0007-dataset-statico-indice-dettagli.md). La libreria Python espone un loader tipizzato del manifest per riusare la stessa struttura nella pipeline e nel futuro `OpenCupChecker`.
+Il contratto architetturale e fissato in [ADR 0007](adr/0007-dataset-statico-indice-dettagli.md). La libreria Python espone loader tipizzati per manifest/latest e `OpenCupChecker`, che riusa gli stessi asset statici scaricando e ricomponendo l'indice SQLite in cache locale.
