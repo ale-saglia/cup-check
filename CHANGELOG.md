@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.3.1 - 2026-05-11
+
+- Corregge il deploy del dataset quando il GitHub Release software non è ancora pubblicato (fallback ai git tag).
+- Corregge il TypeError nel service worker quando una risorsa non è presente in cache.
+
 ## 0.3.0 - 2026-05-11
 
 - Aggiunge la generazione dell'indice OpenCUP SQLite chunked con manifest e puntatore latest.
