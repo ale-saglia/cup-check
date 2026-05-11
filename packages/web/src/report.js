@@ -1,4 +1,4 @@
-import { RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
+import { OUTCOMES, RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
 
 export function resultDetail(result) {
@@ -8,6 +8,14 @@ export function resultDetail(result) {
 
   if (result.failedRules.length > 0) {
     return `Regole fallite: ${result.failedRules.map(formatRule).join('; ')}.${warnings}`;
+  }
+
+  if (result.outcome === OUTCOMES.FOUND_OPENCUP) {
+    return `TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.${warnings}`;
+  }
+
+  if (result.outcome === OUTCOMES.NOT_FOUND_OPENCUP) {
+    return `NON_TROVATO_OPENCUP_DA_VERIFICARE: CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.${warnings}`;
   }
 
   return `FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata.${warnings}`;

@@ -1,6 +1,24 @@
 import { describe, expect, it } from 'vitest';
-import { resultRowsLabel, uniqueResultsByCup } from '../src/results.js';
-import { validateCup } from '../src/validator.js';
+import { applyDatasetLookup, resultRowsLabel, uniqueResultsByCup } from '../src/results.js';
+import { OUTCOMES, validateCup } from '../src/validator.js';
+
+describe('applyDatasetLookup', () => {
+  it('turns CHECK into OpenCUP outcomes', () => {
+    const results = uniqueResultsByCup([
+      validateCup('G17H03000130001', 1, { currentYear: 2026 }),
+      validateCup('H11B22001230001', 2, { currentYear: 2026 }),
+      validateCup('TOOSHORT', 3, { currentYear: 2026 }),
+    ]);
+
+    const updated = applyDatasetLookup(results, (cup) => cup === 'G17H03000130001');
+
+    expect(updated.map((result) => result.outcome)).toEqual([
+      OUTCOMES.FOUND_OPENCUP,
+      OUTCOMES.NOT_FOUND_OPENCUP,
+      OUTCOMES.INVALID,
+    ]);
+  });
+});
 
 describe('uniqueResultsByCup', () => {
   it('keeps CUPs ordered by first occurrence and aggregates duplicate rows', () => {

@@ -1,3 +1,17 @@
+import { OUTCOMES } from './validator.js';
+
+export function applyDatasetLookup(results, lookupFn) {
+  return results.map((result) => {
+    if (result.outcome !== OUTCOMES.CHECK) return result;
+    return {
+      ...result,
+      outcome: lookupFn(result.normalizedValue)
+        ? OUTCOMES.FOUND_OPENCUP
+        : OUTCOMES.NOT_FOUND_OPENCUP,
+    };
+  });
+}
+
 export function uniqueResultsByCup(results) {
   const grouped = new Map();
 

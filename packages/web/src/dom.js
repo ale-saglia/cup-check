@@ -102,6 +102,8 @@ export function mountApp(root = document.querySelector('#app')) {
                 Esito
                 <select id="filter-select">
                   <option value="ALL">Tutti</option>
+                  <option value="${OUTCOMES.FOUND_OPENCUP}">Trovati OpenCUP</option>
+                  <option value="${OUTCOMES.NOT_FOUND_OPENCUP}">Non trovati OpenCUP</option>
                   <option value="${OUTCOMES.CHECK}">Da verificare</option>
                   <option value="${OUTCOMES.INVALID}">Invalidi</option>
                 </select>
@@ -134,8 +136,8 @@ export function mountApp(root = document.querySelector('#app')) {
       <dialog id="limits-dialog" class="limits-dialog" aria-labelledby="limits-title">
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
-          <p>Questa versione controlla solo il formato dei CUP. Un CUP formalmente valido viene marcato <code>FORMATO_VALIDO_DA_VERIFICARE</code>, senza attestare l'esistenza del progetto.</p>
-          <p>Il lookup su dataset OpenCUP statico e esatto e previsto dalla 0.3.0, senza servizi server-side.</p>
+          <p>Questa versione controlla il formato dei CUP e, quando il dataset OpenCUP statico e disponibile, verifica la presenza nel mirror pubblicato.</p>
+          <p>Un CUP marcato <code>NON_TROVATO_OPENCUP_DA_VERIFICARE</code> potrebbe comunque esistere in progetti non pubblicati o non aggiornati nel dataset.</p>
           <p>Per attestare l'esistenza del progetto resta necessaria una fonte autoritativa, come il Sistema CUP o il portale OpenCUP.</p>
         </div>
         <form method="dialog">

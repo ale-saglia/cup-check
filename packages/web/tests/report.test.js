@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { buildCsvReport, opencupUrlForResult, resultDetail } from '../src/report.js';
 import { uniqueResultsByCup } from '../src/results.js';
-import { validateCup } from '../src/validator.js';
+import { OUTCOMES, validateCup } from '../src/validator.js';
 
 describe('resultDetail', () => {
   it('shows non-blocking normalization warnings for valid CUPs', () => {
@@ -41,6 +41,22 @@ describe('resultDetail', () => {
     expect(opencupUrlForResult(result)).toBe('');
     expect(csv).toContain('4;NON UN CUP;INVALIDO_FORMATO;');
     expect(csv.trim().endsWith(';')).toBe(true);
+  });
+
+  it('describes OpenCUP lookup outcomes cautiously', () => {
+    const found = {
+      ...validateCup('G17H03000130001', 1, { currentYear: 2026 }),
+      outcome: OUTCOMES.FOUND_OPENCUP,
+    };
+    const notFound = {
+      ...validateCup('H11B22001230001', 2, { currentYear: 2026 }),
+      outcome: OUTCOMES.NOT_FOUND_OPENCUP,
+    };
+
+    expect(resultDetail(found)).toBe('TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.');
+    expect(resultDetail(notFound)).toBe(
+      'NON_TROVATO_OPENCUP_DA_VERIFICARE: CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.',
+    );
   });
 
   it('prefixes formula-like CSV cells with a tab', () => {

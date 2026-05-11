@@ -1,6 +1,8 @@
 export const OUTCOMES = {
   INVALID: 'INVALIDO_FORMATO',
   CHECK: 'FORMATO_VALIDO_DA_VERIFICARE',
+  FOUND_OPENCUP: 'TROVATO_OPENCUP',
+  NOT_FOUND_OPENCUP: 'NON_TROVATO_OPENCUP_DA_VERIFICARE',
 };
 
 export const RULES = {
@@ -111,6 +113,8 @@ export function summarizeResults(results, durationMs = 0) {
   const counts = {
     [OUTCOMES.INVALID]: 0,
     [OUTCOMES.CHECK]: 0,
+    [OUTCOMES.FOUND_OPENCUP]: 0,
+    [OUTCOMES.NOT_FOUND_OPENCUP]: 0,
   };
   for (const result of results) {
     if (result.outcome in counts) counts[result.outcome] += 1;

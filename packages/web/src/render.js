@@ -4,16 +4,22 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 
 const MAX_RENDERED_RESULT_ROWS = 500;
 
-export function renderDatasetReady(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · in progettazione per la 0.3.0 - solo verifica formato';
+export function renderDatasetSearching(dom) {
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · ricerca ultimo dataset...';
+}
+
+export function renderDatasetReady(dom, manifest = null) {
+  dom.datasetStatusBar.textContent = manifest
+    ? `Dataset OpenCUP · ${manifest.dataset_tag} · snapshot ${manifest.sources_snapshot_date}`
+    : 'Dataset OpenCUP · non caricato - solo verifica formato';
 }
 
 export function renderDatasetChecking(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · solo verifica formato';
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · verifica in corso...';
 }
 
 export function renderDatasetError(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · solo verifica formato';
+  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · non disponibile - solo verifica formato';
 }
 
 export function renderPreview(state, dom, file) {
@@ -68,8 +74,15 @@ export function renderResults(state, dom, durationMs) {
   dom.resultsPanel.classList.remove('hidden');
   expandPanel(dom.resultsPanel, dom.resultsToggle);
   const data = summarizeResults(state.results, durationMs);
-  const { [OUTCOMES.INVALID]: invalid, [OUTCOMES.CHECK]: check } = data.counts;
+  const {
+    [OUTCOMES.INVALID]: invalid,
+    [OUTCOMES.CHECK]: check,
+    [OUTCOMES.FOUND_OPENCUP]: found,
+    [OUTCOMES.NOT_FOUND_OPENCUP]: notFound,
+  } = data.counts;
   const parts = [`${data.total} CUP unici da ${state.sourceRowCount} righe`];
+  if (found > 0) parts.push(`${found} trovati OpenCUP`);
+  if (notFound > 0) parts.push(`${notFound} non trovati OpenCUP`);
   if (check > 0) parts.push(`${check} da verificare`);
   parts.push(`${invalid} invalidi`, `${Math.round(data.durationMs)} ms`);
   dom.summary.textContent = parts.join(' · ');
@@ -192,6 +205,7 @@ function renderRowsCell(result) {
 }
 
 function badgeClass(outcome) {
+  if (outcome === OUTCOMES.FOUND_OPENCUP) return 'good';
   if (outcome === OUTCOMES.INVALID) return 'bad';
   return 'warn';
 }

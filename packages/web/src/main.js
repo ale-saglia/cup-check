@@ -1,10 +1,14 @@
 import { initDialogs, showDetailDialog } from './dialogs.js';
+import { loadLatestDataset } from './dataset-loader.js';
 import { mountApp } from './dom.js';
 import { buildParsedRows, parseFile } from './parser.js';
 import { buildCsvReport } from './report.js';
 import {
   collapsePanel,
+  renderDatasetChecking,
+  renderDatasetError,
   renderDatasetReady,
+  renderDatasetSearching,
   renderPreview,
   renderPreviewData,
   renderPreviewTable,
@@ -13,17 +17,42 @@ import {
   resetView,
   togglePanel,
 } from './render.js';
-import { uniqueResultsByCup } from './results.js';
+import { applyDatasetLookup, uniqueResultsByCup } from './results.js';
 import { state, resetState } from './state.js';
 import { textInputLines } from './text-input.js';
-import { validateCup } from './validator.js';
+import { OUTCOMES, validateCup } from './validator.js';
 import './styles.css';
 
 const dom = mountApp();
 
 initDialogs(dom);
 
-renderDatasetReady(dom);
+let dataset = null;
+const datasetPromise = initializeDataset();
+
+async function initializeDataset() {
+  renderDatasetSearching(dom);
+  try {
+    const loadedDataset = await loadLatestDataset();
+    dataset = loadedDataset;
+    renderDatasetReady(dom, loadedDataset.manifest);
+    return loadedDataset;
+  } catch {
+    renderDatasetError(dom);
+    return null;
+  }
+}
+
+async function applyLookup(results) {
+  const loadedDataset = dataset ?? (await datasetPromise);
+  if (!loadedDataset) return results;
+  const hasCheckableCups = results.some((result) => result.outcome === OUTCOMES.CHECK);
+  if (!hasCheckableCups) return results;
+  renderDatasetChecking(dom);
+  const updatedResults = applyDatasetLookup(results, (cup) => loadedDataset.hasCup(cup));
+  renderDatasetReady(dom, loadedDataset.manifest);
+  return updatedResults;
+}
 
 dom.fileToggle.addEventListener('click', () => {
   togglePanel(dom.filePanel, dom.fileToggle);
@@ -52,7 +81,7 @@ dom.textCheckButton.addEventListener('click', async () => {
   const startedAt = performance.now();
   const results = lines.map((line, index) => validateCup(line, index + 1));
   const unique = uniqueResultsByCup(results);
-  state.results = unique;
+  state.results = await applyLookup(unique);
   state.sourceRowCount = results.length;
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
@@ -100,7 +129,7 @@ dom.checkButton.addEventListener('click', async () => {
     validateCup(row.cells[state.selectedColumnIndex], row.originalRowNumber),
   );
   const unique = uniqueResultsByCup(results);
-  state.results = unique;
+  state.results = await applyLookup(unique);
   state.sourceRowCount = results.length;
   collapsePanel(dom.previewPanel, dom.previewToggle);
   renderResults(state, dom, performance.now() - startedAt);
