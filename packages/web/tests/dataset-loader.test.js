@@ -43,7 +43,7 @@ describe('discoverLatestDataset', () => {
     );
 
     expect(result.dataset_tag).toBe('dataset-2026-05');
-    expect(result.manifest_url).toBe('https://example.test/may.json');
+    expect(result.manifest_url).toBe('https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json');
   });
 });
 
