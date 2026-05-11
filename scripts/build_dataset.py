@@ -66,13 +66,13 @@ def main(snapshot_date_str: str, output_dir: str, release_base_url: str) -> None
     _log(f"[2/3] Build completato in {elapsed:.0f}s")
     _log(f"      Record unici: {manifest.n_records:,}")
     _log(f"      SQLite:       {_mb(result.sqlite_path.stat().st_size)}")
-    _log(f"      Chunk:        {len(manifest.chunks.files)} file da ~{_mb(manifest.chunks.chunk_size_bytes)} ciascuno")
+    _log(f"      Chunk:        {len(manifest.cup_index.files)} file da ~{_mb(manifest.cup_index.chunk_size_bytes)} ciascuno")
 
     # Summary
     _log("[3/3] Pulizia ZIP sorgente...")
     zip_path.unlink()
     _log("[3/3] File pronti per la release:")
-    for name in [result.manifest_path.name, *manifest.chunks.files]:
+    for name in [result.manifest_path.name, result.latest_path.name, *manifest.cup_index.files]:
         path = output_path / name
         _log(f"      {name} ({_mb(path.stat().st_size)})")
     _log("=== Completato ===")

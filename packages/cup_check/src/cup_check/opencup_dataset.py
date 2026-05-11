@@ -20,7 +20,7 @@ from zipfile import ZipFile
 
 import yaml
 
-from cup_check.dataset import DatasetChunks, DatasetManifest, DatasetSchema
+from cup_check.dataset import DatasetCupIndex, DatasetLatest, DatasetManifest, DatasetSchema
 from cup_check.validator import normalize_cup
 
 OPENCUP_PROJECTS_URL = (
@@ -28,14 +28,16 @@ OPENCUP_PROJECTS_URL = (
 )
 OPENCUP_DATASET_SCHEMA = "opencup_dataset_schema.yaml"
 
-_INSERT_SQL = "INSERT OR IGNORE INTO cups (cup) VALUES (?)"
+_INSERT_SQL = "INSERT OR IGNORE INTO cup_index (cup, detail_chunk) VALUES (?, NULL)"
 
 
 @dataclass(frozen=True)
 class BuildDatasetResult:
     sqlite_path: Path
     manifest_path: Path
+    latest_path: Path
     manifest: DatasetManifest
+    latest: DatasetLatest
 
 
 @dataclass(frozen=True)
@@ -92,7 +94,8 @@ def _build_sqlite_from_projects_zip(
         connection.execute("PRAGMA synchronous = OFF")
         connection.execute("PRAGMA temp_store = MEMORY")
         connection.execute("DROP TABLE IF EXISTS cups")
-        connection.execute(_create_table_sql("cups"))
+        connection.execute("DROP TABLE IF EXISTS cup_index")
+        connection.execute(_create_table_sql("cup_index"))
         for cup, natura in _iter_cups_with_natura(source_zip):
             total_records += 1
             if natura is not None and natura not in natura_indexes:
@@ -108,7 +111,7 @@ def _build_sqlite_from_projects_zip(
         print(f"\r  {total_records:,} record letti — inserimento completato.")
         connection.commit()
         connection.execute("PRAGMA optimize")
-        n_records = int(connection.execute("SELECT COUNT(*) FROM cups").fetchone()[0])
+        n_records = int(connection.execute("SELECT COUNT(*) FROM cup_index").fetchone()[0])
     duplicate_cups = total_records - n_records
     stage_yaml_path = sqlite_output_path.with_name("dataset-stage.yaml")
     _write_stage_yaml(
@@ -173,7 +176,7 @@ def build_dataset_release(
 ) -> BuildDatasetResult:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
-    sqlite_path = output_path / "cups.sqlite"
+    sqlite_path = output_path / "cup-index.sqlite"
 
     sqlite_result = _build_sqlite_from_projects_zip(source_zip, sqlite_path)
     chunk_files = chunk_file(sqlite_path, output_path, chunk_size_bytes=chunk_size_bytes)
@@ -182,27 +185,40 @@ def build_dataset_release(
         dataset_tag=dataset_tag,
         released_at=datetime.now(UTC).replace(microsecond=0).isoformat().replace("+00:00", "Z"),
         sources_snapshot_date=sources_snapshot_date,
-        schema=DatasetSchema(table="cups", version=1),
-        chunks=DatasetChunks(
+        schema=DatasetSchema(table="cup_index", version=1),
+        cup_index=DatasetCupIndex(
             base_url=release_base_url,
             files=tuple(path.name for path in chunk_files),
             chunk_size_bytes=chunk_size_bytes,
             total_size_bytes=sqlite_path.stat().st_size,
+            sha256=sha256_file(sqlite_path),
         ),
-        sha256=sha256_file(sqlite_path),
         n_records=sqlite_result.n_records,
         min_software_version="0.3.0",
         natura_categories=sqlite_result.natura_categories,
+    )
+    latest = DatasetLatest(
+        dataset_tag=dataset_tag,
+        manifest_url=f"{release_base_url}/dataset-manifest.json",
+        sources_snapshot_date=sources_snapshot_date,
+        released_at=manifest.released_at,
     )
     manifest_path = output_path / "dataset-manifest.json"
     manifest_path.write_text(
         json.dumps(asdict(manifest), ensure_ascii=True, indent=2) + "\n",
         encoding="utf-8",
     )
+    latest_path = output_path / "dataset-latest.json"
+    latest_path.write_text(
+        json.dumps(asdict(latest), ensure_ascii=True, indent=2) + "\n",
+        encoding="utf-8",
+    )
     return BuildDatasetResult(
         sqlite_path=sqlite_path,
         manifest_path=manifest_path,
+        latest_path=latest_path,
         manifest=manifest,
+        latest=latest,
     )
 
 
@@ -242,10 +258,12 @@ def sha256_file(path: str | Path) -> str:
 
 
 def _create_table_sql(table_name: str) -> str:
-    columns = ",\n".join(
-        f"          {_sqlite_column_definition(column)}"
-        for column in _sqlite_columns()
-    )
+    if table_name == "cup_index":
+        columns = "          cup TEXT PRIMARY KEY,\n          detail_chunk INTEGER"
+    else:
+        columns = ",\n".join(
+            f"          {_sqlite_column_definition(column)}" for column in _sqlite_columns()
+        )
     return f"""
         CREATE TABLE {table_name} (
 {columns}

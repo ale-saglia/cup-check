@@ -10,7 +10,7 @@ from zipfile import ZipFile
 import pytest
 
 from cup_check import opencup_dataset
-from cup_check.dataset import load_dataset_manifest
+from cup_check.dataset import load_dataset_latest, load_dataset_manifest
 from cup_check.opencup_dataset import (
     _first_date,
     _joined_text,
@@ -50,7 +50,7 @@ def test_iter_project_records_reads_semicolon_delimited_utf8_csv(tmp_path: Path)
 
 def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> None:
     source_zip = write_projects_zip(tmp_path)
-    sqlite_path = tmp_path / "cups.sqlite"
+    sqlite_path = tmp_path / "cup-index.sqlite"
 
     with pytest.warns(UserWarning, match="CUP duplicati"):
         n_records = build_sqlite_from_projects_zip(source_zip, sqlite_path)
@@ -58,15 +58,15 @@ def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> Non
 
     with sqlite3.connect(sqlite_path) as connection:
         schema = connection.execute(
-            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cups'"
+            "SELECT sql FROM sqlite_master WHERE type = 'table' AND name = 'cup_index'"
         ).fetchone()[0]
         stage_table = connection.execute(
             "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'cups_stage'"
         ).fetchone()
         rows = connection.execute(
             """
-            SELECT cup
-            FROM cups
+            SELECT cup, detail_chunk
+            FROM cup_index
             ORDER BY cup
             """
         ).fetchall()
@@ -74,6 +74,7 @@ def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> Non
     assert n_records == 2
     assert "WITHOUT ROWID" in schema
     assert "cup TEXT PRIMARY KEY" in schema
+    assert "detail_chunk INTEGER" in schema
     assert "natura_index" not in schema
     assert "year_suffix" not in schema
     assert "attivo" not in schema
@@ -86,8 +87,8 @@ def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> Non
     assert "duplicate_cups: 1" in stage_yaml
     assert '  - "Lavori pubblici"' in stage_yaml
     assert rows == [
-        ("G17H03000130001",),
-        ("H11B22001230001",),
+        ("G17H03000130001", None),
+        ("H11B22001230001", None),
     ]
 
 
@@ -108,16 +109,20 @@ def test_build_dataset_release_writes_chunks_and_manifest(tmp_path: Path) -> Non
             chunk_size_bytes=64,
         )
     manifest = load_dataset_manifest(result.manifest_path)
+    latest = load_dataset_latest(result.latest_path)
 
     assert result.sqlite_path.exists()
+    assert result.sqlite_path.name == "cup-index.sqlite"
     assert manifest.dataset_tag == "dataset-2026-05"
     assert manifest.sources_snapshot_date == "2026-05-01"
-    assert manifest.schema.table == "cups"
+    assert manifest.schema.table == "cup_index"
     assert manifest.n_records == 2
     assert manifest.natura_categories == ("Lavori pubblici", "Acquisto beni")
     assert manifest.sha256 == sha256_file(result.sqlite_path)
-    assert len(manifest.chunks.files) > 1
-    assert all((output_dir / file_name).exists() for file_name in manifest.chunks.files)
+    assert len(manifest.cup_index.files) > 1
+    assert all((output_dir / file_name).exists() for file_name in manifest.cup_index.files)
+    assert latest.dataset_tag == "dataset-2026-05"
+    assert latest.manifest_url.endswith("/dataset-2026-05/dataset-manifest.json")
 
 
 def test_dataset_tag_for_snapshot() -> None:
@@ -125,7 +130,7 @@ def test_dataset_tag_for_snapshot() -> None:
 
 
 def test_chunk_file_requires_positive_chunk_size(tmp_path: Path) -> None:
-    source = tmp_path / "cups.sqlite"
+    source = tmp_path / "cup-index.sqlite"
     source.write_text("sqlite", encoding="ascii")
 
     with pytest.raises(ValueError, match="chunk_size_bytes must be positive"):
@@ -235,7 +240,7 @@ def test_build_sqlite_skips_invalid_cups(tmp_path: Path) -> None:
     )
     with ZipFile(source_zip, "w") as archive:
         archive.writestr("OpenData_Complessivo.csv", csv_content.encode("utf-8"))
-    sqlite_path = tmp_path / "cups.sqlite"
+    sqlite_path = tmp_path / "cup-index.sqlite"
 
     n_records = build_sqlite_from_projects_zip(source_zip, sqlite_path)
 

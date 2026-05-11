@@ -42,24 +42,24 @@ def test_manifest_is_parseable_and_correct(manifest: DatasetManifest) -> None:
     assert manifest.dataset_tag == EXPECTED_TAG
     assert manifest.n_records == EXPECTED_N_RECORDS
     assert manifest.sha256 == EXPECTED_SHA256
-    assert manifest.schema.table == "cups"
+    assert manifest.schema.table == "cup_index"
     assert manifest.schema.version == 1
 
 
 def test_manifest_chunk_count(manifest: DatasetManifest) -> None:
-    assert len(manifest.chunks.files) == EXPECTED_CHUNK_COUNT
+    assert len(manifest.cup_index.files) == EXPECTED_CHUNK_COUNT
 
 
 def test_manifest_total_size_is_consistent(manifest: DatasetManifest) -> None:
-    n = len(manifest.chunks.files)
+    n = len(manifest.cup_index.files)
     # Tutti i chunk tranne l'ultimo sono pieni; l'ultimo è ≤ chunk_size_bytes.
-    assert manifest.chunks.total_size_bytes <= n * manifest.chunks.chunk_size_bytes
-    assert manifest.chunks.total_size_bytes > (n - 1) * manifest.chunks.chunk_size_bytes
+    assert manifest.cup_index.total_size_bytes <= n * manifest.cup_index.chunk_size_bytes
+    assert manifest.cup_index.total_size_bytes > (n - 1) * manifest.cup_index.chunk_size_bytes
 
 
 def test_all_chunks_are_reachable(manifest: DatasetManifest) -> None:
-    for file_name in manifest.chunks.files:
-        url = f"{manifest.chunks.base_url}/{file_name}"
+    for file_name in manifest.cup_index.files:
+        url = f"{manifest.cup_index.base_url}/{file_name}"
         request = Request(url, headers={"Range": "bytes=0-15"})
         with urlopen(request) as response:
             assert response.status in (200, 206), f"{file_name}: HTTP {response.status}"
@@ -67,8 +67,8 @@ def test_all_chunks_are_reachable(manifest: DatasetManifest) -> None:
 
 
 def test_first_chunk_has_sqlite_magic(manifest: DatasetManifest) -> None:
-    first_chunk = manifest.chunks.files[0]
-    url = f"{manifest.chunks.base_url}/{first_chunk}"
+    first_chunk = manifest.cup_index.files[0]
+    url = f"{manifest.cup_index.base_url}/{first_chunk}"
     request = Request(url, headers={"Range": "bytes=0-15"})
     with urlopen(request) as response:
         header = response.read()

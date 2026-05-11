@@ -18,6 +18,18 @@ class DatasetChunks:
     files: tuple[str, ...]
     chunk_size_bytes: int
     total_size_bytes: int
+    sha256: str
+
+
+DatasetCupIndex = DatasetChunks
+
+
+@dataclass(frozen=True)
+class DatasetLatest:
+    dataset_tag: str
+    manifest_url: str
+    sources_snapshot_date: str
+    released_at: str
 
 
 @dataclass(frozen=True)
@@ -27,11 +39,18 @@ class DatasetManifest:
     released_at: str
     sources_snapshot_date: str
     schema: DatasetSchema
-    chunks: DatasetChunks
-    sha256: str
+    cup_index: DatasetCupIndex
     n_records: int
     min_software_version: str
     natura_categories: tuple[str, ...]
+
+    @property
+    def chunks(self) -> DatasetCupIndex:
+        return self.cup_index
+
+    @property
+    def sha256(self) -> str:
+        return self.cup_index.sha256
 
     @classmethod
     def from_mapping(cls, value: dict[str, Any]) -> DatasetManifest:
@@ -43,8 +62,7 @@ class DatasetManifest:
                 "released_at",
                 "sources_snapshot_date",
                 "schema",
-                "chunks",
-                "sha256",
+                "cup_index",
                 "n_records",
                 "min_software_version",
                 "natura_categories",
@@ -52,14 +70,14 @@ class DatasetManifest:
         )
 
         schema_value = _mapping(value["schema"], "schema")
-        chunks_value = _mapping(value["chunks"], "chunks")
-        files = chunks_value.get("files")
+        cup_index_value = _mapping(value["cup_index"], "cup_index")
+        files = cup_index_value.get("files")
         if (
             not isinstance(files, list)
             or not files
             or not all(isinstance(file, str) for file in files)
         ):
-            raise ValueError("chunks.files must be a non-empty list of strings")
+            raise ValueError("cup_index.files must be a non-empty list of strings")
 
         return cls(
             schema_version=_integer(value["schema_version"], "schema_version"),
@@ -72,17 +90,17 @@ class DatasetManifest:
                 table=_string(schema_value.get("table"), "schema.table"),
                 version=_integer(schema_value.get("version"), "schema.version"),
             ),
-            chunks=DatasetChunks(
-                base_url=_string(chunks_value.get("base_url"), "chunks.base_url"),
+            cup_index=DatasetCupIndex(
+                base_url=_string(cup_index_value.get("base_url"), "cup_index.base_url"),
                 files=tuple(files),
                 chunk_size_bytes=_integer(
-                    chunks_value.get("chunk_size_bytes"), "chunks.chunk_size_bytes"
+                    cup_index_value.get("chunk_size_bytes"), "cup_index.chunk_size_bytes"
                 ),
                 total_size_bytes=_integer(
-                    chunks_value.get("total_size_bytes"), "chunks.total_size_bytes"
+                    cup_index_value.get("total_size_bytes"), "cup_index.total_size_bytes"
                 ),
+                sha256=_string(cup_index_value.get("sha256"), "cup_index.sha256"),
             ),
-            sha256=_string(value["sha256"], "sha256"),
             n_records=_integer(value["n_records"], "n_records"),
             min_software_version=_string(
                 value["min_software_version"], "min_software_version"
@@ -97,6 +115,18 @@ def load_dataset_manifest(path: str | Path) -> DatasetManifest:
     manifest_path = Path(path)
     return DatasetManifest.from_mapping(
         json.loads(manifest_path.read_text(encoding="utf-8"))
+    )
+
+
+def load_dataset_latest(path: str | Path) -> DatasetLatest:
+    latest_path = Path(path)
+    value = json.loads(latest_path.read_text(encoding="utf-8"))
+    _require_keys(value, {"dataset_tag", "manifest_url", "sources_snapshot_date", "released_at"})
+    return DatasetLatest(
+        dataset_tag=_string(value["dataset_tag"], "dataset_tag"),
+        manifest_url=_string(value["manifest_url"], "manifest_url"),
+        sources_snapshot_date=_string(value["sources_snapshot_date"], "sources_snapshot_date"),
+        released_at=_string(value["released_at"], "released_at"),
     )
 
 

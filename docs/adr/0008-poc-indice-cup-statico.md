@@ -1,4 +1,4 @@
-# ADR 0008: PoC Indice CUP Statico per 0.3.0
+# ADR 0008: Indice CUP SQLite Chunked per 0.3.0
 
 ## Status
 
@@ -7,9 +7,9 @@ Accepted
 ## Context
 
 ADR 0007 ha riportato il lookup OpenCUP verso asset statici pubblicati su GitHub Releases,
-senza Cloudflare Workers, D1 o altri servizi server-side. Prima di integrare il lookup nella
-web app e nella libreria Python serve scegliere un formato di indice CUP esatto con misure su
-dataset reale, per evitare di fissare troppo presto un contratto costoso da cambiare.
+senza Cloudflare Workers, D1 o altri servizi server-side. Per arrivare rapidamente a una
+prima 0.3.0 funzionante scegliamo un formato esplicito e misurabile, rinviando eventuali
+ottimizzazioni successive a dati reali di download, memoria e lookup.
 
 La 0.3.0 introduce solo la verifica di presenza nel perimetro OpenCUP. I dettagli sostanziali
 per controlli su soggetti, importi, stato e descrizione restano fuori scope e vengono rinviati
@@ -17,32 +17,42 @@ alla 0.4.0 tramite `detail_store`.
 
 ## Decision
 
-La prima iterazione della 0.3.0 e una PoC misurabile dell'indice CUP statico. La PoC deve
-confrontare almeno:
+La 0.3.0 pubblica un indice SQLite statico e chunked:
 
-- lista CUP ordinata e compressa;
-- shard alfabetici o per prefisso;
-- SQLite usato solo come formato build-side, non letto dal browser tramite Range request.
+```sql
+CREATE TABLE cup_index (
+  cup TEXT PRIMARY KEY,
+  detail_chunk INTEGER
+) WITHOUT ROWID;
+```
 
-Ogni alternativa deve produrre un indice esatto, pubblicabile come asset GitHub Release e
-descritto da `dataset-manifest.json` tramite una sezione `cup_index`. Non sono ammessi Bloom
-filter o strutture probabilistiche come fonte primaria di esiti utente.
+`detail_chunk` e sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla 0.4.0.
 
-## Misure Richieste
+La pipeline genera `cup-index.sqlite`, lo divide in `cup-index.sqlite.000`,
+`cup-index.sqlite.001`, ecc. e pubblica i chunk su GitHub Releases insieme a
+`dataset-manifest.json`. Il manifest usa la sezione `cup_index` per descrivere base URL,
+file, dimensioni e SHA-256 dell'indice ricomposto.
 
-Per ogni alternativa vanno registrati:
-
-- dimensione non compressa e compressa;
-- tempo di download o caricamento iniziale nel browser;
-- memoria usata nel browser dopo il caricamento;
-- tempo di lookup su batch piccoli e grandi;
-- semplicita di consumo dalla libreria Python.
-
-La PoC decide il formato minimo da stabilizzare prima di introdurre gli esiti
-`TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE` nell'interfaccia utente.
+La web app resta pinnata alle release software `v*` e recupera dinamicamente l'ultimo dataset
+disponibile dalle GitHub Releases. `dataset-latest.json` resta pubblicato come asset dataset
+e puo essere usato come fallback statico, ma una nuova release dataset non ridistribuisce
+GitHub Pages. Il browser scarica i chunk, ricompone lo SQLite in memoria e interroga
+`cup_index` tramite `sql.js`. Se il dataset non e disponibile, la verifica degrada a
+`FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## Consequences
 
-La web app resta formato-only finche l'indice statico non e scelto e integrato. Il repository
-non contiene codice operativo Cloudflare; ADR 0006 resta solo come decisione storica
-superseded.
+**Positivi:**
+
+- Il lookup resta statico, senza backend applicativo.
+- La pipeline conserva SQLite come formato semplice, ispezionabile e riusabile in Python.
+- `detail_chunk` prepara il contratto per i dettagli 0.4.0 senza pubblicarli subito.
+- La web app non richiede rebuild per scoprire un dataset piu recente.
+- Una release dataset non modifica il sito pubblicato, che resta legato ai tag `v*`.
+
+**Negativi/Trade-off:**
+
+- Il browser scarica e ricompone l'intero indice SQLite in memoria.
+- `sql.js` introduce una dipendenza WASM nel frontend.
+- Se GitHub Releases non e raggiungibile, il lookup OpenCUP usa `dataset-latest.json` solo se
+  disponibile nella build pinnata; altrimenti non viene applicato e gli esiti restano cautelativi.
