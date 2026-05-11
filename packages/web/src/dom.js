@@ -137,7 +137,9 @@ export function mountApp(root = document.querySelector('#app')) {
         <div>
           <h2 id="limits-title">Limiti del controllo</h2>
           <p>Questa versione controlla il formato dei CUP e, quando il dataset OpenCUP statico e disponibile, verifica la presenza nel mirror pubblicato.</p>
-          <p>Un CUP marcato <code>NON_TROVATO_OPENCUP_DA_VERIFICARE</code> potrebbe comunque esistere in progetti non pubblicati o non aggiornati nel dataset.</p>
+          <p>Lo strumento e in fase di sviluppo: puo contenere errori, bug o interpretazioni incomplete delle regole. I risultati sono un supporto operativo, non una certificazione.</p>
+          <p>La verifica OpenCUP usa una banca dati generata mensilmente: potrebbe non includere gli ultimi CUP emessi, CUP non ancora pubblicati o record aggiornati dopo l'ultimo snapshot.</p>
+          <p>Un CUP marcato <code>NON_TROVATO_OPENCUP_DA_VERIFICARE</code> potrebbe comunque esistere in progetti non pubblicati o non ancora presenti nel dataset mensile.</p>
           <p>Per attestare l'esistenza del progetto resta necessaria una fonte autoritativa, come il Sistema CUP o il portale OpenCUP.</p>
         </div>
         <form method="dialog">

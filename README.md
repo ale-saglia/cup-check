@@ -30,12 +30,20 @@ La web app recupera il dataset OpenCUP statico come asset pubblico e cacheabile,
 
 ## Limiti Del Controllo
 
+`cup-check` e in fase di sviluppo: puo contenere errori, bug o interpretazioni
+incomplete delle regole. I risultati sono un supporto operativo, non una
+certificazione.
+
+La verifica OpenCUP usa una banca dati generata mensilmente: potrebbe non
+includere gli ultimi CUP emessi, CUP non ancora pubblicati o record aggiornati
+dopo l'ultimo snapshot.
+
 Gli esiti possibili sono:
 
 - `INVALIDO_FORMATO` — il CUP non rispetta le regole strutturali.
 - `FORMATO_VALIDO_DA_VERIFICARE` — il CUP rispetta le regole strutturali, ma il dataset non e disponibile.
 - `TROVATO_OPENCUP` — CUP presente nel mirror OpenCUP disponibile.
-- `NON_TROVATO_OPENCUP_DA_VERIFICARE` — CUP non presente nel mirror OpenCUP disponibile; richiede verifica cautelativa.
+- `NON_TROVATO_OPENCUP_DA_VERIFICARE` — CUP non presente nel mirror OpenCUP disponibile; richiede verifica cautelativa e potrebbe comunque esistere.
 
 Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il portale OpenCUP.
 
