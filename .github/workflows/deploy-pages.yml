@@ -1,0 +1,129 @@
+name: Deploy Pages
+
+on:
+  workflow_run:
+    workflows: ["Release web"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Deploy Pages from latest releases
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event.workflow_run.conclusion == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Resolve latest software release
+        id: software
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SOFTWARE_TAG="$(gh release list \
+            --repo "${{ github.repository }}" \
+            --exclude-drafts \
+            --exclude-pre-releases \
+            --limit 100 \
+            --json tagName,publishedAt \
+            --jq '[.[] | select(.tagName | test("^v[0-9]"))] | sort_by(.publishedAt) | last | .tagName')"
+          if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
+            SOFTWARE_TAG="$(gh api "repos/${{ github.repository }}/tags" \
+              --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name) | last | .name')"
+          fi
+          if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
+            echo "No software tag v* was found." >&2
+            exit 1
+          fi
+          echo "tag=${SOFTWARE_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve latest dataset release
+        id: dataset
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          DATASET_TAG="$(gh release list \
+            --repo "${{ github.repository }}" \
+            --exclude-drafts \
+            --exclude-pre-releases \
+            --limit 100 \
+            --json tagName,publishedAt \
+            --jq '[.[] | select(.tagName | test("^dataset-[0-9]"))] | sort_by(.publishedAt) | last | .tagName')"
+          if [ -z "$DATASET_TAG" ] || [ "$DATASET_TAG" = "null" ]; then
+            echo "No dataset release found, deploying web only." >&2
+            DATASET_TAG=""
+          fi
+          echo "tag=${DATASET_TAG}" >> "$GITHUB_OUTPUT"
+
+      - name: Download latest pinned web artifact
+        id: web_artifact
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p dist/web dist/pages-root
+          gh release download "${{ steps.software.outputs.tag }}" \
+            --repo "${{ github.repository }}" \
+            --pattern web-dist.tar.gz \
+            --dir dist/web
+          tar -xzf dist/web/web-dist.tar.gz -C dist/pages-root
+
+      - uses: actions/checkout@v4
+        if: steps.web_artifact.outcome == 'failure'
+        with:
+          ref: ${{ steps.software.outputs.tag }}
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        if: steps.web_artifact.outcome == 'failure'
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: packages/web/package-lock.json
+
+      - name: Build latest software release web
+        if: steps.web_artifact.outcome == 'failure'
+        run: |
+          npm ci
+          npm run build
+          mkdir -p ../../dist/pages-root
+          cp -a dist/. ../../dist/pages-root/
+        working-directory: packages/web
+
+      - name: Download latest dataset files
+        if: steps.dataset.outputs.tag != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="${{ steps.dataset.outputs.tag }}"
+          mkdir -p "dist/pages-root/datasets/${TAG}"
+          gh release download "${TAG}" \
+            --repo "${{ github.repository }}" \
+            --pattern "dataset-latest.json" \
+            --dir dist/pages-root
+          gh release download "${TAG}" \
+            --repo "${{ github.repository }}" \
+            --pattern "dataset-manifest.json" \
+            --dir "dist/pages-root/datasets/${TAG}"
+          gh release download "${TAG}" \
+            --repo "${{ github.repository }}" \
+            --pattern "cup-index.sqlite.*" \
+            --dir "dist/pages-root/datasets/${TAG}"
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist/pages-root
+      - id: deployment
+        uses: actions/deploy-pages@v4

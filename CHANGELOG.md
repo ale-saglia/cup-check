@@ -4,6 +4,8 @@
 
 - Corregge il deploy del dataset quando il GitHub Release software non è ancora pubblicato (fallback ai git tag).
 - Corregge il TypeError nel service worker quando una risorsa non è presente in cache.
+- Corregge il fallback discovery dataset che usava `browser_download_url` bloccato da CORS; ora usa sempre URL GitHub Pages.
+- Introduce `deploy-pages.yml`: deploy automatico di Pages dopo ogni release software, combinando web e dataset più recenti senza ricostruire il dataset.
 
 ## 0.3.0 - 2026-05-11
 
