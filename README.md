@@ -40,7 +40,7 @@ File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app 
 
 La web app recupera il dataset OpenCUP statico come asset pubblico e cacheabile, senza servizi server-side applicativi. I file caricati dagli utenti e i report restano elaborati localmente.
 
-## Contesto PA E Open Source
+## Contesto PA e Open Source
 
 Il progetto e rilasciato con licenza EUPL-1.2 ed e strutturato per essere valutabile in contesti di adozione, integrazione o condivisione nella Pubblica Amministrazione, in coerenza con i principi delle Linee guida AGID su acquisizione e riuso del software.
 
