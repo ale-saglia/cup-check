@@ -5,26 +5,23 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 const MAX_RENDERED_RESULT_ROWS = 500;
 
 export function renderDatasetSearching(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · ricerca ultimo dataset...';
+  setDatasetStatus(dom, 'Loading 0%', { emphasis: true });
 }
 
 export function renderDatasetReady(dom, manifest = null) {
-  dom.datasetStatusBar.textContent = manifest
-    ? `Dataset OpenCUP · ${manifest.dataset_tag}`
-    : 'Dataset OpenCUP · non caricato - solo verifica formato';
+  setDatasetStatus(dom, manifest ? manifest.dataset_tag : 'non caricato - solo verifica formato');
 }
 
 export function renderDatasetProgress(dom, progress) {
-  const label = progress.datasetTag ? `${progress.datasetTag} · ${progress.percent}%` : `${progress.percent}%`;
-  dom.datasetStatusBar.textContent = `Dataset OpenCUP · ${label}`;
+  setDatasetLoading(dom, progress.datasetTag, progress.percent);
 }
 
-export function renderDatasetChecking(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · verifica in corso...';
+export function renderDatasetChecking() {
+  // Keep the loaded dataset tag visible while local lookup runs.
 }
 
 export function renderDatasetError(dom) {
-  dom.datasetStatusBar.textContent = 'Dataset OpenCUP · non disponibile - solo verifica formato';
+  setDatasetStatus(dom, 'non disponibile - solo verifica formato', { emphasis: true });
 }
 
 export function renderPreview(state, dom, file) {
@@ -222,4 +219,19 @@ function escapeHtml(value) {
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;')
     .replaceAll("'", '&#039;');
+}
+
+function setDatasetStatus(dom, text, { emphasis = false } = {}) {
+  dom.datasetStatusBar.textContent = text ? ` · ${text}` : '';
+  dom.datasetStatusBar.classList.toggle('is-emphasis', emphasis);
+}
+
+function setDatasetLoading(dom, datasetTag, percent) {
+  dom.datasetStatusBar.classList.remove('is-emphasis');
+  dom.datasetStatusBar.replaceChildren(
+    document.createTextNode(datasetTag ? ` · ${datasetTag} · ` : ' · '),
+    Object.assign(document.createElement('strong'), {
+      textContent: `Loading ${percent}%`,
+    }),
+  );
 }

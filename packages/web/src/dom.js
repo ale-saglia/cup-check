@@ -9,7 +9,7 @@ export function mountApp(root = document.querySelector('#app')) {
           <span class="brand">Verifica CUP</span>
           <div class="nav-links">
             <a class="project-link" href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noreferrer">cup-check ${PRODUCT_VERSION}</a>
-            <button id="open-limits" class="link-button nav-link-button" type="button">Limiti del controllo</button>
+            <span id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></span>
           </div>
         </div>
       </nav>
@@ -48,8 +48,6 @@ export function mountApp(root = document.querySelector('#app')) {
           </div>
         </div>
       </section>
-
-      <div id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></div>
 
       <section class="workspace" aria-label="Verifica CUP">
         <section id="preview-panel" class="control-panel hidden" aria-labelledby="preview-title">
@@ -177,7 +175,6 @@ export function mountApp(root = document.querySelector('#app')) {
     searchInput: root.querySelector('#search-input'),
     summary: root.querySelector('#summary'),
     resultsTable: root.querySelector('#results-table'),
-    openLimitsButton: root.querySelector('#open-limits'),
     openLimitsDescButton: root.querySelector('#open-limits-desc'),
     limitsDialog: root.querySelector('#limits-dialog'),
     detailDialog: root.querySelector('#detail-dialog'),

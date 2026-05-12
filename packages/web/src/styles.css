@@ -72,7 +72,15 @@ button {
   justify-content: space-between;
 }
 
-.nav-links,
+.nav-links {
+  display: flex;
+  gap: 0;
+  align-items: center;
+  justify-content: flex-start;
+  color: var(--muted);
+  font-size: 0.92rem;
+}
+
 .site-footer {
   display: flex;
   gap: 16px;
@@ -401,10 +409,13 @@ td.selected {
 }
 
 .dataset-status-bar {
-  font-size: 0.82rem;
+  font-size: inherit;
   color: var(--muted);
-  padding: 6px 0 2px;
-  min-height: 1.4em;
+  white-space: nowrap;
+}
+
+.dataset-status-bar.is-emphasis {
+  font-weight: 700;
 }
 
 .dataset-status-bar:empty {
@@ -433,11 +444,6 @@ a {
   font-weight: 400;
   text-decoration: underline;
   text-underline-offset: 2px;
-}
-
-.nav-link-button {
-  color: var(--link);
-  font-weight: 400;
 }
 
 code {
@@ -490,7 +496,6 @@ code {
 
 @media (max-width: 700px) {
   .nav-inner,
-  .nav-links,
   .site-footer {
     display: grid;
   }

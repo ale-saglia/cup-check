@@ -1,8 +1,4 @@
 export function initDialogs(dom) {
-  dom.openLimitsButton.addEventListener('click', () => {
-    dom.limitsDialog.showModal();
-  });
-
   dom.openLimitsDescButton.addEventListener('click', () => {
     dom.limitsDialog.showModal();
   });
