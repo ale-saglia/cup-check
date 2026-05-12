@@ -11,6 +11,8 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
+from urllib.error import HTTPError
 from urllib.request import Request, urlopen
 
 import pytest
@@ -30,6 +32,18 @@ _FALLBACK_SHA256 = "0a14e6e4a4253f4d5989ee2c44dfce7ae3fc73a3d78943c87e59c1bd34f0
 _FALLBACK_CHUNK_COUNT = 6
 
 SQLITE_MAGIC = b"SQLite format 3\x00"
+_HTTP_TIMEOUT = 30
+_RETRY_STATUSES = {503, 429}
+
+
+def _urlopen_with_retry(request: Request, retries: int = 3, backoff: float = 2.0):
+    for attempt in range(retries):
+        try:
+            return urlopen(request, timeout=_HTTP_TIMEOUT)
+        except HTTPError as exc:
+            if exc.code not in _RETRY_STATUSES or attempt == retries - 1:
+                raise
+            time.sleep(backoff * (attempt + 1))
 
 
 def _discover_latest_tag(timeout: int = 10) -> str | None:
@@ -103,7 +117,7 @@ def test_all_chunks_are_reachable(manifest: DatasetManifest) -> None:
     for file_name in manifest.cup_index.files:
         url = f"{manifest.cup_index.base_url}/{file_name}"
         request = Request(url, headers={"Range": "bytes=0-15"})
-        with urlopen(request) as response:
+        with _urlopen_with_retry(request) as response:
             assert response.status in (200, 206), f"{file_name}: HTTP {response.status}"
             assert len(response.read()) == len(SQLITE_MAGIC)
 
@@ -112,6 +126,6 @@ def test_first_chunk_has_sqlite_magic(manifest: DatasetManifest) -> None:
     first_chunk = manifest.cup_index.files[0]
     url = f"{manifest.cup_index.base_url}/{first_chunk}"
     request = Request(url, headers={"Range": "bytes=0-15"})
-    with urlopen(request) as response:
+    with _urlopen_with_retry(request) as response:
         header = response.read()
     assert header == SQLITE_MAGIC

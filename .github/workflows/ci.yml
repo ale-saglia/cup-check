@@ -47,3 +47,23 @@ jobs:
       - run: uv sync --dev --locked
       - run: uv run ruff check .
       - run: uv run pytest
+
+  python-integration:
+    name: Python integration tests (published dataset)
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    defaults:
+      run:
+        working-directory: packages/cup_check
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          cache-dependency-glob: packages/cup_check/uv.lock
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: uv sync --dev --locked
+      - run: INTEGRATION_TESTS=1 uv run pytest -m integration --override-ini="addopts="

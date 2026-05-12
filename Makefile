@@ -83,6 +83,10 @@ python-lint: ## Esegue Ruff sul package Python
 python-test: ## Esegue i test pytest del package Python
 	cd $(PYTHON_DIR) && uv run pytest
 
+.PHONY: python-test-integration
+python-test-integration: ## Esegue anche i test di integrazione (richiede rete)
+	cd $(PYTHON_DIR) && INTEGRATION_TESTS=1 uv run pytest -m integration --override-ini="addopts="
+
 .PHONY: python-build
 python-build: ## Genera sdist e wheel del package Python
 	cd $(PYTHON_DIR) && uv build
