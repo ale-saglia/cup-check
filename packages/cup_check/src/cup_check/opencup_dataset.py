@@ -11,7 +11,6 @@ from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
-from functools import cache
 from importlib.resources import files
 from pathlib import Path
 from typing import Any
@@ -95,7 +94,12 @@ def download_projects_zip(
     return destination_path
 
 
-def build_sqlite_from_projects_zip(source_zip: str | Path, sqlite_path: str | Path) -> int:
+def build_sqlite_from_projects_zip(
+    source_zip: str | Path,
+    sqlite_path: str | Path,
+    *,
+    schema_path: Path | None = None,
+) -> int:
     return _build_sqlite_from_projects_zip(source_zip, sqlite_path).n_records
 
 
@@ -155,7 +159,12 @@ def _build_sqlite_from_projects_zip(
     )
 
 
-def iter_project_records(source_zip: str | Path) -> Iterator[ProjectRecord]:
+def iter_project_records(
+    source_zip: str | Path,
+    *,
+    schema_path: Path | None = None,
+) -> Iterator[ProjectRecord]:
+    schema = _load_schema(schema_path)
     with ZipFile(source_zip) as archive:
         for csv_name in sorted(_csv_names(archive)):
             with archive.open(csv_name) as csv_file, io.TextIOWrapper(
@@ -163,7 +172,7 @@ def iter_project_records(source_zip: str | Path) -> Iterator[ProjectRecord]:
             ) as text_file:
                 reader = csv.DictReader(text_file, delimiter=";")
                 for row in reader:
-                    record = _record_from_row(row)
+                    record = _record_from_row(row, schema)
                     if record is not None:
                         yield record
 
@@ -193,6 +202,7 @@ def build_dataset_release(
     sources_snapshot_date: str,
     release_base_url: str,
     chunk_size_bytes: int = 50 * 1024 * 1024,
+    schema_path: Path | None = None,
 ) -> BuildDatasetResult:
     output_path = Path(output_dir)
     output_path.mkdir(parents=True, exist_ok=True)
@@ -279,38 +289,12 @@ def sha256_file(path: str | Path) -> str:
 
 
 def _create_table_sql(table_name: str) -> str:
-    if table_name == "cup_index":
-        columns = "          cup TEXT PRIMARY KEY,\n          detail_chunk INTEGER"
-    else:
-        columns = ",\n".join(
-            f"          {_sqlite_column_definition(column)}" for column in _sqlite_columns()
-        )
+    columns = "          cup TEXT PRIMARY KEY,\n          detail_chunk INTEGER"
     return f"""
         CREATE TABLE {table_name} (
 {columns}
         ) WITHOUT ROWID
         """
-
-
-def _sqlite_columns() -> tuple[dict[str, Any], ...]:
-    return tuple(
-        column
-        for column in _dataset_schema()["columns"]
-        if "sqlite_column" in column and column.get("destination", True) is not False
-    )
-
-
-def _sqlite_column_definition(column: dict[str, Any]) -> str:
-    parts = [column["sqlite_column"], column["sqlite_type"]]
-    if column.get("primary_key") is True:
-        parts.append("PRIMARY KEY")
-    if column.get("nullable", True) is False:
-        parts.append("NOT NULL")
-    if "default" in column:
-        parts.append(f"DEFAULT {column['default']}")
-    if "check" in column:
-        parts.append(f"CHECK ({column['check']})")
-    return " ".join(str(part) for part in parts)
 
 
 def _csv_names(archive: ZipFile) -> tuple[str, ...]:
@@ -321,8 +305,8 @@ def _csv_names(archive: ZipFile) -> tuple[str, ...]:
     )
 
 
-def _record_from_row(row: dict[str, str | None]) -> ProjectRecord | None:
-    values = _mapped_record_values(row)
+def _record_from_row(row: dict[str, str | None], schema: dict[str, Any]) -> ProjectRecord | None:
+    values = _mapped_record_values(row, schema)
     cup = values["cup"]
     if cup == "" or len(cup) < 6 or not cup[4:6].isdigit():
         return None
@@ -343,16 +327,18 @@ def _record_from_row(row: dict[str, str | None]) -> ProjectRecord | None:
     )
 
 
-@cache
-def _dataset_schema() -> dict[str, Any]:
-    schema_path = files("cup_check").joinpath(OPENCUP_DATASET_SCHEMA)
-    return yaml.safe_load(schema_path.read_text(encoding="utf-8"))
+def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
+    if schema_path is not None:
+        return yaml.safe_load(Path(schema_path).read_text(encoding="utf-8"))
+    return yaml.safe_load(
+        files("cup_check").joinpath(OPENCUP_DATASET_SCHEMA).read_text(encoding="utf-8")
+    )
 
 
-def _mapped_record_values(row: dict[str, str | None]) -> dict[str, Any]:
+def _mapped_record_values(row: dict[str, str | None], schema: dict[str, Any]) -> dict[str, Any]:
     return {
         column["target"]: _mapped_value(row, column)
-        for column in _dataset_schema()["columns"]
+        for column in schema["columns"]
     }
 
 

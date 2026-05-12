@@ -49,3 +49,4 @@
 8. Dettaglio per campo: match P.IVA/CF titolare o beneficiario, match costo o finanziamento, score descrizione, stato/revoca.
 9. Fixture o mini-dataset di test per parity web/Python sui controlli sostanziali.
 10. ADR per schema dataset e strategia di matching.
+11. Schema YAML custom in input: `build_sqlite_from_projects_zip`, `build_dataset_release` e `iter_project_records` accettano `schema_path` opzionale per personalizzare il mapping CSV→SQLite; se omesso, viene usato lo schema bundled.
