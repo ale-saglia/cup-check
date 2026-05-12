@@ -3,6 +3,7 @@ const GITHUB_RELEASES_URL = 'https://api.github.com/repos/ale-saglia/cup-check/r
 const PAGES_DATASETS_URL = 'https://ale-saglia.github.io/cup-check/datasets';
 const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
 const MIN_SCHEMA_VERSION = 1;
+const MAX_CHUNK_RETRIES = 2;
 
 let datasetPromise = null;
 
@@ -80,24 +81,32 @@ async function initDefaultSql(options) {
 }
 
 async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
-  let loadedBytes = 0;
-  const reportProgress = (deltaBytes) => {
-    loadedBytes += deltaBytes;
-    onProgress({
-      loadedBytes,
-      totalBytes: cupIndex.total_size_bytes,
-      percent: Math.min(100, Math.floor((loadedBytes / cupIndex.total_size_bytes) * 100)),
-    });
-  };
+  const chunkHashes = cupIndex.files_sha256;
+  if (!Array.isArray(chunkHashes) || chunkHashes.length !== cupIndex.files.length) {
+    throw new Error('dataset chunk integrity hashes unavailable');
+  }
 
+  let loadedBytes = 0;
   onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
+
   const chunks = await Promise.all(
-    cupIndex.files.map(async (file) => {
-      const response = await fetchFn(`${cupIndex.base_url}/${file}`);
-      if (!response.ok) throw new Error(`dataset chunk ${file}: HTTP ${response.status}`);
-      return readResponseBytes(response, reportProgress);
+    cupIndex.files.map(async (file, index) => {
+      const bytes = await fetchAndVerifyChunk(
+        fetchFn,
+        `${cupIndex.base_url}/${file}`,
+        chunkHashes[index],
+        MAX_CHUNK_RETRIES,
+      );
+      loadedBytes += bytes.byteLength;
+      onProgress({
+        loadedBytes,
+        totalBytes: cupIndex.total_size_bytes,
+        percent: Math.min(100, Math.floor((loadedBytes / cupIndex.total_size_bytes) * 100)),
+      });
+      return bytes;
     }),
   );
+
   const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
   if (totalSize !== cupIndex.total_size_bytes) {
     throw new Error('dataset chunk size mismatch');
@@ -110,6 +119,30 @@ async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
     offset += chunk.byteLength;
   }
   return out;
+}
+
+async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries) {
+  for (let attempt = 0; attempt <= retries; attempt++) {
+    try {
+      const response = await fetchFn(url);
+      if (!response.ok) throw new Error(`dataset chunk ${url}: HTTP ${response.status}`);
+      const bytes = await readResponseBytes(response, () => {});
+      await verifySha256(bytes, expectedSha256);
+      return bytes;
+    } catch (err) {
+      if (attempt === retries) throw err;
+    }
+  }
+}
+
+async function verifySha256(bytes, expectedHex) {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  const hashHex = Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+  if (hashHex !== expectedHex) {
+    throw new Error('dataset integrity check failed');
+  }
 }
 
 async function readResponseBytes(response, onBytes) {
@@ -160,7 +193,10 @@ function validateManifest(manifest) {
     !Array.isArray(cupIndex.files) ||
     cupIndex.files.length === 0 ||
     !cupIndex.files.every((file) => typeof file === 'string') ||
-    typeof cupIndex.total_size_bytes !== 'number'
+    typeof cupIndex.total_size_bytes !== 'number' ||
+    !Array.isArray(cupIndex.files_sha256) ||
+    cupIndex.files_sha256.length !== cupIndex.files.length ||
+    !cupIndex.files_sha256.every((h) => typeof h === 'string' && h.length > 0)
   ) {
     throw new Error('invalid dataset cup_index');
   }

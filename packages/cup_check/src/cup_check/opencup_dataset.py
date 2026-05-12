@@ -210,6 +210,7 @@ def build_dataset_release(
             chunk_size_bytes=chunk_size_bytes,
             total_size_bytes=sqlite_path.stat().st_size,
             sha256=sha256_file(sqlite_path),
+            files_sha256=tuple(sha256_file(path) for path in chunk_files),
         ),
         n_records=sqlite_result.n_records,
         min_software_version="0.3.0",

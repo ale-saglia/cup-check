@@ -19,6 +19,7 @@ class DatasetChunks:
     chunk_size_bytes: int
     total_size_bytes: int
     sha256: str
+    files_sha256: tuple[str, ...] = ()
 
 
 DatasetCupIndex = DatasetChunks
@@ -100,6 +101,9 @@ class DatasetManifest:
                     cup_index_value.get("total_size_bytes"), "cup_index.total_size_bytes"
                 ),
                 sha256=_string(cup_index_value.get("sha256"), "cup_index.sha256"),
+                files_sha256=_string_tuple(
+                    cup_index_value.get("files_sha256", []), "cup_index.files_sha256"
+                ),
             ),
             n_records=_integer(value["n_records"], "n_records"),
             min_software_version=_string(

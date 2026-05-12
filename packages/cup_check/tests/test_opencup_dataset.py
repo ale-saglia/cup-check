@@ -121,6 +121,11 @@ def test_build_dataset_release_writes_chunks_and_manifest(tmp_path: Path) -> Non
     assert manifest.sha256 == sha256_file(result.sqlite_path)
     assert len(manifest.cup_index.files) > 1
     assert all((output_dir / file_name).exists() for file_name in manifest.cup_index.files)
+    assert len(manifest.cup_index.files_sha256) == len(manifest.cup_index.files)
+    assert all(
+        manifest.cup_index.files_sha256[i] == sha256_file(output_dir / manifest.cup_index.files[i])
+        for i in range(len(manifest.cup_index.files))
+    )
     assert latest.dataset_tag == "dataset-2026-05"
     assert latest.manifest_url.endswith("/dataset-2026-05/dataset-manifest.json")
 

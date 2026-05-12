@@ -3,6 +3,9 @@ import { describe, expect, it } from 'vitest';
 import { discoverLatestDataset, loadDataset } from '../src/dataset-loader.js';
 
 const wasmPath = new URL('../node_modules/sql.js/dist/sql-wasm.wasm', import.meta.url).pathname;
+const MANIFEST_URL = 'https://example.test/dataset-manifest.json';
+const CHUNK_URL_0 = 'https://example.test/release/cup-index.sqlite.000';
+const CHUNK_URL_1 = 'https://example.test/release/cup-index.sqlite.001';
 
 describe('discoverLatestDataset', () => {
   it('uses dataset-latest.json before remote discovery', async () => {
@@ -52,44 +55,12 @@ describe('loadDataset', () => {
     const sqliteBytes = await buildSqliteFixture();
     const firstChunk = sqliteBytes.slice(0, 128);
     const secondChunk = sqliteBytes.slice(128);
+    const sha256s = await Promise.all([firstChunk, secondChunk].map(computeSha256Hex));
     const fetchFn = mockFetch({
-      './dataset-latest.json': {
-        dataset_tag: 'dataset-2026-05',
-        manifest_url: 'https://example.test/dataset-manifest.json',
-        sources_snapshot_date: '2026-05-01',
-        released_at: '2026-05-05T03:14:00Z',
-      },
-      'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
-        {
-          tag_name: 'dataset-2026-05',
-          published_at: '2026-05-05T03:14:00Z',
-          assets: [
-            {
-              name: 'dataset-manifest.json',
-              browser_download_url: 'https://example.test/dataset-manifest.json',
-            },
-          ],
-        },
-      ],
-      'https://example.test/dataset-manifest.json': {
-        schema_version: 1,
-        dataset_tag: 'dataset-2026-05',
-        released_at: '2026-05-05T03:14:00Z',
-        sources_snapshot_date: '2026-05-01',
-        schema: { table: 'cup_index', version: 1 },
-        cup_index: {
-          base_url: 'https://example.test/release',
-          files: ['cup-index.sqlite.000', 'cup-index.sqlite.001'],
-          chunk_size_bytes: 128,
-          total_size_bytes: sqliteBytes.byteLength,
-          sha256: 'test',
-        },
-        n_records: 1,
-        min_software_version: '0.3.0',
-        natura_categories: [],
-      },
-      'https://example.test/release/cup-index.sqlite.000': firstChunk,
-      'https://example.test/release/cup-index.sqlite.001': secondChunk,
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s),
+      [CHUNK_URL_0]: firstChunk,
+      [CHUNK_URL_1]: secondChunk,
     });
     const progressEvents = [];
 
@@ -107,6 +78,87 @@ describe('loadDataset', () => {
     expect(progressEvents).toEqual([...progressEvents].sort((a, b) => a - b));
     dataset.close();
   });
+
+  it('rejects when files_sha256 is absent from the manifest', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const fetchFn = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, null),
+      [CHUNK_URL_0]: sqliteBytes.slice(0, 128),
+      [CHUNK_URL_1]: sqliteBytes.slice(128),
+    });
+
+    await expect(loadDataset({ fetchFn })).rejects.toThrow();
+  });
+
+  it('retries a chunk on HTTP failure and succeeds', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const firstChunk = sqliteBytes.slice(0, 128);
+    const secondChunk = sqliteBytes.slice(128);
+    const sha256s = await Promise.all([firstChunk, secondChunk].map(computeSha256Hex));
+    const base = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s),
+      [CHUNK_URL_0]: firstChunk,
+      [CHUNK_URL_1]: secondChunk,
+    });
+    const fetchFn = withFailures(base, {
+      [CHUNK_URL_0]: { times: 1, response: () => serverError() },
+    });
+
+    const dataset = await loadDataset({
+      fetchFn,
+      initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+    });
+
+    expect(dataset.hasCup('G17H03000130001')).toBe(true);
+    expect(fetchFn.counts[CHUNK_URL_0]).toBe(2);
+    dataset.close();
+  });
+
+  it('retries a chunk on sha256 mismatch and succeeds', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const firstChunk = sqliteBytes.slice(0, 128);
+    const secondChunk = sqliteBytes.slice(128);
+    const sha256s = await Promise.all([firstChunk, secondChunk].map(computeSha256Hex));
+    const base = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s),
+      [CHUNK_URL_0]: firstChunk,
+      [CHUNK_URL_1]: secondChunk,
+    });
+    const fetchFn = withFailures(base, {
+      [CHUNK_URL_0]: { times: 1, response: () => new Response(new Uint8Array([0xde, 0xad])) },
+    });
+
+    const dataset = await loadDataset({
+      fetchFn,
+      initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+    });
+
+    expect(dataset.hasCup('G17H03000130001')).toBe(true);
+    expect(fetchFn.counts[CHUNK_URL_0]).toBe(2);
+    dataset.close();
+  });
+
+  it('rejects after exhausting chunk retries', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const firstChunk = sqliteBytes.slice(0, 128);
+    const secondChunk = sqliteBytes.slice(128);
+    const sha256s = await Promise.all([firstChunk, secondChunk].map(computeSha256Hex));
+    const base = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s),
+      [CHUNK_URL_0]: firstChunk,
+      [CHUNK_URL_1]: secondChunk,
+    });
+    const fetchFn = withFailures(base, {
+      [CHUNK_URL_0]: { times: 3, response: () => new Response(new Uint8Array([0xde, 0xad])) },
+    });
+
+    await expect(loadDataset({ fetchFn })).rejects.toThrow('dataset integrity check failed');
+    expect(fetchFn.counts[CHUNK_URL_0]).toBe(3);
+  });
 });
 
 async function buildSqliteFixture() {
@@ -119,6 +171,46 @@ async function buildSqliteFixture() {
   return bytes;
 }
 
+async function computeSha256Hex(bytes) {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+  return Array.from(new Uint8Array(hashBuffer))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function latestPointer() {
+  return {
+    dataset_tag: 'dataset-2026-05',
+    manifest_url: MANIFEST_URL,
+    sources_snapshot_date: '2026-05-01',
+    released_at: '2026-05-05T03:14:00Z',
+  };
+}
+
+function makeManifest(totalSizeBytes, filessha256) {
+  const cupIndex = {
+    base_url: 'https://example.test/release',
+    files: ['cup-index.sqlite.000', 'cup-index.sqlite.001'],
+    chunk_size_bytes: 128,
+    total_size_bytes: totalSizeBytes,
+    sha256: 'ignored',
+  };
+  if (filessha256 !== null) {
+    cupIndex.files_sha256 = filessha256;
+  }
+  return {
+    schema_version: 1,
+    dataset_tag: 'dataset-2026-05',
+    released_at: '2026-05-05T03:14:00Z',
+    sources_snapshot_date: '2026-05-01',
+    schema: { table: 'cup_index', version: 1 },
+    cup_index: cupIndex,
+    n_records: 1,
+    min_software_version: '0.3.0',
+    natura_categories: [],
+  };
+}
+
 function mockFetch(routes) {
   return async (url) => {
     const key = String(url);
@@ -129,6 +221,24 @@ function mockFetch(routes) {
   };
 }
 
+function withFailures(baseFetch, failures) {
+  const counts = {};
+  const fn = async (url) => {
+    const failure = failures[url];
+    if (failure) {
+      counts[url] = (counts[url] ?? 0) + 1;
+      if (counts[url] <= failure.times) return failure.response();
+    }
+    return baseFetch(url);
+  };
+  fn.counts = counts;
+  return fn;
+}
+
 function notFound() {
   return new Response('not found', { status: 404 });
+}
+
+function serverError() {
+  return new Response('server error', { status: 503 });
 }

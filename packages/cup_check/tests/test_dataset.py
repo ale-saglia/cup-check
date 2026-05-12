@@ -39,8 +39,18 @@ def test_dataset_manifest_from_mapping() -> None:
     assert manifest.schema.version == 1
     assert manifest.cup_index.files == ("cup-index.sqlite.000", "cup-index.sqlite.001")
     assert manifest.sha256 == "abcd"
+    assert manifest.cup_index.files_sha256 == ()
     assert manifest.n_records == 9842317
     assert manifest.natura_categories == ("Acquisto beni", "Lavori pubblici")
+
+
+def test_dataset_manifest_from_mapping_with_files_sha256() -> None:
+    mapping = manifest_mapping()
+    mapping["cup_index"]["files_sha256"] = ["sha-of-chunk-0", "sha-of-chunk-1"]
+
+    manifest = DatasetManifest.from_mapping(mapping)
+
+    assert manifest.cup_index.files_sha256 == ("sha-of-chunk-0", "sha-of-chunk-1")
 
 
 def test_load_dataset_manifest_from_json_file(tmp_path) -> None:
