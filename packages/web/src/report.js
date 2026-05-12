@@ -73,8 +73,9 @@ function csvCell(value) {
 
 function protectCsvFormula(text) {
   if (/^[=+\-@]/.test(text)) {
-    // A leading tab keeps spreadsheet apps from interpreting the cell as a formula.
-    return `\t${text}`;
+    // A leading apostrophe prevents formula execution in Excel/Sheets and is ignored as a text prefix;
+    // unlike a tab, it does not risk being treated as a field separator by TSV-aware parsers.
+    return `'${text}`;
   }
 
   return text;
