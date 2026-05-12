@@ -1,5 +1,5 @@
 :root {
-  color-scheme: light;
+  color-scheme: light dark;
   font-family:
     Georgia,
     'Times New Roman',
@@ -20,6 +20,31 @@
   --check-bg: #fff8dc;
   --found: #145214;
   --found-bg: #edfaed;
+  --nav-bg: rgb(255 255 255 / 94%);
+  --shadow: rgb(27 31 35 / 16%);
+  --backdrop: rgb(27 31 35 / 22%);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #ffffff;
+    background: #0d1117;
+    --bg: #0d1117;
+    --text: #ffffff;
+    --muted: #ffffff;
+    --line: #30363d;
+    --link: #58a6ff;
+    --panel: #161b22;
+    --invalid: #ffa198;
+    --invalid-bg: #3d1515;
+    --check: #e3b341;
+    --check-bg: #3a2900;
+    --found: #56d364;
+    --found-bg: #0d2318;
+    --nav-bg: rgb(13 17 23 / 94%);
+    --shadow: rgb(0 0 0 / 40%);
+    --backdrop: rgb(0 0 0 / 50%);
+  }
 }
 
 * {
@@ -59,7 +84,7 @@ button {
   top: 0;
   z-index: 8;
   border-bottom: 1px solid var(--line);
-  background: rgb(255 255 255 / 94%);
+  background: var(--nav-bg);
 }
 
 .nav-inner {
@@ -463,11 +488,11 @@ td.selected {
   padding: 24px;
   background: var(--bg);
   color: var(--text);
-  box-shadow: 0 18px 50px rgb(27 31 35 / 16%);
+  box-shadow: 0 18px 50px var(--shadow);
 }
 
 .detail-dialog::backdrop {
-  background: rgb(27 31 35 / 22%);
+  background: var(--backdrop);
 }
 
 .detail-dialog-text {
@@ -562,11 +587,11 @@ code {
   background: var(--bg);
   color: var(--text);
   line-height: 1.7;
-  box-shadow: 0 18px 50px rgb(27 31 35 / 16%);
+  box-shadow: 0 18px 50px var(--shadow);
 }
 
 .limits-dialog::backdrop {
-  background: rgb(27 31 35 / 22%);
+  background: var(--backdrop);
 }
 
 .limits-dialog h2 {
@@ -777,4 +802,20 @@ code {
     min-width: 100%;
   }
 
+}
+
+@media (prefers-color-scheme: dark) {
+  .nav-links,
+  .dataset-status-bar,
+  .site-footer,
+  caption {
+    color: #c9d1d9;
+  }
+
+  .primary,
+  .secondary {
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--link);
+  }
 }
