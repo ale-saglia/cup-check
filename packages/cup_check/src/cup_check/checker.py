@@ -50,7 +50,11 @@ class OpenCupChecker:
             else load_dataset_manifest(path_or_manifest)
         )
         connection = _connect_sqlite_index(Path(sqlite_path))
-        _assert_supported_index(connection, manifest)
+        try:
+            _assert_supported_index(connection, manifest)
+        except Exception:
+            connection.close()
+            raise
         return cls(connection, manifest=manifest)
 
     @classmethod
@@ -182,24 +186,26 @@ def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path) -> Path:
 def _download_index(manifest: DatasetManifest, destination: Path) -> None:
     digest = hashlib.sha256()
     total_size = 0
-    with destination.open("wb") as output:
-        for file_name in manifest.cup_index.files:
-            url = f"{manifest.cup_index.base_url.rstrip('/')}/{file_name}"
-            with urlopen(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
-                while True:
-                    chunk = response.read(1024 * 1024)
-                    if not chunk:
-                        break
-                    output.write(chunk)
-                    digest.update(chunk)
-                    total_size += len(chunk)
+    try:
+        with destination.open("wb") as output:
+            for file_name in manifest.cup_index.files:
+                url = f"{manifest.cup_index.base_url.rstrip('/')}/{file_name}"
+                with urlopen(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
+                    while True:
+                        chunk = response.read(1024 * 1024)
+                        if not chunk:
+                            break
+                        output.write(chunk)
+                        digest.update(chunk)
+                        total_size += len(chunk)
 
-    if total_size != manifest.cup_index.total_size_bytes:
+        if total_size != manifest.cup_index.total_size_bytes:
+            raise ValueError("dataset chunk size mismatch")
+        if digest.hexdigest() != manifest.cup_index.sha256:
+            raise ValueError("dataset sha256 mismatch")
+    except Exception:
         destination.unlink(missing_ok=True)
-        raise ValueError("dataset chunk size mismatch")
-    if digest.hexdigest() != manifest.cup_index.sha256:
-        destination.unlink(missing_ok=True)
-        raise ValueError("dataset sha256 mismatch")
+        raise
 
 
 def _valid_cached_index(sqlite_path: Path, manifest: DatasetManifest) -> bool:
