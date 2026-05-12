@@ -11,6 +11,7 @@ import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
 
 const ROW_COUNT = 10000;
 const MAX_TOTAL_MS = 5000;
+const XSS_PAYLOAD = '"><img src=x onerror=alert(1)>';
 
 const port = await getFreePort();
 const server = spawn(
@@ -32,6 +33,12 @@ try {
     result.controllerAfterOnlineReload,
     'service worker non controlla la pagina dopo il reload online',
   );
+  assert(result.xssResultsImageCount === 0, 'payload HTML renderizzato come immagine nei risultati');
+  assert(
+    result.xssResultsText.includes('<IMG SRC=X ONERROR=ALERT(1)>'),
+    `payload HTML non presente come testo nei risultati: ${result.xssResultsText}`,
+  );
+  assert(result.previewImageCount === 0, 'payload HTML renderizzato come immagine in anteprima');
   assert(result.summary.includes(`${ROW_COUNT} righe`), `riepilogo inatteso: ${result.summary}`);
   assert(result.groupToggleDefault, 'il toggle raggruppa CUP uguali non e attivo di default');
   assert(
@@ -82,9 +89,18 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       Boolean(navigator.serviceWorker?.controller),
     );
 
+    await page.locator('#cup-textarea').fill(XSS_PAYLOAD);
+    await page.click('#text-check-button');
+    await page.waitForSelector('#results-panel:not(.hidden)');
+    out.xssResultsImageCount = await page.locator('#results-table img').count();
+    out.xssResultsText = await page.locator('#results-table').textContent();
+    await page.click('#clear-button');
+    await page.waitForSelector('#results-panel.hidden', { state: 'attached' });
+
     const started = Date.now();
     await page.setInputFiles('#file-input', xlsxPath);
     await page.waitForSelector('#preview-panel:not(.hidden)');
+    out.previewImageCount = await page.locator('#preview-table img').count();
     out.textPanelCollapsedAfterUpload =
       (await page
         .locator('#text')
@@ -124,7 +140,7 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
 
 async function writeAcceptanceWorkbook() {
   const outputPath = join(tmpdir(), 'cup-check-acceptance-10k.xlsx');
-  const rows = [['id', 'CUP', 'descrizione']];
+  const rows = [['id', 'CUP', `descrizione ${XSS_PAYLOAD}`]];
   const validCups = ['A12B23000000001', 'Z99C00000000002', 'F11D24000000003'];
   const invalidCups = ['', '123B24000000004', 'A12B99000000005', 'A12B24000000@06', 'A12C2400007'];
 
@@ -133,7 +149,7 @@ async function writeAcceptanceWorkbook() {
       index % 4 === 0
         ? invalidCups[Math.floor(index / 4) % invalidCups.length]
         : validCups[index % validCups.length];
-    rows.push([String(index + 1), cup, `Riga ${index + 1}`]);
+    rows.push([String(index + 1), cup, index === 0 ? XSS_PAYLOAD : `Riga ${index + 1}`]);
   }
 
   const sheetRows = rows

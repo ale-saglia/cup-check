@@ -42,43 +42,51 @@ export function renderPreview(state, dom, file) {
 
 export function renderPreviewData(state, dom, fileName = state.displayFileName) {
   const headerMeta = headerDetectionMeta(state.parsed);
-  dom.fileMeta.innerHTML = `<span class="file-meta-name" title="${escapeHtml(fileName)}">${escapeHtml(
-    fileName,
-  )}</span><span class="file-meta-detail"> - ${state.parsed.rows.length} righe dati - ${headerMeta}</span>`;
+  const fileNameLabel = document.createElement('span');
+  fileNameLabel.className = 'file-meta-name';
+  fileNameLabel.title = String(fileName ?? '');
+  fileNameLabel.textContent = String(fileName ?? '');
+  const fileDetail = document.createElement('span');
+  fileDetail.className = 'file-meta-detail';
+  fileDetail.textContent = ` - ${state.parsed.rows.length} righe dati - ${headerMeta}`;
+  dom.fileMeta.replaceChildren(fileNameLabel, fileDetail);
   dom.previewToggleMeta.textContent = `${state.parsed.rows.length} righe`;
   dom.headerToggle.checked = state.parsed.headerPresent;
   dom.skipMissingCupInput.checked = state.skipMissingCup;
   renderSheetSelect(state, dom);
-  dom.columnSelect.innerHTML = state.parsed.headers
-    .map(
-      (header, index) =>
-        `<option value="${index}">${escapeHtml(header || `Colonna ${index + 1}`)}</option>`,
-    )
-    .join('');
+  dom.columnSelect.replaceChildren(
+    ...state.parsed.headers.map((header, index) =>
+      selectOption(String(index), header || `Colonna ${index + 1}`),
+    ),
+  );
   dom.columnSelect.value = String(state.selectedColumnIndex);
   renderPreviewTable(state, dom);
 }
 
 export function renderPreviewTable(state, dom) {
   const rows = state.parsed.rows.slice(0, 10);
-  dom.previewTable.innerHTML = `
-    <thead>
-      <tr>${state.parsed.headers.map((header) => `<th>${escapeHtml(header)}</th>`).join('')}</tr>
-    </thead>
-    <tbody>
-      ${rows
-        .map(
-          (row) =>
-            `<tr>${row.cells
-              .map(
-                (cell, index) =>
-                  `<td class="${index === state.selectedColumnIndex ? 'selected' : ''}">${escapeHtml(cell)}</td>`,
-              )
-              .join('')}</tr>`,
-        )
-        .join('')}
-    </tbody>
-  `;
+  const headerRow = document.createElement('tr');
+  headerRow.replaceChildren(...state.parsed.headers.map((header) => tableCell('th', header)));
+
+  const thead = document.createElement('thead');
+  thead.replaceChildren(headerRow);
+
+  const tbody = document.createElement('tbody');
+  tbody.replaceChildren(
+    ...rows.map((row) => {
+      const tr = document.createElement('tr');
+      tr.replaceChildren(
+        ...row.cells.map((cell, index) => {
+          const td = tableCell('td', cell);
+          td.classList.toggle('selected', index === state.selectedColumnIndex);
+          return td;
+        }),
+      );
+      return tr;
+    }),
+  );
+
+  dom.previewTable.replaceChildren(thead, tbody);
 }
 
 export function renderResults(state, dom, durationMs) {
@@ -118,44 +126,16 @@ export function renderResultsTable(state, dom) {
     return matchesOutcome && matchesQuery;
   });
   const renderedRows = rows.slice(0, MAX_RENDERED_RESULT_ROWS);
-  const resultLimitNote =
-    rows.length > renderedRows.length
-      ? `<caption>Mostrate ${renderedRows.length} di ${rows.length} righe filtrate</caption>`
-      : '';
-  const opencupCell = (result) => {
-    const url = opencupUrlForResult(result);
-    return url
-      ? `<a href="${url}" target="_blank" rel="noreferrer">Apri</a>`
-      : '<span aria-label="Link OpenCUP non disponibile">-</span>';
-  };
+  const tableParts = [];
 
-  dom.resultsTable.innerHTML = `
-    ${resultLimitNote}
-    <thead>
-      <tr>
-        <th>Riga</th>
-        <th>CUP</th>
-        <th>Esito</th>
-        <th>Dettaglio</th>
-        <th>OpenCUP</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${renderedRows
-        .map(
-          (result) => `
-            <tr>
-              <td>${renderRowsCell(result)}</td>
-              <td title="${escapeHtml(result.normalizedValue)}"><code class="cup-cell">${escapeHtml(result.normalizedValue)}</code></td>
-              <td><span class="badge ${badgeClass(result.outcome)}">${result.outcome}</span></td>
-              <td title="${escapeHtml(resultDetail(result))}"><div class="detail-cell">${escapeHtml(resultDetail(result))}</div></td>
-              <td>${opencupCell(result)}</td>
-            </tr>
-          `,
-        )
-        .join('')}
-    </tbody>
-  `;
+  if (rows.length > renderedRows.length) {
+    tableParts.push(
+      tableCell('caption', `Mostrate ${renderedRows.length} di ${rows.length} righe filtrate`),
+    );
+  }
+
+  tableParts.push(resultsTableHeader(), resultsTableBody(renderedRows));
+  dom.resultsTable.replaceChildren(...tableParts);
 
   dom.resultsTable.querySelectorAll('.detail-cell').forEach((cell) => {
     if (cell.scrollWidth > cell.clientWidth) {
@@ -174,11 +154,12 @@ export function resetView(dom) {
   dom.textToggleMeta.textContent = 'Nessun testo inserito';
   dom.previewToggleMeta.textContent = 'Nessun file';
   dom.resultsToggleMeta.textContent = 'Nessun risultato';
-  dom.columnSelect.innerHTML = '';
-  dom.sheetSelect.innerHTML = '';
+  dom.fileMeta.replaceChildren();
+  dom.columnSelect.replaceChildren();
+  dom.sheetSelect.replaceChildren();
   dom.sheetSelectLabel.classList.add('hidden');
-  dom.previewTable.innerHTML = '';
-  dom.resultsTable.innerHTML = '';
+  dom.previewTable.replaceChildren();
+  dom.resultsTable.replaceChildren();
   dom.summary.textContent = '';
   dom.filterSelect.value = 'ALL';
   dom.searchInput.value = '';
@@ -223,43 +204,124 @@ function renderSheetSelect(state, dom) {
   dom.sheetSelect.disabled = !hasMultipleSheets;
 
   if (!hasMultipleSheets) {
-    dom.sheetSelect.innerHTML = '';
+    dom.sheetSelect.replaceChildren();
     return;
   }
 
-  dom.sheetSelect.innerHTML = sheetNames
-    .map(
-      (sheetName) => `<option value="${escapeHtml(sheetName)}">${escapeHtml(sheetName)}</option>`,
-    )
-    .join('');
+  dom.sheetSelect.replaceChildren(
+    ...sheetNames.map((sheetName) => selectOption(sheetName, sheetName)),
+  );
   dom.sheetSelect.value =
     state.selectedSheetName || state.parsed.selectedSheetName || sheetNames[0];
+}
+
+function resultsTableHeader() {
+  const headerRow = document.createElement('tr');
+  headerRow.replaceChildren(
+    tableCell('th', 'Riga'),
+    tableCell('th', 'CUP'),
+    tableCell('th', 'Esito'),
+    tableCell('th', 'Dettaglio'),
+    tableCell('th', 'OpenCUP'),
+  );
+
+  const thead = document.createElement('thead');
+  thead.replaceChildren(headerRow);
+  return thead;
+}
+
+function resultsTableBody(results) {
+  const tbody = document.createElement('tbody');
+  tbody.replaceChildren(...results.map(resultRow));
+  return tbody;
+}
+
+function resultRow(result) {
+  const tr = document.createElement('tr');
+
+  const rowsCell = document.createElement('td');
+  rowsCell.replaceChildren(renderRowsCell(result));
+
+  const cupCell = document.createElement('td');
+  cupCell.title = String(result.normalizedValue ?? '');
+  const cupCode = document.createElement('code');
+  cupCode.className = 'cup-cell';
+  cupCode.textContent = String(result.normalizedValue ?? '');
+  cupCell.replaceChildren(cupCode);
+
+  const outcomeCell = document.createElement('td');
+  const badge = document.createElement('span');
+  badge.className = `badge ${badgeClass(result.outcome)}`;
+  badge.textContent = result.outcome;
+  outcomeCell.replaceChildren(badge);
+
+  const detailCell = document.createElement('td');
+  const detail = resultDetail(result);
+  detailCell.title = detail;
+  const detailContent = document.createElement('div');
+  detailContent.className = 'detail-cell';
+  detailContent.textContent = detail;
+  detailCell.replaceChildren(detailContent);
+
+  const opencupCell = document.createElement('td');
+  opencupCell.replaceChildren(renderOpencupCell(result));
+
+  tr.replaceChildren(rowsCell, cupCell, outcomeCell, detailCell, opencupCell);
+  return tr;
 }
 
 function renderRowsCell(result) {
   const rows = result.inputRows ?? [result.inputRow];
 
   if (rows.length <= 1) {
-    return escapeHtml(rows[0]);
+    return document.createTextNode(String(rows[0] ?? ''));
   }
 
   const rowsLabel = resultRowsLabel(result);
-  return `<button class="link-button multiple-rows-button" type="button" data-rows="${escapeHtml(rowsLabel)}" aria-label="Mostra tutte le righe per il CUP">${escapeHtml(rows[0])}++</button>`;
+  const button = document.createElement('button');
+  button.className = 'link-button multiple-rows-button';
+  button.type = 'button';
+  button.dataset.rows = rowsLabel;
+  button.setAttribute('aria-label', 'Mostra tutte le righe per il CUP');
+  button.textContent = `${String(rows[0] ?? '')}++`;
+  return button;
+}
+
+function renderOpencupCell(result) {
+  const url = opencupUrlForResult(result);
+
+  if (!url) {
+    const unavailable = document.createElement('span');
+    unavailable.setAttribute('aria-label', 'Link OpenCUP non disponibile');
+    unavailable.textContent = '-';
+    return unavailable;
+  }
+
+  const link = document.createElement('a');
+  link.href = url;
+  link.target = '_blank';
+  link.rel = 'noreferrer';
+  link.textContent = 'Apri';
+  return link;
+}
+
+function selectOption(value, text) {
+  const option = document.createElement('option');
+  option.value = value;
+  option.textContent = String(text ?? '');
+  return option;
+}
+
+function tableCell(tagName, text) {
+  const cell = document.createElement(tagName);
+  cell.textContent = String(text ?? '');
+  return cell;
 }
 
 function badgeClass(outcome) {
   if (outcome === OUTCOMES.FOUND_OPENCUP) return 'good';
   if (outcome === OUTCOMES.INVALID) return 'bad';
   return 'warn';
-}
-
-function escapeHtml(value) {
-  return String(value ?? '')
-    .replaceAll('&', '&amp;')
-    .replaceAll('<', '&lt;')
-    .replaceAll('>', '&gt;')
-    .replaceAll('"', '&quot;')
-    .replaceAll("'", '&#039;');
 }
 
 function setDatasetStatus(dom, text, { emphasis = false } = {}) {
