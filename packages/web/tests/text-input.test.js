@@ -25,4 +25,27 @@ describe('textInputLines', () => {
   it('keeps the first line when it is not exactly CUP', () => {
     expect(textInputLines('Codice CUP\nA58C15000390001')).toEqual(['Codice CUP', 'A58C15000390001']);
   });
+
+  it('returns empty array for empty input', () => {
+    expect(textInputLines('')).toEqual([]);
+  });
+
+  it('returns empty array for whitespace-only input', () => {
+    expect(textInputLines('   ')).toEqual([]);
+    expect(textInputLines('   \n\t\n  ')).toEqual([]);
+  });
+
+  it('drops blank and whitespace-only lines between valid entries', () => {
+    expect(textInputLines('A58C15000390001\n\n   \nB11B15001360001')).toEqual([
+      'A58C15000390001',
+      'B11B15001360001',
+    ]);
+  });
+
+  it('trims surrounding whitespace from each line', () => {
+    expect(textInputLines('  A58C15000390001  \n  B11B15001360001  ')).toEqual([
+      'A58C15000390001',
+      'B11B15001360001',
+    ]);
+  });
 });

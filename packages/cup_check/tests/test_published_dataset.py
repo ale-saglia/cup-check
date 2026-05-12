@@ -1,4 +1,7 @@
-"""Integration tests against the published dataset-2026-05 release.
+"""Integration tests against the latest published dataset release.
+
+Discovers the latest dataset-YYYY-MM release from GitHub at test-collection
+time; falls back to the pinned release below if discovery fails.
 
 Hit la rete reale. Esegui con:
     INTEGRATION_TESTS=1 pytest -m integration -p no:cov
@@ -7,21 +10,55 @@ from __future__ import annotations
 
 import json
 import os
+import re
 from urllib.request import Request, urlopen
 
 import pytest
 
 from cup_check import DatasetManifest
 
-MANIFEST_URL = (
-    "https://github.com/ale-saglia/cup-check"
-    "/releases/download/dataset-2026-05/dataset-manifest.json"
+_GITHUB_RELEASES_URL = (
+    "https://api.github.com/repos/ale-saglia/cup-check/releases"
 )
-EXPECTED_TAG = "dataset-2026-05"
-EXPECTED_N_RECORDS = 11641560
-EXPECTED_SHA256 = "0a14e6e4a4253f4d5989ee2c44dfce7ae3fc73a3d78943c87e59c1bd34f00ee0"
-EXPECTED_CHUNK_COUNT = 6
+_DATASET_TAG_RE = re.compile(r"^dataset-\d{4}-\d{2}$")
+_BASE_URL = "https://github.com/ale-saglia/cup-check/releases/download"
+
+# Pinned fallback — aggiorna questi valori a ogni nuova release dataset.
+_FALLBACK_TAG = "dataset-2026-05"
+_FALLBACK_N_RECORDS = 11641560
+_FALLBACK_SHA256 = "0a14e6e4a4253f4d5989ee2c44dfce7ae3fc73a3d78943c87e59c1bd34f00ee0"
+_FALLBACK_CHUNK_COUNT = 6
+
 SQLITE_MAGIC = b"SQLite format 3\x00"
+
+
+def _discover_latest_tag(timeout: int = 10) -> str | None:
+    """Return the most recent dataset-YYYY-MM tag from GitHub, or None."""
+    try:
+        req = Request(
+            _GITHUB_RELEASES_URL,
+            headers={"User-Agent": "cup-check-integration-tests/1"},
+        )
+        with urlopen(req, timeout=timeout) as resp:
+            releases = json.loads(resp.read())
+        tags = sorted(
+            (r["tag_name"] for r in releases if _DATASET_TAG_RE.match(r.get("tag_name", ""))),
+            reverse=True,
+        )
+        return tags[0] if tags else None
+    except Exception:
+        return None
+
+
+# La discovery avviene solo quando si eseguono gli integration test, per non
+# rallentare il collection pytest negli altri contesti.
+if os.getenv("INTEGRATION_TESTS"):
+    _LATEST_TAG = _discover_latest_tag() or _FALLBACK_TAG
+else:
+    _LATEST_TAG = _FALLBACK_TAG
+
+_MANIFEST_URL = f"{_BASE_URL}/{_LATEST_TAG}/dataset-manifest.json"
+_ON_FALLBACK = _LATEST_TAG == _FALLBACK_TAG
 
 pytestmark = [
     pytest.mark.integration,
@@ -34,20 +71,25 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def manifest() -> DatasetManifest:
-    with urlopen(MANIFEST_URL) as response:
+    with urlopen(_MANIFEST_URL) as response:
         return DatasetManifest.from_mapping(json.loads(response.read()))
 
 
 def test_manifest_is_parseable_and_correct(manifest: DatasetManifest) -> None:
-    assert manifest.dataset_tag == EXPECTED_TAG
-    assert manifest.n_records == EXPECTED_N_RECORDS
-    assert manifest.sha256 == EXPECTED_SHA256
+    assert _DATASET_TAG_RE.match(manifest.dataset_tag), manifest.dataset_tag
     assert manifest.schema.table == "cup_index"
     assert manifest.schema.version == 1
+    if _ON_FALLBACK:
+        assert manifest.dataset_tag == _FALLBACK_TAG
+        assert manifest.n_records == _FALLBACK_N_RECORDS
+        assert manifest.sha256 == _FALLBACK_SHA256
 
 
 def test_manifest_chunk_count(manifest: DatasetManifest) -> None:
-    assert len(manifest.cup_index.files) == EXPECTED_CHUNK_COUNT
+    if _ON_FALLBACK:
+        assert len(manifest.cup_index.files) == _FALLBACK_CHUNK_COUNT
+    else:
+        assert len(manifest.cup_index.files) > 0
 
 
 def test_manifest_total_size_is_consistent(manifest: DatasetManifest) -> None:
