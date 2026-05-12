@@ -45,7 +45,7 @@ runs:
         if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
           echo "No published GitHub Release v* found, falling back to latest git tag." >&2
           SOFTWARE_TAG="$(gh api "repos/${REPOSITORY}/tags" \
-            --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name) | last | .name')"
+            --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name | ltrimstr("v") | split(".") | map(tonumber)) | last | .name')"
         fi
         if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
           echo "No software tag v* was found." >&2
