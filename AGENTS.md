@@ -2,12 +2,28 @@
 
 Istruzioni operative per agenti di coding su questo repo.
 
-- Leggere `docs/project.md` prima di modifiche sostanziali.
+- Prima di modifiche sostanziali leggere la documentazione tematica pertinente in `docs/`; almeno `docs/product.md`, `docs/architecture.md`, `docs/technical-spec.md` e `docs/roadmap.md`.
 - I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale: aggiornali prima di cambiare il validatore.
-- Nell'MVP non introdurre esiti di verifica esistenza. Gli unici outcome ammessi sono `INVALIDO_FORMATO` e `FORMATO_VALIDO_DA_VERIFICARE`.
+- Nel validatore formale non introdurre esiti di verifica esistenza: gli unici outcome ammessi sono `INVALIDO_FORMATO` e `FORMATO_VALIDO_DA_VERIFICARE`. Il lookup OpenCUP resta separato.
 - Tenere il web package statico e deployabile su GitHub Pages.
 - Preferire modifiche piccole, testate e coerenti con la roadmap.
-- Non aggiungere servizi server-side nell'MVP.
+- Non aggiungere servizi server-side: il lookup usa asset statici e dataset pubblici.
+
+## Eseguire i test Python
+
+Il package usa `uv`. Dalla root del repo:
+
+```bash
+cd packages/cup_check && uv run pytest
+```
+
+Per un sottoinsieme di test:
+
+```bash
+cd packages/cup_check && uv run pytest tests/test_checker.py
+```
+
+Se le dipendenze non sono ancora installate: `cd packages/cup_check && uv sync --dev`.
 
 ## Messaggi di commit
 
