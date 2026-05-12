@@ -133,7 +133,7 @@ ValidationResult = {
 }
 ```
 
-`validateCup` restituisce sempre `FORMATO_VALIDO_DA_VERIFICARE` per CUP formalmente validi. Il lookup dataset e separato: quando l'indice OpenCUP statico e disponibile, la web app trasforma gli esiti formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
+`validateCup` restituisce sempre `FORMATO_VALIDO_DA_VERIFICARE` per CUP formalmente validi. Il lookup dataset è separato: quando l'indice OpenCUP statico è disponibile, la web app trasforma gli esiti formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 
 Implementazione web:
 
@@ -153,7 +153,7 @@ with OpenCupChecker.from_latest(cache_dir=".cup-check-cache") as checker:
     checked = checker.check("G17H03000130001")
 ```
 
-La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core. `validate_format` resta solo formale; `OpenCupChecker` scarica/cacha l'indice OpenCUP oppure apre un indice SQLite locale e trasforma i CUP formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`. Se il dataset non e disponibile, il checker degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
+La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core. `validate_format` resta solo formale; `OpenCupChecker` scarica/cacha l'indice OpenCUP oppure apre un indice SQLite locale e trasforma i CUP formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`. Se il dataset non è disponibile, il checker degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## Workflow
 
@@ -166,11 +166,11 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 
 La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery; anche in questo caso il `manifest_url` punta a GitHub Pages per evitare blocchi CORS. Se il dataset non è ancora pubblicato su Pages il lookup degrada in modo cautelativo.
 
-Il download dataset e rafforzato a due livelli: il browser verifica lo SHA-256 di ogni chunk prima di ricomporre lo SQLite e ritenta i chunk falliti; il service worker usa una cache dataset dedicata, separata dalla cache app-shell, con eviction delle release `dataset-YYYY-MM` precedenti. La libreria Python usa timeout espliciti per manifest/latest, chunk dataset gia elaborati e download bulk OpenCUP.
+Il download dataset è rafforzato a due livelli: il browser verifica lo SHA-256 di ogni chunk prima di ricomporre lo SQLite e ritenta i chunk falliti; il service worker usa una cache dataset dedicata, separata dalla cache app-shell, con eviction delle release `dataset-YYYY-MM` precedenti. La libreria Python usa timeout espliciti per manifest/latest, chunk dataset già elaborati e download bulk OpenCUP.
 
-La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
+La build web ricava la versione dal tag software Git più vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 
-La build Python accetta solo tag software esatti `vX.Y.Z`: il workflow pubblica su PyPI al push del tag e puo essere rilanciato manualmente con `workflow_dispatch` per recuperare un tag gia esistente. Il controllo sui file `dist/cup_check-X.Y.Z.*` blocca il publish se il versioning VCS produce una versione diversa dal tag.
+La build Python accetta solo tag software esatti `vX.Y.Z`: il workflow pubblica su PyPI al push del tag e può essere rilanciato manualmente con `workflow_dispatch` per recuperare un tag già esistente. Il controllo sui file `dist/cup_check-X.Y.Z.*` blocca il publish se il versioning VCS produce una versione diversa dal tag.
 
 ## Comandi
 
@@ -187,9 +187,9 @@ make web-preview-dataset
 
 `make dataset-release-local` genera `dist/dataset/` con `dataset-latest.json`,
 `dataset-manifest.json` e chunk `cup-index.sqlite.*`, scaricando prima il dump OpenCUP.
-La data snapshot predefinita e il primo giorno del mese UTC corrente; puo essere sovrascritta
+La data snapshot predefinita è il primo giorno del mese UTC corrente; può essere sovrascritta
 con `DATASET_SNAPSHOT_DATE=YYYY-MM-DD`.
 
-`make web-preview-dataset` richiede un dataset gia generato in `dist/dataset/`; copia
+`make web-preview-dataset` richiede un dataset già generato in `dist/dataset/`; copia
 `dataset-latest.json`, `dataset-manifest.json` e i chunk nella build web con URL relativi,
-cosi la preview Codespaces esercita il caricamento dataset same-origin.
+così la preview Codespaces esercita il caricamento dataset same-origin.

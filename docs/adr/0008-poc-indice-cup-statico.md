@@ -26,7 +26,7 @@ CREATE TABLE cup_index (
 ) WITHOUT ROWID;
 ```
 
-`detail_chunk` e sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla 0.4.0.
+`detail_chunk` è sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla 0.4.0.
 
 La pipeline genera `cup-index.sqlite`, lo divide in `cup-index.sqlite.000`,
 `cup-index.sqlite.001`, ecc. e pubblica i chunk sia nella release dataset sia nello spazio
@@ -38,9 +38,9 @@ La web app resta pinnata alle release software `v*` e recupera dinamicamente l'u
 disponibile leggendo prima `dataset-latest.json` da GitHub Pages. Le GitHub Releases restano
 archivio storico e fallback di discovery, ma il consumo browser operativo avviene da asset
 statici Pages per evitare rate limit e vincoli CORS sugli asset release. Una nuova release
-dataset puo quindi ridistribuire GitHub Pages, ma solo ricostruendo la pagina dall'artefatto
+dataset può quindi ridistribuire GitHub Pages, ma solo ricostruendo la pagina dall'artefatto
 immutabile dell'ultima release software `v*`, mai da `main`. Il browser scarica i chunk,
-ricompone lo SQLite in memoria e interroga `cup_index` tramite `sql.js`. Se il dataset non e
+ricompone lo SQLite in memoria e interroga `cup_index` tramite `sql.js`. Se il dataset non è
 disponibile, la verifica degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## Consequences
@@ -50,7 +50,7 @@ disponibile, la verifica degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 - Il lookup resta statico, senza backend applicativo.
 - La pipeline conserva SQLite come formato semplice, ispezionabile e riusabile in Python.
 - `detail_chunk` prepara il contratto per i dettagli 0.4.0 senza pubblicarli subito.
-- La web app non richiede rebuild per scoprire un dataset piu recente.
+- La web app non richiede rebuild per scoprire un dataset più recente.
 - Una release dataset aggiorna gli asset Pages del dataset senza promuovere codice web da HEAD.
 
 **Negativi/Trade-off:**

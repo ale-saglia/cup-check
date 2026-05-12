@@ -6,13 +6,13 @@
 
 ![cup-check — web app](screenshot.png)
 
-Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. Verificare manualmente centinaia o migliaia di codici prima di una trasmissione ufficiale e un'attivita ripetitiva, lenta e soggetta a errore.
+Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male può bloccare controlli, rallentare pratiche e generare correzioni costose. Verificare manualmente centinaia o migliaia di codici prima di una trasmissione ufficiale e un'attività ripetitiva, lenta e soggetta a errore.
 
 `cup-check` nasce per ridurre questo attrito operativo: aiuta funzionari, consulenti e team tecnici a controllare in batch liste di CUP prima di rendicontazioni, caricamenti o verifiche amministrative, intercettando rapidamente errori formali e assenze dal perimetro OpenCUP disponibile.
 
 Il progetto mantiene una postura cautelativa: distingue il formato valido dalla verifica di esistenza, usa un dataset OpenCUP statico e versionato quando disponibile, e non presenta mai il risultato come certificazione autoritativa.
 
-`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico e disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non e disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`.
+`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico è disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non è disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`.
 
 ## English Abstract
 
@@ -22,13 +22,13 @@ The project is designed for zero operational cost, browser-side processing, audi
 
 ## Stato
 
-Il progetto e rilasciato come web app statica e package Python.
+Il progetto è rilasciato come web app statica e package Python.
 
 ## Cosa Fa
 
 - Valida CUP da file CSV e XLSX.
 - Valida CUP incollati come testo, uno per riga.
-- Verifica la presenza nel dataset OpenCUP statico quando il dataset e disponibile.
+- Verifica la presenza nel dataset OpenCUP statico quando il dataset è disponibile.
 - Mostra risultati filtrabili per esito e testo.
 - Mostra ed esporta i risultati raggruppati per CUP o riga per riga.
 - Funziona offline dopo la prima visita.
@@ -42,13 +42,13 @@ La web app recupera il dataset OpenCUP statico come asset pubblico e cacheabile,
 
 ## Contesto PA e Open Source
 
-Il progetto e rilasciato con licenza EUPL-1.2 ed e strutturato per essere valutabile in contesti di adozione, integrazione o condivisione nella Pubblica Amministrazione, in coerenza con i principi delle Linee guida AGID su acquisizione e riuso del software.
+Il progetto è rilasciato con licenza EUPL-1.2 ed è strutturato per essere valutabile in contesti di adozione, integrazione o condivisione nella Pubblica Amministrazione, in coerenza con i principi delle Linee guida AGID su acquisizione e riuso del software.
 
-`cup-check` non e un servizio ufficiale ne una fonte autoritativa: fornisce controlli locali, auditabili e cautelativi a supporto dei processi amministrativi.
+`cup-check` non è un servizio ufficiale né una fonte autoritativa: fornisce controlli locali, auditabili e cautelativi a supporto dei processi amministrativi.
 
 ## Limiti Del Controllo
 
-`cup-check` e in fase di sviluppo: puo contenere errori, bug o interpretazioni
+`cup-check` è in fase di sviluppo: può contenere errori, bug o interpretazioni
 incomplete delle regole. I risultati sono un supporto operativo, non una
 certificazione.
 
@@ -59,7 +59,7 @@ dopo l'ultimo snapshot.
 Gli esiti possibili sono:
 
 - `INVALIDO_FORMATO` — il CUP non rispetta le regole strutturali.
-- `FORMATO_VALIDO_DA_VERIFICARE` — il CUP rispetta le regole strutturali, ma il dataset non e disponibile.
+- `FORMATO_VALIDO_DA_VERIFICARE` — il CUP rispetta le regole strutturali, ma il dataset non è disponibile.
 - `TROVATO_OPENCUP` — CUP presente nel mirror OpenCUP disponibile.
 - `NON_TROVATO_OPENCUP_DA_VERIFICARE` — CUP non presente nel mirror OpenCUP disponibile; richiede verifica cautelativa e potrebbe comunque esistere.
 

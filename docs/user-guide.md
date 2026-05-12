@@ -17,13 +17,13 @@ Hai un file con 500 CUP da verificare prima di inviare un prospetto al MEF, a un
 
 1. Apri la [web app](https://ale-saglia.github.io/cup-check/).
 2. Carica un file CSV o XLSX.
-3. Se il file Excel contiene piu fogli, scegli il foglio da controllare.
+3. Se il file Excel contiene più fogli, scegli il foglio da controllare.
 4. Verifica che la colonna proposta sia quella dei CUP. Se necessario, seleziona un'altra colonna.
 5. Indica se la prima riga contiene intestazioni.
 6. Decidi se ignorare le righe senza CUP.
 7. Avvia il controllo.
 
-La tabella risultati mostra gli esiti per CUP, con possibilita di raggruppare i codici uguali o vedere il dettaglio riga per riga nell'export CSV.
+La tabella risultati mostra gli esiti per CUP, con possibilità di raggruppare i codici uguali o vedere il dettaglio riga per riga nell'export CSV.
 
 ## Controllo Da Testo
 
@@ -40,17 +40,17 @@ Le righe vuote vengono ignorate.
 Gli esiti sono cautelativi:
 
 - `INVALIDO_FORMATO`: il CUP non rispetta le regole formali applicate dal validatore.
-- `FORMATO_VALIDO_DA_VERIFICARE`: il CUP ha formato valido, ma il dataset OpenCUP non e disponibile o il controllo e solo formale.
-- `TROVATO_OPENCUP`: il CUP e presente nel mirror OpenCUP statico disponibile alla data dello snapshot.
-- `NON_TROVATO_OPENCUP_DA_VERIFICARE`: il CUP non e presente nel mirror OpenCUP disponibile; va verificato su fonte autoritativa.
+- `FORMATO_VALIDO_DA_VERIFICARE`: il CUP ha formato valido, ma il dataset OpenCUP non è disponibile o il controllo è solo formale.
+- `TROVATO_OPENCUP`: il CUP è presente nel mirror OpenCUP statico disponibile alla data dello snapshot.
+- `NON_TROVATO_OPENCUP_DA_VERIFICARE`: il CUP non è presente nel mirror OpenCUP disponibile; va verificato su fonte autoritativa.
 
-Un `NON_TROVATO_OPENCUP_DA_VERIFICARE` non dimostra che il CUP non esista. Puo indicare un CUP recente, non pubblicato, non incluso nello snapshot mensile o da verificare con strumenti ufficiali.
+Un `NON_TROVATO_OPENCUP_DA_VERIFICARE` non dimostra che il CUP non esista. Può indicare un CUP recente, non pubblicato, non incluso nello snapshot mensile o da verificare con strumenti ufficiali.
 
-## Privacy E Offline
+## Privacy e Offline
 
 I file caricati, i CUP incollati e i report vengono elaborati nel browser. La web app non invia i dati a un backend applicativo.
 
-La web app puo scaricare asset pubblici e cacheabili, incluso il dataset OpenCUP statico. Dopo la prima visita l'interfaccia puo funzionare offline; il lookup OpenCUP dipende dalla disponibilita del dataset gia scaricato o raggiungibile.
+La web app può scaricare asset pubblici e cacheabili, incluso il dataset OpenCUP statico. Dopo la prima visita l'interfaccia può funzionare offline; il lookup OpenCUP dipende dalla disponibilità del dataset già scaricato o raggiungibile.
 
 ## Buone Pratiche
 

@@ -14,4 +14,4 @@ Non usiamo bloom filter o dataset derivati nel MVP.
 
 ## Consequences
 
-Il prodotto resta onesto sui limiti: un CUP formalmente valido e sempre `FORMATO_VALIDO_DA_VERIFICARE`.
+Il prodotto resta onesto sui limiti: un CUP formalmente valido è sempre `FORMATO_VALIDO_DA_VERIFICARE`.

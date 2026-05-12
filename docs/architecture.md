@@ -83,4 +83,4 @@ Il browser scarica sempre l'indice solo quando serve la verifica OpenCUP. Scaric
 
 ## Architettura Target
 
-Una futura verifica autoritativa potra aggiungere un endpoint/proxy API MEF/Sogei o un checker Python con credenziali fornite dall'utente. Questa parte resta fuori dallo scope attuale e deve preservare la regola centrale: nessun esito di esistenza senza fonte autoritativa o dataset esatto.
+Una futura verifica autoritativa potrà aggiungere un endpoint/proxy API MEF/Sogei o un checker Python con credenziali fornite dall'utente. Questa parte resta fuori dallo scope attuale e deve preservare la regola centrale: nessun esito di esistenza senza fonte autoritativa o dataset esatto.

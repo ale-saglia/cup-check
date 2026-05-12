@@ -6,9 +6,9 @@ Accepted
 
 ## Context
 
-La roadmap iniziale prevedeva una CLI come secondo canale d'uso dopo la web app. Il caso d'uso emerso e diverso: chi integra `cup-check` in processi PA o gestionali ha piu valore da una libreria Python importabile che da un comando da invocare via subprocess.
+La roadmap iniziale prevedeva una CLI come secondo canale d'uso dopo la web app. Il caso d'uso emerso è diverso: chi integra `cup-check` in processi PA o gestionali ha più valore da una libreria Python importabile che da un comando da invocare via subprocess.
 
-La CLI aggiungerebbe dipendenze, interfacce e manutenzione senza essere necessaria per il valore principale. Se servira, potra essere costruita in futuro come wrapper sottile sopra la libreria.
+La CLI aggiungerebbe dipendenze, interfacce e manutenzione senza essere necessaria per il valore principale. Se servirà, potrà essere costruita in futuro come wrapper sottile sopra la libreria.
 
 ## Decision
 
@@ -24,6 +24,6 @@ Il package non include parser CSV/XLSX nel core. Accetta stringhe o iterabili di
 
 ## Consequences
 
-La superficie pubblica resta piu piccola e adatta all'integrazione applicativa.
+La superficie pubblica resta più piccola e adatta all'integrazione applicativa.
 
-I fixture YAML restano la specifica funzionale condivisa tra web e Python. La CLI non e esclusa per sempre, ma non guida l'architettura del progetto.
+I fixture YAML restano la specifica funzionale condivisa tra web e Python. La CLI non è esclusa per sempre, ma non guida l'architettura del progetto.

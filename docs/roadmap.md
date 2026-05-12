@@ -31,9 +31,9 @@
 3. Indice SQLite ottimizzato `WITHOUT ROWID`, tabella `cup_index`, chiave `cup` e `detail_chunk` per ora `NULL`.
 4. Indice CUP esatto pubblicato nella release dataset, servito da GitHub Pages e descritto da `dataset-manifest.json` con sezione `cup_index`.
 5. Chunk dell'indice scaricabili e cacheabili dal browser senza servizi server-side.
-6. Integrazione web: lookup locale nel browser sui CUP unici con `sql.js`, latest dataset dinamico e fallback a `FORMATO_VALIDO_DA_VERIFICARE` se il dataset non e disponibile.
+6. Integrazione web: lookup locale nel browser sui CUP unici con `sql.js`, latest dataset dinamico e fallback a `FORMATO_VALIDO_DA_VERIFICARE` se il dataset non è disponibile.
 7. `OpenCupChecker` Python con download/cache locale dell'indice.
-8. Manifest con hash, dimensioni, snapshot fonte e compatibilita minima software.
+8. Manifest con hash, dimensioni, snapshot fonte e compatibilità minima software.
 9. Nuovi esiti `TROVATO_OPENCUP` e `NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 10. ADR per strategia statica browser lookup (ADR 0007) e SQLite chunked distribuito via Pages/Releases (ADR 0008).
 

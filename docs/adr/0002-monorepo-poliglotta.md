@@ -6,7 +6,7 @@ Accepted
 
 ## Context
 
-Il browser richiede JavaScript per l'app statica, mentre la libreria importabile e Python.
+Il browser richiede JavaScript per l'app statica, mentre la libreria importabile è Python.
 
 ## Decision
 
