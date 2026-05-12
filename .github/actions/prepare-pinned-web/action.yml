@@ -1,0 +1,106 @@
+name: Prepare pinned web
+description: Resolve the latest software tag and populate the Pages root with its web build.
+
+inputs:
+  github-token:
+    description: GitHub token used by gh.
+    required: true
+  repository:
+    description: Repository in owner/name form.
+    required: true
+  pages-root:
+    description: Directory populated with the pinned web build.
+    required: false
+    default: dist/pages-root
+  web-artifact-dir:
+    description: Directory used to download the release web artifact.
+    required: false
+    default: dist/web
+
+outputs:
+  software-tag:
+    description: Resolved software tag.
+    value: ${{ steps.software.outputs.tag }}
+  source:
+    description: Source used for the web build, either artifact or build.
+    value: ${{ steps.source.outputs.source }}
+
+runs:
+  using: composite
+  steps:
+    - name: Resolve latest software release
+      id: software
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPOSITORY: ${{ inputs.repository }}
+      run: |
+        SOFTWARE_TAG="$(gh release list \
+          --repo "${REPOSITORY}" \
+          --exclude-drafts \
+          --exclude-pre-releases \
+          --limit 100 \
+          --json tagName,publishedAt \
+          --jq '[.[] | select(.tagName | test("^v[0-9]"))] | sort_by(.publishedAt) | last | .tagName')"
+        if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
+          echo "No published GitHub Release v* found, falling back to latest git tag." >&2
+          SOFTWARE_TAG="$(gh api "repos/${REPOSITORY}/tags" \
+            --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name) | last | .name')"
+        fi
+        if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
+          echo "No software tag v* was found." >&2
+          exit 1
+        fi
+        echo "tag=${SOFTWARE_TAG}" >> "$GITHUB_OUTPUT"
+
+    - name: Download pinned web artifact
+      id: web_artifact
+      continue-on-error: true
+      shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.github-token }}
+        REPOSITORY: ${{ inputs.repository }}
+        PAGES_ROOT: ${{ github.workspace }}/${{ inputs.pages-root }}
+        WEB_ARTIFACT_DIR: ${{ github.workspace }}/${{ inputs.web-artifact-dir }}
+      run: |
+        mkdir -p "${WEB_ARTIFACT_DIR}" "${PAGES_ROOT}"
+        gh release download "${{ steps.software.outputs.tag }}" \
+          --repo "${REPOSITORY}" \
+          --pattern web-dist.tar.gz \
+          --dir "${WEB_ARTIFACT_DIR}"
+        tar -xzf "${WEB_ARTIFACT_DIR}/web-dist.tar.gz" -C "${PAGES_ROOT}"
+
+    - uses: actions/checkout@v4
+      if: steps.web_artifact.outcome == 'failure'
+      with:
+        ref: ${{ steps.software.outputs.tag }}
+        fetch-depth: 0
+
+    - uses: actions/setup-node@v4
+      if: steps.web_artifact.outcome == 'failure'
+      with:
+        node-version: 22
+        cache: npm
+        cache-dependency-path: packages/web/package-lock.json
+
+    - name: Build pinned web from software tag
+      if: steps.web_artifact.outcome == 'failure'
+      shell: bash
+      env:
+        PAGES_ROOT: ${{ github.workspace }}/${{ inputs.pages-root }}
+      run: |
+        cd "${GITHUB_WORKSPACE}/packages/web"
+        npm ci
+        npm run build
+        mkdir -p "${PAGES_ROOT}"
+        cp -a dist/. "${PAGES_ROOT}/"
+
+    - name: Resolve web source
+      id: source
+      shell: bash
+      run: |
+        if [ "${{ steps.web_artifact.outcome }}" = "success" ]; then
+          echo "source=artifact" >> "$GITHUB_OUTPUT"
+        else
+          echo "source=build" >> "$GITHUB_OUTPUT"
+        fi

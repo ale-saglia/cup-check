@@ -114,63 +114,13 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - name: Resolve latest software release
-        id: software
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          SOFTWARE_TAG="$(gh release list \
-            --repo "${{ github.repository }}" \
-            --exclude-drafts \
-            --exclude-pre-releases \
-            --limit 100 \
-            --json tagName,publishedAt \
-            --jq '[.[] | select(.tagName | test("^v[0-9]"))] | sort_by(.publishedAt) | last | .tagName')"
-          if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
-            echo "No published GitHub Release v* found, falling back to latest git tag." >&2
-            SOFTWARE_TAG="$(gh api "repos/${{ github.repository }}/tags" \
-              --jq '[.[] | select(.name | test("^v[0-9]"))] | sort_by(.name) | last | .name')"
-          fi
-          if [ -z "$SOFTWARE_TAG" ] || [ "$SOFTWARE_TAG" = "null" ]; then
-            echo "No software tag v* was found." >&2
-            exit 1
-          fi
-          echo "tag=${SOFTWARE_TAG}" >> "$GITHUB_OUTPUT"
-
-      - name: Download latest pinned web artifact
-        id: web_artifact
-        continue-on-error: true
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          mkdir -p dist/web dist/pages-root
-          gh release download "${{ steps.software.outputs.tag }}" \
-            --repo "${{ github.repository }}" \
-            --pattern web-dist.tar.gz \
-            --dir dist/web
-          tar -xzf dist/web/web-dist.tar.gz -C dist/pages-root
-
       - uses: actions/checkout@v4
-        if: steps.web_artifact.outcome == 'failure'
-        with:
-          ref: ${{ steps.software.outputs.tag }}
-          fetch-depth: 0
 
-      - uses: actions/setup-node@v4
-        if: steps.web_artifact.outcome == 'failure'
+      - name: Prepare pinned web
+        uses: ./.github/actions/prepare-pinned-web
         with:
-          node-version: 22
-          cache: npm
-          cache-dependency-path: packages/web/package-lock.json
-
-      - name: Build latest software release web
-        if: steps.web_artifact.outcome == 'failure'
-        run: |
-          npm ci
-          npm run build
-          mkdir -p ../../dist/pages-root
-          cp -a dist/. ../../dist/pages-root/
-        working-directory: packages/web
+          github-token: ${{ github.token }}
+          repository: ${{ github.repository }}
 
       - uses: actions/download-artifact@v4
         with:
