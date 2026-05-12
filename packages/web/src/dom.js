@@ -59,6 +59,10 @@ export function mountApp(root = document.querySelector('#app')) {
             <div class="section-head">
               <p id="file-meta"></p>
               <div class="preview-options">
+                <label id="sheet-select-label" class="hidden">
+                  Scheda Excel
+                  <select id="sheet-select"></select>
+                </label>
                 <label class="toggle">
                   <input id="header-toggle" type="checkbox" />
                   <span>La prima riga contiene intestazioni</span>
@@ -164,6 +168,8 @@ export function mountApp(root = document.querySelector('#app')) {
     resultsToggle: root.querySelector('#results-toggle'),
     resultsToggleMeta: root.querySelector('#results-toggle-meta'),
     fileMeta: root.querySelector('#file-meta'),
+    sheetSelectLabel: root.querySelector('#sheet-select-label'),
+    sheetSelect: root.querySelector('#sheet-select'),
     headerToggle: root.querySelector('#header-toggle'),
     columnSelect: root.querySelector('#column-select'),
     previewTable: root.querySelector('#preview-table'),

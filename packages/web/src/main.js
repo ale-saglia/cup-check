@@ -29,6 +29,7 @@ const dom = mountApp();
 initDialogs(dom);
 
 let dataset = null;
+let selectedFile = null;
 const datasetPromise = initializeDataset();
 
 async function initializeDataset() {
@@ -102,11 +103,26 @@ dom.fileInput.addEventListener('change', async (event) => {
   }
 
   try {
+    selectedFile = file;
     state.parsed = await parseFile(file);
     state.fileName = file.name.replace(/\.[^.]+$/, '');
     state.displayFileName = file.name;
+    state.selectedSheetName = state.parsed.selectedSheetName ?? '';
     state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
     renderPreview(state, dom, file);
+  } catch (error) {
+    alert(error.message);
+  }
+});
+
+dom.sheetSelect.addEventListener('change', async () => {
+  if (!selectedFile) return;
+
+  try {
+    state.parsed = await parseFile(selectedFile, { sheetName: dom.sheetSelect.value });
+    state.selectedSheetName = state.parsed.selectedSheetName ?? '';
+    state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
+    renderPreviewData(state, dom);
   } catch (error) {
     alert(error.message);
   }
@@ -118,7 +134,7 @@ dom.columnSelect.addEventListener('change', () => {
 });
 
 dom.headerToggle.addEventListener('change', () => {
-  state.parsed = buildParsedRows(state.parsed.rawRows, dom.headerToggle.checked);
+  state.parsed = rebuildParsedRows(state.parsed.rawRows, dom.headerToggle.checked);
   state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
   renderPreviewData(state, dom);
 });
@@ -179,9 +195,18 @@ dom.exportButton.addEventListener('click', () => {
 });
 
 function resetApp() {
+  selectedFile = null;
   resetState();
   resetView(dom);
   sessionStorage.removeItem('cup-check:last-results');
+}
+
+function rebuildParsedRows(rawRows, headerPresent) {
+  const { sheetNames, selectedSheetName } = state.parsed;
+  return {
+    ...buildParsedRows(rawRows, headerPresent),
+    ...(sheetNames ? { sheetNames, selectedSheetName } : {}),
+  };
 }
 
 function isMissingCup(row) {

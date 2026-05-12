@@ -40,6 +40,7 @@ export function renderPreviewData(state, dom, fileName = state.displayFileName) 
   dom.previewToggleMeta.textContent = `${state.parsed.rows.length} righe`;
   dom.headerToggle.checked = state.parsed.headerPresent;
   dom.skipMissingCupInput.checked = state.skipMissingCup;
+  renderSheetSelect(state, dom);
   dom.columnSelect.innerHTML = state.parsed.headers
     .map(
       (header, index) =>
@@ -157,6 +158,8 @@ export function resetView(dom) {
   dom.previewToggleMeta.textContent = 'Nessun file';
   dom.resultsToggleMeta.textContent = 'Nessun risultato';
   dom.columnSelect.innerHTML = '';
+  dom.sheetSelect.innerHTML = '';
+  dom.sheetSelectLabel.classList.add('hidden');
   dom.previewTable.innerHTML = '';
   dom.resultsTable.innerHTML = '';
   dom.summary.textContent = '';
@@ -193,6 +196,23 @@ function headerDetectionMeta(parsed) {
   return parsed.headerPresent
     ? 'intestazione impostata manualmente'
     : 'prima riga trattata manualmente come dati';
+}
+
+function renderSheetSelect(state, dom) {
+  const sheetNames = state.parsed.sheetNames ?? [];
+  const hasMultipleSheets = sheetNames.length > 1;
+  dom.sheetSelectLabel.classList.toggle('hidden', !hasMultipleSheets);
+  dom.sheetSelect.disabled = !hasMultipleSheets;
+
+  if (!hasMultipleSheets) {
+    dom.sheetSelect.innerHTML = '';
+    return;
+  }
+
+  dom.sheetSelect.innerHTML = sheetNames
+    .map((sheetName) => `<option value="${escapeHtml(sheetName)}">${escapeHtml(sheetName)}</option>`)
+    .join('');
+  dom.sheetSelect.value = state.selectedSheetName || state.parsed.selectedSheetName || sheetNames[0];
 }
 
 function renderRowsCell(result) {

@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Aggiunge nella preview XLSX un selettore scheda quando il file contiene più fogli.
 - Corregge il workflow PyPI: il publish Python ora parte solo da tag software `vX.Y.Z` o da dispatch manuale sullo stesso formato, evitando release dataset e versioni VCS spurie.
 
 ## 0.3.1 - 2026-05-11

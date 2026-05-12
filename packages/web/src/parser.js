@@ -1,13 +1,13 @@
 import Papa from 'papaparse';
-import readXlsxFile from 'read-excel-file';
+import readXlsxFile, { readSheetNames } from 'read-excel-file';
 
 const SUPPORTED_CSV_TYPES = ['text/csv', 'application/vnd.ms-excel'];
 
-export async function parseFile(file) {
+export async function parseFile(file, options = {}) {
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   if (extension === 'xlsx') {
-    return parseXlsx(file);
+    return parseXlsx(file, options.sheetName);
   }
 
   if (extension === 'csv' || SUPPORTED_CSV_TYPES.includes(file.type)) {
@@ -60,12 +60,17 @@ async function parseCsv(file) {
   });
 }
 
-async function parseXlsx(file) {
-  const rows = await readXlsxFile(file);
-  return normalizeRows(rows);
+async function parseXlsx(file, sheetName) {
+  const sheetNames = await readSheetNames(file);
+  const selectedSheetName = sheetName ?? sheetNames[0];
+  const rows = await readXlsxFile(file, { sheet: selectedSheetName });
+  return normalizeRows(rows, { sheetNames, selectedSheetName });
 }
 
-function normalizeRows(rawRows) {
+function normalizeRows(rawRows, metadata = {}) {
   const rows = rawRows.map((row) => row.map((cell) => String(cell ?? '')));
-  return buildParsedRows(rows, hasHeader(rows[0] ?? []));
+  return {
+    ...buildParsedRows(rows, hasHeader(rows[0] ?? [])),
+    ...metadata,
+  };
 }

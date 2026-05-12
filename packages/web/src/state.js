@@ -7,6 +7,7 @@ const INITIAL_STATE = {
   query: '',
   fileName: 'report',
   displayFileName: 'report',
+  selectedSheetName: '',
   skipMissingCup: true,
 };
 
