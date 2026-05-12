@@ -28,6 +28,7 @@ export function renderPreview(state, dom, file) {
   collapsePanel(dom.filePanel, dom.fileToggle);
   collapsePanel(dom.textPanel, dom.textToggle);
   dom.fileToggleMeta.textContent = file.name;
+  dom.fileToggleMeta.title = file.name;
   dom.previewPanel.classList.remove('hidden');
   expandPanel(dom.previewPanel, dom.previewToggle);
   dom.resultsPanel.classList.add('hidden');
@@ -36,7 +37,9 @@ export function renderPreview(state, dom, file) {
 
 export function renderPreviewData(state, dom, fileName = state.displayFileName) {
   const headerMeta = headerDetectionMeta(state.parsed);
-  dom.fileMeta.textContent = `${fileName} - ${state.parsed.rows.length} righe dati - ${headerMeta}`;
+  dom.fileMeta.innerHTML = `<span class="file-meta-name" title="${escapeHtml(fileName)}">${escapeHtml(
+    fileName,
+  )}</span><span class="file-meta-detail"> - ${state.parsed.rows.length} righe dati - ${headerMeta}</span>`;
   dom.previewToggleMeta.textContent = `${state.parsed.rows.length} righe`;
   dom.headerToggle.checked = state.parsed.headerPresent;
   dom.skipMissingCupInput.checked = state.skipMissingCup;
@@ -130,7 +133,7 @@ export function renderResultsTable(state, dom) {
           (result) => `
             <tr>
               <td>${renderRowsCell(result)}</td>
-              <td><code>${escapeHtml(result.normalizedValue)}</code></td>
+              <td title="${escapeHtml(result.normalizedValue)}"><code class="cup-cell">${escapeHtml(result.normalizedValue)}</code></td>
               <td><span class="badge ${badgeClass(result.outcome)}">${result.outcome}</span></td>
               <td title="${escapeHtml(resultDetail(result))}"><div class="detail-cell">${escapeHtml(resultDetail(result))}</div></td>
               <td>${opencupCell(result)}</td>
@@ -154,6 +157,7 @@ export function resetView(dom) {
   expandPanel(dom.filePanel, dom.fileToggle);
   expandPanel(dom.textPanel, dom.textToggle);
   dom.fileToggleMeta.textContent = 'Nessun file caricato';
+  dom.fileToggleMeta.removeAttribute('title');
   dom.textToggleMeta.textContent = 'Nessun testo inserito';
   dom.previewToggleMeta.textContent = 'Nessun file';
   dom.resultsToggleMeta.textContent = 'Nessun risultato';

@@ -56,18 +56,20 @@ export function mountApp(root = document.querySelector('#app')) {
             <span id="preview-toggle-meta">Nessun file</span>
           </button>
           <div id="preview-controls" class="panel-body">
-            <div class="section-head">
-              <p id="file-meta"></p>
-              <div class="preview-options">
-                <label id="sheet-select-label" class="hidden">
+            <div class="section-head preview-head">
+              <div class="preview-row">
+                <p id="file-meta"></p>
+                <label id="sheet-select-label" class="preview-select hidden">
                   Scheda Excel
                   <select id="sheet-select"></select>
                 </label>
+              </div>
+              <div class="preview-row">
                 <label class="toggle">
                   <input id="header-toggle" type="checkbox" />
                   <span>La prima riga contiene intestazioni</span>
                 </label>
-                <label>
+                <label class="preview-select">
                   Colonna CUP
                   <select id="column-select"></select>
                 </label>
