@@ -8,6 +8,19 @@
 
 Ogni modifica alle regole di validazione deve partire da un aggiornamento dei fixture.
 
+## Postura Epistemica
+
+Il prodotto preferisce segnalare un CUP come "da verificare" piuttosto che dichiarare valido un CUP fasullo. Nessun esito di esistenza viene prodotto senza una fonte autoritativa o un dataset esatto che ne delimiti chiaramente il perimetro. Strutture probabilistiche, come Bloom filter, non possono essere fonte primaria di esiti utente.
+
+## Principi
+
+- **Proporzionalità**: nessuna tecnologia senza un problema specifico.
+- **Onestà sui limiti**: UI e API devono dichiarare cosa è e cosa non viene verificato.
+- **Asimmetria di rischio**: i falsi positivi sono peggio dei falsi negativi cautelativi.
+- **Cautela sui controlli sostanziali**: le discrepanze tra atto e dataset sono sempre "da verificare", mai giudizi automatici di incoerenza definitiva.
+- **Stack appropriato**: JavaScript minimale nel browser, Python dove serve integrazione o pipeline.
+- **Degradazione graceful**: se una fonte esterna fallisce, il check locale resta disponibile.
+
 ## Sicurezza E Privacy
 
 - Nell'MVP nessun dato dell'utente lascia il browser.

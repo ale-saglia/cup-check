@@ -1,5 +1,11 @@
 # cup-check
 
+> Local-first validator for Italian public project codes (CUP), with OpenCUP lookup and Python library.
+
+**[Web app](https://ale-saglia.github.io/cup-check/)** · [Python package](https://pypi.org/project/cup-check/) · [Documentazione](docs/product.md)
+
+![cup-check — web app](screenshot.png)
+
 Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. `cup-check` aiuta enti, consulenti e team tecnici a intercettare subito gli errori formali prima di caricare o condividere elenchi di Codici Unici di Progetto.
 
 Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
@@ -47,94 +53,15 @@ Gli esiti possibili sono:
 
 Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il portale OpenCUP.
 
-## Quickstart sviluppo
-
-```bash
-cd packages/web
-npm install
-npm run dev
-```
-
-Per la libreria Python:
-
-```bash
-cd packages/cup_check
-uv sync --dev
-uv run pytest
-```
-
-Esempio d'uso con lookup OpenCUP locale/cacheato:
-
-```python
-from cup_check import OpenCupChecker
-
-with OpenCupChecker.from_latest(cache_dir=".cup-check-cache") as checker:
-    result = checker.check("G17H03000130001")
-
-print(result.outcome)
-```
-
-Oppure apri il repo in Dev Containers / Codespaces. Il container include Node.js 22,
-npm, uv, make, ripgrep, GitHub CLI, Chromium e Lighthouse; al primo avvio esegue
-`make setup`.
-
-Comandi principali:
-
-```bash
-make help
-make check
-make release-check
-make python-build
-make dataset-release-local
-make web-dev
-make web-preview
-make web-preview-dataset
-```
-
-`make dataset-release-local` scarica il dump OpenCUP e genera `dist/dataset/` con manifest
-e chunk SQLite per prove locali. Il download e grande: usalo solo quando serve rigenerare
-il dataset.
-
-`make web-preview-dataset` usa il dataset locale in `dist/dataset/`, lo copia nella build web
-con URL relativi e avvia la preview statica. Serve per provare in Codespaces lo stesso
-percorso same-origin usato da GitHub Pages.
-
-`make release-check` aggiunge alle verifiche veloci un test browser con upload XLSX
-da 10.000 righe, reload offline PWA e controllo Lighthouse con soglie MVP.
-
-## Regole MVP
-
-Un CUP e `FORMATO_VALIDO_DA_VERIFICARE` solo se, dopo `trim`:
-
-- ha 15 caratteri;
-- contiene solo lettere maiuscole e cifre;
-- il primo carattere e una lettera;
-- le posizioni 5-6 rappresentano un anno a due cifre non futuro;
-- il quarto carattere e una lettera.
-
-In tutti gli altri casi l'esito e `INVALIDO_FORMATO`.
-
-I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale del validatore.
-
-## Struttura
-
-- `tests/fixtures/`: specifica funzionale YAML condivisa.
-- `packages/web/`: web app Vite vanilla JS.
-- `packages/cup_check/`: libreria Python pubblicata come `cup-check`.
-- `docs/`: documentazione di progetto, architettura, roadmap, fonti dati e governance.
-- `.github/workflows/`: CI, deploy Pages e publish PyPI su release.
-
 ## Documentazione
 
-- [Progetto](docs/project.md)
+- [Sviluppo](docs/development.md)
 - [Product](docs/product.md)
-- [MVP 0.1.0](docs/mvp.md)
 - [Architettura](docs/architecture.md)
 - [Specifiche tecniche](docs/technical-spec.md)
 - [Roadmap](docs/roadmap.md)
 - [Fonti dati](docs/data-sources.md)
 - [Governance](docs/governance.md)
-- [Parity](docs/parity.md)
 - [Glossario](docs/glossary.md)
 - [ADR](docs/adr/)
 

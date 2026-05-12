@@ -27,15 +27,13 @@ cup-check/
 ├── CHANGELOG.md
 ├── Makefile
 ├── docs/
-│   ├── project.md
 │   ├── product.md
-│   ├── mvp.md
 │   ├── architecture.md
 │   ├── technical-spec.md
 │   ├── data-sources.md
 │   ├── governance.md
-│   ├── parity.md
 │   ├── roadmap.md
+│   ├── development.md
 │   ├── glossary.md
 │   └── adr/
 ├── packages/
@@ -65,7 +63,39 @@ Regole:
 
 - aggiornare i fixture prima dell'implementazione quando cambia una regola;
 - non duplicare fixture per linguaggio;
-- web e libreria Python devono produrre gli stessi esiti sugli stessi fixture.
+- se un input è vuoto, l'unica regola fallita è `R0`;
+- web e libreria Python devono produrre gli stessi esiti e le stesse `failedRules` sugli stessi fixture.
+
+Per verificare la parity:
+
+```bash
+cd packages/web && npm test
+cd packages/cup_check && uv run pytest
+```
+
+## Regole di Formato
+
+Il valore viene normalizzato con `trim` + uppercase prima di applicare le regole.
+
+| Regola | Specifica |
+| ------ | --------- |
+| `R0`   | valore vuoto dopo trim |
+| `R1`   | lunghezza diversa da 15 caratteri dopo trim |
+| `R2`   | charset diverso da lettere maiuscole A-Z e cifre 0-9 |
+| `R3`   | prima posizione non alfabetica |
+| `R4`   | posizioni 5-6 non sono un anno plausibile non futuro |
+| `R5`   | quarta posizione non alfabetica |
+
+Se il valore è vuoto, l'unica regola fallita è `R0`. Se almeno una regola fallisce, l'esito è `INVALIDO_FORMATO`. Se tutte passano, l'esito è `FORMATO_VALIDO_DA_VERIFICARE`.
+
+Avvisi non bloccanti:
+
+| Avviso | Specifica |
+| ------ | --------- |
+| `N1`   | spazi bianchi rimossi dal CUP |
+| `N2`   | lettere convertite in maiuscolo |
+
+I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale normativa.
 
 ## Contratto Validatore
 

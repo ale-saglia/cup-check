@@ -44,9 +44,4 @@ L'evoluzione prevista e incrementale: nelle prime milestone il prodotto risponde
 
 ## Principi
 
-- Proporzionalita: nessuna tecnologia senza un problema specifico.
-- Onesta sui limiti: UI e API devono dichiarare cosa e cosa non viene verificato.
-- Asimmetria di rischio: i falsi positivi sono peggio dei falsi negativi cautelativi.
-- Cautela sui controlli sostanziali: le discrepanze tra atto e dataset sono sempre "da verificare", mai giudizi automatici di incoerenza definitiva.
-- Stack appropriato: JavaScript minimale nel browser, Python dove serve integrazione o pipeline.
-- Degradazione graceful: se una fonte esterna fallisce, il check locale resta disponibile.
+Vedi [Governance](governance.md#principi).
