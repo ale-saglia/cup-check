@@ -8,7 +8,7 @@
 
 Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. Verificare manualmente centinaia o migliaia di codici prima di una trasmissione ufficiale e un'attivita ripetitiva, lenta e soggetta a errore.
 
-`cup-check` nasce per ridurre questo attrito operativo: aiuta funzionari, consulenti e team tecnici a intercettare rapidamente errori formali e assenze dal perimetro OpenCUP disponibile, prima di caricare, condividere o consolidare elenchi di Codici Unici di Progetto.
+`cup-check` nasce per ridurre questo attrito operativo: aiuta funzionari, consulenti e team tecnici a controllare in batch liste di CUP prima di rendicontazioni, caricamenti o verifiche amministrative, intercettando rapidamente errori formali e assenze dal perimetro OpenCUP disponibile.
 
 Il progetto mantiene una postura cautelativa: distingue il formato valido dalla verifica di esistenza, usa un dataset OpenCUP statico e versionato quando disponibile, e non presenta mai il risultato come certificazione autoritativa.
 
@@ -16,7 +16,7 @@ Il progetto mantiene una postura cautelativa: distingue il formato valido dalla 
 
 ## English Abstract
 
-`cup-check` is an open source, local-first tool for checking Italian CUP codes used in public investment projects. It helps public administrations and technical teams find format errors and compare codes with a static OpenCUP mirror before formal reporting or downstream validation.
+`cup-check` is an open source, local-first tool for checking Italian CUP codes used in public investment projects before administrative reporting, uploads or downstream validation. It helps public administrations and technical teams review large CUP lists, find format errors and compare codes with a static OpenCUP mirror.
 
 The project is designed for zero operational cost, browser-side processing, auditable rules and cautious outcomes. It is not an authoritative certification service: final existence checks still belong to the official CUP/OpenCUP channels.
 
@@ -39,6 +39,12 @@ Il progetto e rilasciato come web app statica e package Python.
 File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app non carica i CUP, i file o i report su un backend applicativo.
 
 La web app recupera il dataset OpenCUP statico come asset pubblico e cacheabile, senza servizi server-side applicativi. I file caricati dagli utenti e i report restano elaborati localmente.
+
+## Contesto PA E Open Source
+
+Il progetto e rilasciato con licenza EUPL-1.2 ed e strutturato per essere valutabile in contesti di adozione, integrazione o condivisione nella Pubblica Amministrazione, in coerenza con i principi delle Linee guida AGID su acquisizione e riuso del software.
+
+`cup-check` non e un servizio ufficiale ne una fonte autoritativa: fornisce controlli locali, auditabili e cautelativi a supporto dei processi amministrativi.
 
 ## Limiti Del Controllo
 
