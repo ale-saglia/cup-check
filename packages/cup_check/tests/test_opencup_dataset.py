@@ -281,6 +281,40 @@ def test_download_projects_zip_reports_progress_every_interval(
     assert progress_calls == [3, 6]
 
 
+def test_download_projects_zip_requires_positive_progress_interval_when_reporting(
+    tmp_path: Path,
+) -> None:
+    with pytest.raises(ValueError, match="progress_interval_bytes must be positive"):
+        download_projects_zip(
+            tmp_path / "OpendataProgetti.zip",
+            source_url="https://example.test/opencup.zip",
+            progress_interval_bytes=0,
+            on_progress=lambda downloaded_bytes: None,
+        )
+
+
+def test_build_sqlite_logs_batch_progress(
+    tmp_path: Path,
+    monkeypatch,
+    caplog: pytest.LogCaptureFixture,
+) -> None:
+    def iter_cups_with_natura(source_zip: str | Path):
+        assert source_zip == tmp_path / "OpendataProgetti.zip"
+        for index in range(10_000):
+            yield f"A00B26{index:09d}", None
+
+    monkeypatch.setattr(opencup_dataset, "_iter_cups_with_natura", iter_cups_with_natura)
+
+    with caplog.at_level(logging.INFO, logger=opencup_dataset.__name__):
+        n_records = build_sqlite_from_projects_zip(
+            tmp_path / "OpendataProgetti.zip",
+            tmp_path / "cup-index.sqlite",
+        )
+
+    assert n_records == 10_000
+    assert "10,000 record letti..." in caplog.text
+
+
 def test_build_sqlite_skips_invalid_cups(tmp_path: Path) -> None:
     source_zip = tmp_path / "OpendataProgetti.zip"
     csv_content = "\n".join(
@@ -332,6 +366,63 @@ def test_project_records_handle_unrecognized_date_format(tmp_path: Path) -> None
 
     assert len(records) == 1
     assert records[0].data_chiusura_revoca is None
+
+
+def test_project_records_accept_custom_schema_path(tmp_path: Path) -> None:
+    source_zip = tmp_path / "OpendataProgetti.zip"
+    schema_path = tmp_path / "custom-schema.yaml"
+    schema_path.write_text(
+        "\n".join(
+            [
+                "schema_version: 1",
+                "columns:",
+                '  - {target: cup, source: CODICE_CUP, type: cup}',
+                '  - {target: natura, source: TIPO, type: category}',
+                '  - {target: year_suffix, source: CODICE_CUP, type: cup_year_suffix}',
+                '  - {target: piva_cf_titolare, source: TITOLARE, type: optional_text}',
+                '  - {target: piva_cf_beneficiario, source: BENEFICIARIO, type: optional_text}',
+                '  - {target: costo_progetto_cents, source: COSTO, type: money_cents}',
+                "  - target: finanziamento_progetto_cents",
+                "    source: FINANZIAMENTO",
+                "    type: money_cents",
+                '  - {target: descrizione_full, source: DESCRIZIONE, type: joined_text}',
+                '  - {target: attivo, source: STATO, type: bool_equals, true_values: [APERTO]}',
+                '  - {target: data_chiusura_revoca, source: CHIUSURA, type: date}',
+                '  - {target: cup_master, source: MASTER, type: optional_cup}',
+                '  - {target: updated_on, source: AGGIORNATO, type: first_date}',
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    csv_content = "\n".join(
+        [
+            '"CODICE_CUP";"TIPO";"COSTO";"FINANZIAMENTO";"DESCRIZIONE";"STATO";"AGGIORNATO"',
+            '"h11b22001230001";"Servizi";"10,50";"5,00";"Riga custom";"APERTO";"2026-05-09"',
+        ]
+    )
+    with ZipFile(source_zip, "w") as archive:
+        archive.writestr("custom.csv", csv_content.encode("utf-8"))
+
+    records = tuple(iter_project_records(source_zip, schema_path=schema_path))
+
+    assert len(records) == 1
+    assert records[0].cup == "H11B22001230001"
+    assert records[0].natura == "Servizi"
+    assert records[0].costo_progetto_cents == 1050
+    assert records[0].attivo is True
+    assert records[0].updated_on == date(2026, 5, 9)
+
+    sqlite_path = tmp_path / "custom-cup-index.sqlite"
+    n_records = build_sqlite_from_projects_zip(
+        source_zip, sqlite_path, schema_path=schema_path
+    )
+
+    with sqlite3.connect(sqlite_path) as connection:
+        rows = connection.execute("SELECT cup, detail_chunk FROM cup_index").fetchall()
+
+    assert n_records == 1
+    assert rows == [("H11B22001230001", None)]
 
 
 def test_mapped_value_raises_for_unsupported_type() -> None:

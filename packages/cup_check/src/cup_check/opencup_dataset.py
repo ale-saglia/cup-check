@@ -100,11 +100,16 @@ def build_sqlite_from_projects_zip(
     *,
     schema_path: Path | None = None,
 ) -> int:
-    return _build_sqlite_from_projects_zip(source_zip, sqlite_path).n_records
+    return _build_sqlite_from_projects_zip(
+        source_zip, sqlite_path, schema_path=schema_path
+    ).n_records
 
 
 def _build_sqlite_from_projects_zip(
-    source_zip: str | Path, sqlite_path: str | Path
+    source_zip: str | Path,
+    sqlite_path: str | Path,
+    *,
+    schema_path: Path | None = None,
 ) -> SqliteBuildResult:
     sqlite_output_path = Path(sqlite_path)
     sqlite_output_path.parent.mkdir(parents=True, exist_ok=True)
@@ -120,7 +125,7 @@ def _build_sqlite_from_projects_zip(
         connection.execute("DROP TABLE IF EXISTS cups")
         connection.execute("DROP TABLE IF EXISTS cup_index")
         connection.execute(_create_table_sql("cup_index"))
-        for cup, natura in _iter_cups_with_natura(source_zip):
+        for cup, natura in _iter_index_rows(source_zip, schema_path):
             total_records += 1
             if natura is not None and natura not in natura_indexes:
                 natura_indexes[natura] = len(natura_categories)
@@ -194,6 +199,17 @@ def _iter_cups_with_natura(source_zip: str | Path) -> Iterator[tuple[str, str | 
                     yield cup, natura
 
 
+def _iter_index_rows(
+    source_zip: str | Path, schema_path: Path | None
+) -> Iterator[tuple[str, str | None]]:
+    if schema_path is None:
+        yield from _iter_cups_with_natura(source_zip)
+        return
+
+    for record in iter_project_records(source_zip, schema_path=schema_path):
+        yield record.cup, record.natura
+
+
 def build_dataset_release(
     source_zip: str | Path,
     output_dir: str | Path,
@@ -208,7 +224,9 @@ def build_dataset_release(
     output_path.mkdir(parents=True, exist_ok=True)
     sqlite_path = output_path / "cup-index.sqlite"
 
-    sqlite_result = _build_sqlite_from_projects_zip(source_zip, sqlite_path)
+    sqlite_result = _build_sqlite_from_projects_zip(
+        source_zip, sqlite_path, schema_path=schema_path
+    )
     chunk_files = chunk_file(sqlite_path, output_path, chunk_size_bytes=chunk_size_bytes)
     manifest = DatasetManifest(
         schema_version=1,
