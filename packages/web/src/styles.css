@@ -79,6 +79,7 @@ button {
   justify-content: flex-start;
   color: var(--muted);
   font-size: 0.92rem;
+  line-height: 1.35;
 }
 
 .site-footer {
@@ -485,6 +486,15 @@ td.selected {
   white-space: nowrap;
 }
 
+.dataset-status-bar.is-loading {
+  display: inline-flex;
+  align-items: baseline;
+}
+
+.dataset-loading-label::before {
+  content: ' · ';
+}
+
 .dataset-status-bar.is-emphasis {
   font-weight: 700;
 }
@@ -565,10 +575,81 @@ code {
   white-space: nowrap;
 }
 
-@media (max-width: 700px) {
-  .nav-inner,
+@media (max-width: 900px) {
   .site-footer {
     display: grid;
+    grid-template-columns: 1fr;
+    justify-content: center;
+    justify-items: center;
+    text-align: center;
+  }
+
+  .site-footer span:last-child {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 700px) {
+  .nav-inner {
+    display: grid;
+    grid-template-columns: max-content minmax(0, 1fr);
+    gap: 4px 8px;
+    align-items: baseline;
+    padding: 10px 0;
+  }
+
+  .brand {
+    font-size: 0.95rem;
+    line-height: 1.35;
+    white-space: nowrap;
+  }
+
+  .nav-links {
+    min-width: 0;
+    align-items: baseline;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    font-size: 0.78rem;
+    white-space: nowrap;
+  }
+
+  .dataset-status-bar.is-loading {
+    display: inline-grid;
+    width: max-content;
+    max-width: 100%;
+    grid-template-columns: max-content max-content;
+    justify-items: end;
+    row-gap: 0;
+  }
+
+  .dataset-status-bar.is-loading .dataset-loading-label {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: end;
+    text-align: right;
+  }
+
+  .dataset-status-bar.is-loading .dataset-status-separator {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .dataset-status-bar.is-loading .dataset-status-label {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .dataset-status-bar.is-loading .dataset-loading-label::before {
+    content: '';
+  }
+
+  .dataset-status-bar.is-emphasis {
+    flex-basis: 100%;
+    text-align: right;
+  }
+
+  .dataset-status-bar.is-emphasis .dataset-status-separator {
+    display: none;
   }
 
   .file-controls,
@@ -668,10 +749,6 @@ code {
 
   .dropzone {
     min-width: 100%;
-  }
-
-  .site-footer span:last-child {
-    white-space: normal;
   }
 
 }

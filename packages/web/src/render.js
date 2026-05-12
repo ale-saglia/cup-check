@@ -5,7 +5,7 @@ import { OUTCOMES, summarizeResults } from './validator.js';
 const MAX_RENDERED_RESULT_ROWS = 500;
 
 export function renderDatasetSearching(dom) {
-  setDatasetStatus(dom, 'Loading 0%', { emphasis: true });
+  setDatasetStatus(dom, '');
 }
 
 export function renderDatasetReady(dom, manifest = null) {
@@ -13,6 +13,11 @@ export function renderDatasetReady(dom, manifest = null) {
 }
 
 export function renderDatasetProgress(dom, progress) {
+  if (!progress.datasetTag) {
+    setDatasetStatus(dom, '');
+    return;
+  }
+
   setDatasetLoading(dom, progress.datasetTag, progress.percent);
 }
 
@@ -246,15 +251,40 @@ function escapeHtml(value) {
 }
 
 function setDatasetStatus(dom, text, { emphasis = false } = {}) {
-  dom.datasetStatusBar.textContent = text ? ` · ${text}` : '';
+  dom.datasetStatusBar.classList.remove('is-loading');
   dom.datasetStatusBar.classList.toggle('is-emphasis', emphasis);
+  dom.datasetStatusBar.replaceChildren();
+
+  if (!text) {
+    return;
+  }
+
+  dom.datasetStatusBar.replaceChildren(
+    Object.assign(document.createElement('span'), {
+      className: 'dataset-status-separator',
+      textContent: ' · ',
+    }),
+    Object.assign(document.createElement('span'), {
+      className: 'dataset-status-label',
+      textContent: text,
+    }),
+  );
 }
 
 function setDatasetLoading(dom, datasetTag, percent) {
   dom.datasetStatusBar.classList.remove('is-emphasis');
+  dom.datasetStatusBar.classList.add('is-loading');
   dom.datasetStatusBar.replaceChildren(
-    document.createTextNode(datasetTag ? ` · ${datasetTag} · ` : ' · '),
+    Object.assign(document.createElement('span'), {
+      className: 'dataset-status-separator',
+      textContent: ' · ',
+    }),
+    Object.assign(document.createElement('span'), {
+      className: 'dataset-status-label',
+      textContent: datasetTag,
+    }),
     Object.assign(document.createElement('strong'), {
+      className: 'dataset-loading-label',
       textContent: `Loading ${percent}%`,
     }),
   );
