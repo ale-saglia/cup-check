@@ -18,7 +18,7 @@ Il progetto e rilasciato come web app statica e package Python.
 - Valida CUP incollati come testo, uno per riga.
 - Verifica la presenza nel dataset OpenCUP statico quando il dataset e disponibile.
 - Mostra risultati filtrabili per esito e testo.
-- Esporta report CSV con esito riga per riga.
+- Mostra ed esporta i risultati raggruppati per CUP o riga per riga.
 - Funziona offline dopo la prima visita.
 - Espone una libreria Python installabile come `cup-check`.
 

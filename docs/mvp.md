@@ -61,7 +61,8 @@ Avvisi non bloccanti:
 
 - Tabella con riga originale, CUP normalizzato, esito, dettaglio e link OpenCUP per verifica manuale.
 - Filtri per esito e ricerca testuale.
-- Export CSV con separatore `;` e BOM UTF-8.
+- Risultati visualizzabili ed esportabili in forma raggruppata per CUP o riga per riga.
+- Export CSV con separatore `;` e BOM UTF-8 coerente con la vista scelta.
 - Riepilogo con totale righe, conteggi per esito e durata elaborazione.
 
 ## Criteri Di Accettazione

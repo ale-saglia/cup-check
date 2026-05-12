@@ -25,7 +25,7 @@ L'evoluzione prevista e incrementale: nelle prime milestone il prodotto risponde
 
 - Verificare in batch la correttezza formale di almeno 10.000 CUP.
 - Offrire una web app interattiva e una libreria Python importabile.
-- Produrre report esportabili con esito riga per riga.
+- Produrre report esportabili con esito riga per riga o raggruppato per CUP.
 - Restare offline-first dopo la prima visita.
 - Da `0.3.0`, verificare l'esistenza nel perimetro pubblicato da OpenCUP tramite dataset esatto self-hosted.
 - Da `0.4.0`, segnalare possibili incoerenze tra CUP e dati associati nell'atto, come soggetto titolare/beneficiario, importo e descrizione progetto.
