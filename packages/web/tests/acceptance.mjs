@@ -13,10 +13,14 @@ const ROW_COUNT = 10000;
 const MAX_TOTAL_MS = 5000;
 
 const port = await getFreePort();
-const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
-  detached: true,
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const server = spawn(
+  'npm',
+  ['run', 'preview', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'],
+  {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  },
+);
 
 try {
   const baseUrl = `http://127.0.0.1:${port}/`;
@@ -24,14 +28,25 @@ try {
   const xlsxPath = await writeAcceptanceWorkbook();
   const result = await runBrowserAcceptance(baseUrl, xlsxPath);
 
-  assert(result.controllerAfterOnlineReload, 'service worker non controlla la pagina dopo il reload online');
+  assert(
+    result.controllerAfterOnlineReload,
+    'service worker non controlla la pagina dopo il reload online',
+  );
   assert(result.summary.includes(`${ROW_COUNT} righe`), `riepilogo inatteso: ${result.summary}`);
+  assert(result.groupToggleDefault, 'il toggle raggruppa CUP uguali non e attivo di default');
+  assert(
+    result.ungroupedSummary.includes(`${ROW_COUNT} righe verificate`),
+    `riepilogo non raggruppato inatteso: ${result.ungroupedSummary}`,
+  );
   assert(result.textPanelCollapsedAfterUpload, 'il pannello testo resta aperto dopo upload file');
   assert(
     result.totalUploadToResultsMs < MAX_TOTAL_MS,
     `upload + verifica + render troppo lenti: ${result.totalUploadToResultsMs} ms`,
   );
-  assert(result.offlineOk, `reload offline non riuscito: ${result.offlineError ?? 'errore sconosciuto'}`);
+  assert(
+    result.offlineOk,
+    `reload offline non riuscito: ${result.offlineError ?? 'errore sconosciuto'}`,
+  );
 
   console.log(JSON.stringify(result, null, 2));
 } finally {
@@ -63,13 +78,17 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       return Boolean(registration.active);
     });
     await page.reload({ waitUntil: 'networkidle' });
-    out.controllerAfterOnlineReload = await page.evaluate(() => Boolean(navigator.serviceWorker?.controller));
+    out.controllerAfterOnlineReload = await page.evaluate(() =>
+      Boolean(navigator.serviceWorker?.controller),
+    );
 
     const started = Date.now();
     await page.setInputFiles('#file-input', xlsxPath);
     await page.waitForSelector('#preview-panel:not(.hidden)');
     out.textPanelCollapsedAfterUpload =
-      (await page.locator('#text').evaluate((element) => element.classList.contains('collapsed'))) &&
+      (await page
+        .locator('#text')
+        .evaluate((element) => element.classList.contains('collapsed'))) &&
       (await page.locator('#text-toggle').getAttribute('aria-expanded')) === 'false';
     await page.locator('#skip-missing-cup').uncheck();
     await page.click('#check-button');
@@ -78,6 +97,9 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     out.meta = await page.locator('#file-meta').textContent();
     out.selectedColumn = await page.locator('#column-select').inputValue();
     out.summary = await page.locator('#summary').textContent();
+    out.groupToggleDefault = await page.locator('#group-same-cups').isChecked();
+    await page.locator('#group-same-cups').uncheck();
+    out.ungroupedSummary = await page.locator('#summary').textContent();
 
     await context.setOffline(true);
     try {
@@ -85,7 +107,10 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       await page.waitForSelector('#title', { timeout: 15000 });
       out.offlineOk = true;
       out.offlineTitle = await page.locator('#title').textContent();
-      out.offlineSummary = await page.locator('#summary').textContent().catch(() => '');
+      out.offlineSummary = await page
+        .locator('#summary')
+        .textContent()
+        .catch(() => '');
     } catch (error) {
       out.offlineOk = false;
       out.offlineError = error.message;
@@ -105,7 +130,9 @@ async function writeAcceptanceWorkbook() {
 
   for (let index = 0; index < ROW_COUNT; index += 1) {
     const cup =
-      index % 4 === 0 ? invalidCups[Math.floor(index / 4) % invalidCups.length] : validCups[index % validCups.length];
+      index % 4 === 0
+        ? invalidCups[Math.floor(index / 4) % invalidCups.length]
+        : validCups[index % validCups.length];
     rows.push([String(index + 1), cup, `Riga ${index + 1}`]);
   }
 

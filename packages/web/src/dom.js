@@ -102,7 +102,11 @@ export function mountApp(root = document.querySelector('#app')) {
             </div>
             </div>
             <div class="filters">
-              <label>
+              <label class="toggle result-group-toggle">
+                <input id="group-same-cups" type="checkbox" checked />
+                <span>Raggruppa CUP uguali</span>
+              </label>
+              <label class="result-outcome-filter">
                 Esito
                 <select id="filter-select">
                   <option value="ALL">Tutti</option>
@@ -112,7 +116,7 @@ export function mountApp(root = document.querySelector('#app')) {
                   <option value="${OUTCOMES.INVALID}">Invalidi</option>
                 </select>
               </label>
-              <label>
+              <label class="result-search-filter">
                 Cerca
                 <input id="search-input" type="search" placeholder="CUP o dettaglio" />
               </label>
@@ -177,6 +181,7 @@ export function mountApp(root = document.querySelector('#app')) {
     previewTable: root.querySelector('#preview-table'),
     checkButton: root.querySelector('#check-button'),
     skipMissingCupInput: root.querySelector('#skip-missing-cup'),
+    groupSameCupsInput: root.querySelector('#group-same-cups'),
     clearButton: root.querySelector('#clear-button'),
     exportButton: root.querySelector('#export-button'),
     filterSelect: root.querySelector('#filter-select'),

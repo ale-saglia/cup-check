@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Aggiunge nei risultati il toggle per raggruppare o mostrare riga per riga i CUP uguali, con export CSV coerente.
 - Aggiunge nella preview XLSX un selettore scheda quando il file contiene più fogli.
 - Migliora la UI mobile di header, footer, anteprima, risultati e stato dataset.
 - Corregge il workflow PyPI: il publish Python ora parte solo da tag software `vX.Y.Z` o da dispatch manuale sullo stesso formato, evitando release dataset e versioni VCS spurie.

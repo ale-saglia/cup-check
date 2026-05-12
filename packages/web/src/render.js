@@ -1,5 +1,5 @@
 import { opencupUrlForResult, resultDetail } from './report.js';
-import { resultRowsLabel } from './results.js';
+import { displayResults, resultRowsLabel } from './results.js';
 import { OUTCOMES, summarizeResults } from './validator.js';
 
 const MAX_RENDERED_RESULT_ROWS = 500;
@@ -84,25 +84,33 @@ export function renderPreviewTable(state, dom) {
 export function renderResults(state, dom, durationMs) {
   dom.resultsPanel.classList.remove('hidden');
   expandPanel(dom.resultsPanel, dom.resultsToggle);
-  const data = summarizeResults(state.results, durationMs);
+  const visibleResults = displayResults(state.results, state.groupSameCups);
+  const data = summarizeResults(visibleResults, durationMs);
   const {
     [OUTCOMES.INVALID]: invalid,
     [OUTCOMES.CHECK]: check,
     [OUTCOMES.FOUND_OPENCUP]: found,
     [OUTCOMES.NOT_FOUND_OPENCUP]: notFound,
   } = data.counts;
-  const parts = [`${data.total} CUP unici da ${state.sourceRowCount} righe`];
+  const parts = [
+    state.groupSameCups
+      ? `${data.total} CUP unici da ${state.sourceRowCount} righe`
+      : `${data.total} righe verificate`,
+  ];
   if (found > 0) parts.push(`${found} trovati OpenCUP`);
   if (notFound > 0) parts.push(`${notFound} non trovati OpenCUP`);
   if (check > 0) parts.push(`${check} da verificare`);
   parts.push(`${invalid} invalidi`, `${Math.round(data.durationMs)} ms`);
   dom.summary.textContent = parts.join(' · ');
-  dom.resultsToggleMeta.textContent = `${data.total} CUP unici`;
+  dom.resultsToggleMeta.textContent = state.groupSameCups
+    ? `${data.total} CUP unici`
+    : `${data.total} righe`;
+  dom.groupSameCupsInput.checked = state.groupSameCups;
   renderResultsTable(state, dom);
 }
 
 export function renderResultsTable(state, dom) {
-  const rows = state.results.filter((result) => {
+  const rows = displayResults(state.results, state.groupSameCups).filter((result) => {
     const matchesOutcome = state.filter === 'ALL' || result.outcome === state.filter;
     const haystack =
       `${resultRowsLabel(result)} ${result.normalizedValue} ${result.outcome} ${resultDetail(result)}`.toLowerCase();
@@ -175,6 +183,7 @@ export function resetView(dom) {
   dom.filterSelect.value = 'ALL';
   dom.searchInput.value = '';
   dom.skipMissingCupInput.checked = true;
+  dom.groupSameCupsInput.checked = true;
   dom.headerToggle.checked = false;
   dom.previewPanel.classList.add('hidden');
   dom.resultsPanel.classList.add('hidden');
@@ -219,9 +228,12 @@ function renderSheetSelect(state, dom) {
   }
 
   dom.sheetSelect.innerHTML = sheetNames
-    .map((sheetName) => `<option value="${escapeHtml(sheetName)}">${escapeHtml(sheetName)}</option>`)
+    .map(
+      (sheetName) => `<option value="${escapeHtml(sheetName)}">${escapeHtml(sheetName)}</option>`,
+    )
     .join('');
-  dom.sheetSelect.value = state.selectedSheetName || state.parsed.selectedSheetName || sheetNames[0];
+  dom.sheetSelect.value =
+    state.selectedSheetName || state.parsed.selectedSheetName || sheetNames[0];
 }
 
 function renderRowsCell(result) {

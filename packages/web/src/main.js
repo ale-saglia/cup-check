@@ -18,7 +18,7 @@ import {
   resetView,
   togglePanel,
 } from './render.js';
-import { applyDatasetLookup, uniqueResultsByCup } from './results.js';
+import { applyDatasetLookup, displayResults, uniqueResultsByCup } from './results.js';
 import { state, resetState } from './state.js';
 import { textInputLines } from './text-input.js';
 import { OUTCOMES, validateCup } from './validator.js';
@@ -90,10 +90,11 @@ dom.textCheckButton.addEventListener('click', async () => {
   state.fileName = 'cup-testo';
   state.filter = 'ALL';
   state.query = '';
+  state.durationMs = performance.now() - startedAt;
   collapsePanel(dom.textPanel, dom.textToggle);
   dom.textToggleMeta.textContent = `${lines.length} CUP`;
   dom.previewPanel.classList.add('hidden');
-  renderResults(state, dom, performance.now() - startedAt);
+  renderResults(state, dom, state.durationMs);
 });
 
 dom.fileInput.addEventListener('change', async (event) => {
@@ -150,12 +151,18 @@ dom.checkButton.addEventListener('click', async () => {
   const unique = uniqueResultsByCup(results);
   state.results = await applyLookup(unique);
   state.sourceRowCount = results.length;
+  state.durationMs = performance.now() - startedAt;
   collapsePanel(dom.previewPanel, dom.previewToggle);
-  renderResults(state, dom, performance.now() - startedAt);
+  renderResults(state, dom, state.durationMs);
 });
 
 dom.skipMissingCupInput.addEventListener('change', () => {
   state.skipMissingCup = dom.skipMissingCupInput.checked;
+});
+
+dom.groupSameCupsInput.addEventListener('change', () => {
+  state.groupSameCups = dom.groupSameCupsInput.checked;
+  renderResults(state, dom, state.durationMs);
 });
 
 dom.filterSelect.addEventListener('change', () => {
@@ -185,7 +192,9 @@ dom.resultsTable.addEventListener('click', (event) => {
 });
 
 dom.exportButton.addEventListener('click', () => {
-  const blob = new Blob([buildCsvReport(state.results)], { type: 'text/csv;charset=utf-8' });
+  const blob = new Blob([buildCsvReport(displayResults(state.results, state.groupSameCups))], {
+    type: 'text/csv;charset=utf-8',
+  });
   const url = URL.createObjectURL(blob);
   const link = document.createElement('a');
   link.href = url;

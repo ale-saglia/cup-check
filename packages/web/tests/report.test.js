@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { buildCsvReport, opencupUrlForResult, resultDetail } from '../src/report.js';
-import { uniqueResultsByCup } from '../src/results.js';
+import { displayResults, uniqueResultsByCup } from '../src/results.js';
 import { OUTCOMES, validateCup } from '../src/validator.js';
 
 describe('resultDetail', () => {
@@ -23,6 +23,19 @@ describe('resultDetail', () => {
 
     expect(csv).toContain('righe_originali;cup_normalizzato;esito;dettaglio;link_opencup');
     expect(csv).toContain('2, 7;A12B23000000001;FORMATO_VALIDO_DA_VERIFICARE');
+  });
+
+  it('exports one row per original row when grouped display is disabled', () => {
+    const groupedResults = uniqueResultsByCup([
+      validateCup('A12B23000000001', 2, { currentYear: 2026 }),
+      validateCup('A12B23000000001', 7, { currentYear: 2026 }),
+    ]);
+
+    const csv = buildCsvReport(displayResults(groupedResults, false));
+
+    expect(csv).toContain('\n2;A12B23000000001;FORMATO_VALIDO_DA_VERIFICARE');
+    expect(csv).toContain('\n7;A12B23000000001;FORMATO_VALIDO_DA_VERIFICARE');
+    expect(csv).not.toContain('2, 7;A12B23000000001');
   });
 
   it('keeps OpenCUP links for manually checkable invalid CUP-shaped values', () => {
@@ -53,7 +66,9 @@ describe('resultDetail', () => {
       outcome: OUTCOMES.NOT_FOUND_OPENCUP,
     };
 
-    expect(resultDetail(found)).toBe('TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.');
+    expect(resultDetail(found)).toBe(
+      'TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.',
+    );
     expect(resultDetail(notFound)).toBe(
       'NON_TROVATO_OPENCUP_DA_VERIFICARE: CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.',
     );

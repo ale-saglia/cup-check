@@ -37,6 +37,22 @@ export function uniqueResultsByCup(results) {
   return [...grouped.values()];
 }
 
+export function displayResults(results, groupSameCups = true) {
+  if (groupSameCups) return results;
+
+  return results
+    .flatMap((result) => {
+      const rows = result.inputRows ?? [result.inputRow];
+      return rows.map((row) => ({
+        ...result,
+        inputRow: row,
+        inputRows: [row],
+        occurrenceCount: 1,
+      }));
+    })
+    .sort((left, right) => compareRows(left.inputRow, right.inputRow));
+}
+
 export function resultRowsLabel(result) {
   const rows = result.inputRows ?? [result.inputRow];
   return rows.length > 1 ? rows.join(', ') : String(rows[0] ?? '');
@@ -44,4 +60,16 @@ export function resultRowsLabel(result) {
 
 function uniqueValues(values) {
   return [...new Set(values)];
+}
+
+function compareRows(left, right) {
+  if (typeof left === 'number' && typeof right === 'number') {
+    return left - right;
+  }
+
+  if (left == null && right == null) return 0;
+  if (left == null) return 1;
+  if (right == null) return -1;
+
+  return String(left).localeCompare(String(right), 'it', { numeric: true });
 }
