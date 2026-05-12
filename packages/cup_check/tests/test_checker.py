@@ -66,10 +66,10 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path, monk
         f"{base_url}/cup-index.sqlite.000": first_chunk,
         f"{base_url}/cup-index.sqlite.001": second_chunk,
     }
-    requested_urls: list[str] = []
+    requests: list[tuple[str, float | None]] = []
 
-    def fake_urlopen(url: str):
-        requested_urls.append(url)
+    def fake_urlopen(url: str, *, timeout: float | None = None):
+        requests.append((url, timeout))
         return BytesResponse(payloads[url])
 
     monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
@@ -80,18 +80,19 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path, monk
     with OpenCupChecker.from_latest(latest_url, cache_dir=tmp_path / "cache") as cached_checker:
         assert cached_checker.is_available is True
 
-    assert requested_urls == [
-        latest_url,
-        manifest_url,
-        f"{base_url}/cup-index.sqlite.000",
-        f"{base_url}/cup-index.sqlite.001",
-        latest_url,
-        manifest_url,
+    assert requests == [
+        (latest_url, 30),
+        (manifest_url, 30),
+        (f"{base_url}/cup-index.sqlite.000", 300),
+        (f"{base_url}/cup-index.sqlite.001", 300),
+        (latest_url, 30),
+        (manifest_url, 30),
     ]
 
 
 def test_open_cup_checker_falls_back_when_latest_download_fails(monkeypatch) -> None:
-    def failing_urlopen(url: str):
+    def failing_urlopen(url: str, *, timeout: float | None = None):
+        assert timeout == 30
         raise OSError(f"{url}: offline")
 
     monkeypatch.setattr(checker_module, "urlopen", failing_urlopen)

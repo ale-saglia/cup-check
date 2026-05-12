@@ -214,8 +214,9 @@ def test_download_projects_zip_writes_response_body(tmp_path: Path, monkeypatch)
         def read(self, size=-1):
             return self._content.read(size)
 
-    def fake_urlopen(source_url: str):
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
         assert source_url == "https://example.test/opencup.zip"
+        assert timeout == opencup_dataset.OPENCUP_DOWNLOAD_TIMEOUT_SECONDS
         return Response()
 
     monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
@@ -226,6 +227,42 @@ def test_download_projects_zip_writes_response_body(tmp_path: Path, monkeypatch)
     )
 
     assert destination.read_bytes() == b"dataset"
+
+
+def test_download_projects_zip_reports_progress_every_interval(
+    tmp_path: Path, monkeypatch
+) -> None:
+    class ChunkedResponse:
+        def __init__(self):
+            self._chunks = iter((b"aa", b"bb", b"bb", b"c"))
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return None
+
+        def read(self, size=-1):
+            return next(self._chunks, b"")
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        assert source_url == "https://example.test/opencup.zip"
+        assert timeout == 123
+        return ChunkedResponse()
+
+    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
+    progress_calls: list[int] = []
+
+    destination = download_projects_zip(
+        tmp_path / "OpendataProgetti.zip",
+        source_url="https://example.test/opencup.zip",
+        timeout=123,
+        progress_interval_bytes=3,
+        on_progress=progress_calls.append,
+    )
+
+    assert destination.read_bytes() == b"aabbbbc"
+    assert progress_calls == [3, 6]
 
 
 def test_build_sqlite_skips_invalid_cups(tmp_path: Path) -> None:

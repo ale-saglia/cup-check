@@ -19,6 +19,8 @@ from cup_check.models import Outcome, ValidationResult
 from cup_check.validator import validate_format
 
 DEFAULT_LATEST_DATASET_URL = "https://ale-saglia.github.io/cup-check/dataset-latest.json"
+_DATASET_JSON_TIMEOUT_SECONDS = 30
+_DATASET_CHUNK_TIMEOUT_SECONDS = 300
 
 
 class OpenCupChecker:
@@ -157,7 +159,7 @@ def _latest_from_mapping(value: dict[str, Any]) -> DatasetLatest:
 
 
 def _json_from_url(url: str) -> dict[str, Any]:
-    with urlopen(url) as response:
+    with urlopen(url, timeout=_DATASET_JSON_TIMEOUT_SECONDS) as response:
         value = json.loads(response.read())
     if not isinstance(value, dict):
         raise ValueError("dataset json response must be an object")
@@ -183,7 +185,7 @@ def _download_index(manifest: DatasetManifest, destination: Path) -> None:
     with destination.open("wb") as output:
         for file_name in manifest.cup_index.files:
             url = f"{manifest.cup_index.base_url.rstrip('/')}/{file_name}"
-            with urlopen(url) as response:
+            with urlopen(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
                 while True:
                     chunk = response.read(1024 * 1024)
                     if not chunk:

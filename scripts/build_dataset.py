@@ -47,7 +47,12 @@ def main(snapshot_date_str: str, output_dir: str, cup_index_base_url: str) -> No
     zip_path = output_path / "OpendataProgetti.zip"
     _log(f"[1/3] Download ZIP OpenCUP -> {zip_path}")
     t0 = time.monotonic()
-    download_projects_zip(zip_path)
+    download_projects_zip(
+        zip_path,
+        on_progress=lambda downloaded_bytes: _log(
+            f"      Download in corso: {_mb(downloaded_bytes)}"
+        ),
+    )
     elapsed = time.monotonic() - t0
     _log(f"[1/3] Download completato in {elapsed:.0f}s ({_mb(zip_path.stat().st_size)})")
 

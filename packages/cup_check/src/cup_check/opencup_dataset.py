@@ -4,10 +4,9 @@ import csv
 import hashlib
 import io
 import json
-import shutil
 import sqlite3
 import warnings
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -27,6 +26,9 @@ OPENCUP_PROJECTS_URL = (
     "https://www.opencup.gov.it/portale/documents/21195/299152/OpendataProgetti.zip/"
 )
 OPENCUP_DATASET_SCHEMA = "opencup_dataset_schema.yaml"
+OPENCUP_DOWNLOAD_TIMEOUT_SECONDS = 60 * 60
+OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES = 100 * 1024 * 1024
+_DOWNLOAD_BLOCK_SIZE_BYTES = 1024 * 1024
 
 _INSERT_SQL = "INSERT OR IGNORE INTO cup_index (cup, detail_chunk) VALUES (?, NULL)"
 
@@ -67,11 +69,27 @@ def download_projects_zip(
     destination: str | Path,
     *,
     source_url: str = OPENCUP_PROJECTS_URL,
+    timeout: float | None = OPENCUP_DOWNLOAD_TIMEOUT_SECONDS,
+    progress_interval_bytes: int = OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES,
+    on_progress: Callable[[int], None] | None = None,
 ) -> Path:
     destination_path = Path(destination)
     destination_path.parent.mkdir(parents=True, exist_ok=True)
-    with urlopen(source_url) as response, destination_path.open("wb") as output:
-        shutil.copyfileobj(response, output)
+    if on_progress is not None and progress_interval_bytes <= 0:
+        raise ValueError("progress_interval_bytes must be positive")
+
+    downloaded_bytes = 0
+    next_progress_bytes = progress_interval_bytes
+    with urlopen(source_url, timeout=timeout) as response, destination_path.open("wb") as output:
+        while True:
+            chunk = response.read(_DOWNLOAD_BLOCK_SIZE_BYTES)
+            if not chunk:
+                break
+            output.write(chunk)
+            downloaded_bytes += len(chunk)
+            while on_progress is not None and downloaded_bytes >= next_progress_bytes:
+                on_progress(next_progress_bytes)
+                next_progress_bytes += progress_interval_bytes
     return destination_path
 
 
