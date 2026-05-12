@@ -1,18 +1,24 @@
 # cup-check
 
-> Local-first validator for Italian public project codes (CUP), with OpenCUP lookup and Python library.
+> Local-first support tool for checking Italian public project codes (CUP) before administrative reporting, with static OpenCUP lookup and a Python library.
 
 **[Web app](https://ale-saglia.github.io/cup-check/)** · [Python package](https://pypi.org/project/cup-check/) · [Documentazione](docs/product.md)
 
 ![cup-check — web app](screenshot.png)
 
-Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. `cup-check` aiuta enti, consulenti e team tecnici a intercettare subito gli errori formali prima di caricare o condividere elenchi di Codici Unici di Progetto.
+Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male puo bloccare controlli, rallentare pratiche e generare correzioni costose. Verificare manualmente centinaia o migliaia di codici prima di una trasmissione ufficiale e un'attivita ripetitiva, lenta e soggetta a errore.
 
-Verifica massiva e locale del formato dei Codici Unici di Progetto (CUP).
+`cup-check` nasce per ridurre questo attrito operativo: aiuta funzionari, consulenti e team tecnici a intercettare rapidamente errori formali e assenze dal perimetro OpenCUP disponibile, prima di caricare, condividere o consolidare elenchi di Codici Unici di Progetto.
 
-`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni.
+Il progetto mantiene una postura cautelativa: distingue il formato valido dalla verifica di esistenza, usa un dataset OpenCUP statico e versionato quando disponibile, e non presenta mai il risultato come certificazione autoritativa.
 
-La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico e disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non e disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`.
+`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico e disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non e disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`.
+
+## English Abstract
+
+`cup-check` is an open source, local-first tool for checking Italian CUP codes used in public investment projects. It helps public administrations and technical teams find format errors and compare codes with a static OpenCUP mirror before formal reporting or downstream validation.
+
+The project is designed for zero operational cost, browser-side processing, auditable rules and cautious outcomes. It is not an authoritative certification service: final existence checks still belong to the official CUP/OpenCUP channels.
 
 ## Stato
 
@@ -55,6 +61,7 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 
 ## Documentazione
 
+- [Guida utente](docs/user-guide.md)
 - [Sviluppo](docs/development.md)
 - [Product](docs/product.md)
 - [Architettura](docs/architecture.md)
@@ -64,6 +71,10 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 - [Governance](docs/governance.md)
 - [Glossario](docs/glossary.md)
 - [ADR](docs/adr/)
+
+## Contribuire
+
+Il progetto accetta contributi coerenti con la roadmap e con i vincoli di governance. Vedi [CONTRIBUTING.md](CONTRIBUTING.md) per processo, convenzioni e regola fixture-first.
 
 ## Licenza
 

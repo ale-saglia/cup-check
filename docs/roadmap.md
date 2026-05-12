@@ -10,7 +10,7 @@
 | `0.5.0` | UX & a11y | tema scuro, WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
 | `0.6.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
 | `0.7.0` | API autoritativa | completamento per nature non pubblicate, checker puntuale con credenziali o proxy documentato | API key |
-| `1.0.0` | Produzione stabile | documentazione utente, hardening, dichiarazione accessibilita, eventuale Developers Italia | da valutare |
+| `1.0.0` | Produzione stabile | documentazione utente consolidata, hardening, dichiarazione accessibilita, eventuale Developers Italia | da valutare |
 
 ## Milestone `0.2.0`
 

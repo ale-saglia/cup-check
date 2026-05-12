@@ -23,10 +23,12 @@
 cup-check/
 ├── README.md
 ├── AGENTS.md
+├── CONTRIBUTING.md
 ├── LICENSE
 ├── CHANGELOG.md
 ├── Makefile
 ├── docs/
+│   ├── user-guide.md
 │   ├── product.md
 │   ├── architecture.md
 │   ├── technical-spec.md

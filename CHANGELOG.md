@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+- Migliora il README con un'introduzione orientata al problema pubblico e un abstract in inglese.
+- Aggiunge una guida utente non tecnica e un processo contributivo minimo.
+
 ## 0.3.2 - 2026-05-12
 
 - Aggiunge nei risultati il toggle per raggruppare o mostrare riga per riga i CUP uguali, con export CSV coerente.
