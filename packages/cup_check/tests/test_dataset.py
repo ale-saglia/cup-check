@@ -37,6 +37,7 @@ def test_dataset_manifest_from_mapping() -> None:
     assert manifest.dataset_tag == "dataset-2026-05"
     assert manifest.schema.table == "cup_index"
     assert manifest.schema.version == 1
+    assert manifest.chunks is manifest.cup_index
     assert manifest.cup_index.files == ("cup-index.sqlite.000", "cup-index.sqlite.001")
     assert manifest.sha256 == "abcd"
     assert manifest.cup_index.files_sha256 == ()

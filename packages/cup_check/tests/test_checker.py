@@ -6,6 +6,8 @@ import json
 import sqlite3
 from pathlib import Path
 
+import pytest
+
 from cup_check import OpenCupChecker, Outcome
 from cup_check import checker as checker_module
 from cup_check.dataset import DatasetManifest
@@ -103,6 +105,132 @@ def test_open_cup_checker_falls_back_when_latest_download_fails(monkeypatch) -> 
     assert checker.is_available is False
     assert checker.fallback_reason is not None
     assert result.outcome is Outcome.FORMATO_VALIDO_DA_VERIFICARE
+
+
+def test_open_cup_checker_uses_local_latest_and_manifest_files(tmp_path: Path) -> None:
+    sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
+    manifest = manifest_for_sqlite(sqlite_path)
+    manifest_path = tmp_path / "dataset-manifest.json"
+    latest_path = tmp_path / "dataset-latest.json"
+    cache_path = tmp_path / "cache" / manifest.dataset_tag / "cup-index.sqlite"
+    cache_path.parent.mkdir(parents=True)
+    cache_path.write_bytes(sqlite_path.read_bytes())
+    manifest_path.write_text(json.dumps(manifest_mapping(manifest)), encoding="utf-8")
+    latest_path.write_text(
+        json.dumps(
+            {
+                "dataset_tag": manifest.dataset_tag,
+                "manifest_url": str(manifest_path),
+                "sources_snapshot_date": manifest.sources_snapshot_date,
+                "released_at": manifest.released_at,
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    with OpenCupChecker.from_latest(latest_path, cache_dir=tmp_path / "cache") as checker:
+        assert checker.is_available is True
+        result = checker.check("G17H03000130001", current_year=26)
+
+    assert result.outcome is Outcome.TROVATO_OPENCUP
+
+
+def test_open_cup_checker_rejects_unsupported_dataset_table(tmp_path: Path) -> None:
+    sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
+    manifest = manifest_for_sqlite(sqlite_path)
+    manifest = DatasetManifest.from_mapping(
+        {**manifest_mapping(manifest), "schema": {"table": "cups", "version": 1}}
+    )
+
+    with pytest.raises(ValueError, match="unsupported dataset table"):
+        OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
+
+
+def test_open_cup_checker_rejects_sqlite_without_cup_index(tmp_path: Path) -> None:
+    sqlite_path = tmp_path / "empty.sqlite"
+    with sqlite3.connect(sqlite_path):
+        pass
+    manifest = manifest_for_sqlite(write_cup_index(tmp_path, ["G17H03000130001"]))
+
+    with pytest.raises(ValueError, match="missing cup_index table"):
+        OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
+
+
+def test_json_from_url_requires_object_payload(monkeypatch) -> None:
+    def fake_urlopen(url: str, *, timeout: float | None = None):
+        assert url == "https://example.test/dataset-latest.json"
+        assert timeout == 30
+        return BytesResponse(b"[]")
+
+    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
+
+    with pytest.raises(ValueError, match="dataset json response must be an object"):
+        checker_module._json_from_url("https://example.test/dataset-latest.json")
+
+
+def test_download_index_removes_partial_file_on_size_mismatch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    payload = b"sqlite"
+    manifest = manifest_for_chunks(
+        base_url="https://example.test/dataset",
+        files=("cup-index.sqlite.000",),
+        sqlite_bytes=payload + b"-extra",
+    )
+
+    def fake_urlopen(url: str, *, timeout: float | None = None):
+        assert url == "https://example.test/dataset/cup-index.sqlite.000"
+        assert timeout == 300
+        return BytesResponse(payload)
+
+    destination = tmp_path / "cup-index.sqlite.tmp"
+    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
+
+    with pytest.raises(ValueError, match="dataset chunk size mismatch"):
+        checker_module._download_index(manifest, destination)
+
+    assert not destination.exists()
+
+
+def test_download_index_removes_partial_file_on_sha_mismatch(
+    tmp_path: Path, monkeypatch
+) -> None:
+    payload = b"sqlite"
+    manifest = DatasetManifest.from_mapping(
+        {
+            **manifest_mapping(
+                manifest_for_chunks(
+                    base_url="https://example.test/dataset",
+                    files=("cup-index.sqlite.000",),
+                    sqlite_bytes=payload,
+                )
+            ),
+            "cup_index": {
+                "base_url": "https://example.test/dataset",
+                "files": ["cup-index.sqlite.000"],
+                "chunk_size_bytes": len(payload),
+                "total_size_bytes": len(payload),
+                "sha256": hashlib.sha256(b"different").hexdigest(),
+            },
+        }
+    )
+
+    def fake_urlopen(url: str, *, timeout: float | None = None):
+        assert url == "https://example.test/dataset/cup-index.sqlite.000"
+        assert timeout == 300
+        return BytesResponse(payload)
+
+    destination = tmp_path / "cup-index.sqlite.tmp"
+    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
+
+    with pytest.raises(ValueError, match="dataset sha256 mismatch"):
+        checker_module._download_index(manifest, destination)
+
+    assert not destination.exists()
+
+
+def test_default_cache_root_uses_user_cache_directory() -> None:
+    assert checker_module._cache_root(None) == Path.home() / ".cache" / "cup-check"
 
 
 def test_open_cup_checker_is_exported() -> None:
