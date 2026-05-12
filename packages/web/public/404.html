@@ -6,7 +6,11 @@
     <meta http-equiv="refresh" content="0; url=/" />
     <title></title>
     <script>
-      const homePath = location.pathname.startsWith('/cup-check/') ? '/cup-check/' : '/';
+      const firstSegment = location.pathname.split('/').filter(Boolean)[0] || '';
+      const homePath =
+        firstSegment && location.hostname.endsWith('.github.io')
+          ? `/${firstSegment}/`
+          : '/';
       location.replace(`${homePath}${location.search}${location.hash}`);
     </script>
   </head>
