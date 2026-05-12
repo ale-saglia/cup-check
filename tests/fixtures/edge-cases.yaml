@@ -39,7 +39,10 @@
     warnings: []
 
 - id: edge-century-rollover-r4
-  description: 'R4 documenta il limite intrinseco dell''anno CUP a due cifre'
+  description: >-
+    R4 documenta il limite intrinseco dell'anno CUP a due cifre.
+    Il Sistema CUP è operativo dal 2003 (delibera CIPE 143/2002, l. 3/2003 art. 11),
+    quindi l'anno a due cifre non è mai ambiguo con date pre-2000.
   input: 'G17H01000130001'
   options:
     current_year: 2100

@@ -88,6 +88,20 @@ Il valore viene normalizzato con `trim` + uppercase prima di applicare le regole
 | `R4`   | posizioni 5-6 non sono un anno plausibile non futuro |
 | `R5`   | quarta posizione non alfabetica |
 
+### Anno a due cifre (R4) e assenza di ambiguità pre-2000
+
+Il formato CUP espone l'anno di decisione del progetto nelle posizioni 5-6 con due sole cifre. Questa scelta non introduce ambiguità con date precedenti al 2000 perché il Sistema CUP è operativo dal 2003: nessun codice è stato generato prima di tale data.
+
+Riferimenti normativi:
+
+- **Delibera CIPE n. 143 del 27 dicembre 2002** (G.U. n. 87 del 14/04/2003): istituisce il Sistema CUP e ne definisce l'algoritmo di generazione come stringa alfanumerica di 15 caratteri.
+- **Legge 16 gennaio 2003, n. 3, art. 11**: rende obbligatorio il CUP per tutti i progetti di investimento pubblico. L'obbligo decorre dal 1º gennaio 2003 per i nuovi progetti e dal 1º gennaio 2004 per quelli già in corso.
+- **Delibera CIPE n. 63 del 26 novembre 2020**: conferma che il CUP e il suo corredo informativo restano immutati nel tempo.
+
+La corrispondenza tra posizioni 5-6 e anno di decisione non è documentata esplicitamente nei testi normativi pubblici: l'algoritmo di generazione del CUP non è pubblicato nella delibera né nel Manuale utente del Sistema CUP (ed. aprile 2022, DIPE). La regola R4 si basa sulla verifica empirica incrociata con il campo `ANNO_DECISIONE` del dataset OpenCUP su milioni di record.
+
+`cup-check` adotta la rappresentazione a due cifre perché è quella prodotta dal Sistema CUP nelle specifiche attuali. Se il CIPESS modificasse il formato della stringa CUP (evento che richiederebbe una nuova delibera), la regola R4 e l'architettura del validatore andrebbero aggiornati di conseguenza.
+
 Se il valore è vuoto, l'unica regola fallita è `R0`. Se almeno una regola fallisce, l'esito è `INVALIDO_FORMATO`. Se tutte passano, l'esito è `FORMATO_VALIDO_DA_VERIFICARE`.
 
 Avvisi non bloccanti:

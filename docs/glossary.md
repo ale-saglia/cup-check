@@ -16,3 +16,4 @@
 - **HTTP Range request**: richiesta HTTP di un intervallo di byte, utile per leggere parti di file grandi.
 - **Verifica di coerenza atto**: cross-check tra CUP e dati associati nell'atto, come P.IVA/CF, importo e descrizione progetto, contro il dataset disponibile.
 - **POSSIBILE_INCOERENZA_DA_VERIFICARE**: esito cautelativo che segnala una discrepanza tra dato dichiarato e dato registrato, senza dichiarare automaticamente l'atto incoerente.
+- **Anno di decisione**: anno in cui il soggetto responsabile decide la realizzazione del progetto. Nel formato CUP è rappresentato con due cifre nelle posizioni 5-6 della stringa. Poiché il Sistema CUP è attivo dal 2003, non esiste ambiguità con anni precedenti al 2000. La corrispondenza posizione-anno è verificata empiricamente sul dataset OpenCUP; l'algoritmo di generazione del CUP non è pubblicato nella normativa.
