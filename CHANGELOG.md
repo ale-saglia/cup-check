@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+## 0.3.2 - 2026-05-12
+
 - Aggiunge nei risultati il toggle per raggruppare o mostrare riga per riga i CUP uguali, con export CSV coerente.
 - Aggiunge nella preview XLSX un selettore scheda quando il file contiene più fogli.
 - Migliora la UI mobile di header, footer, anteprima, risultati e stato dataset.
@@ -9,6 +11,8 @@
 - Rafforza il download dei dataset con timeout espliciti e log di avanzamento per il bulk OpenCUP.
 - Verifica nel browser lo SHA-256 di ogni chunk SQLite con retry prima di ricomporre l'indice.
 - Isola gli asset dataset in una cache Service Worker dedicata, mantenendo solo l'ultima release `dataset-YYYY-MM`.
+- Porta la coverage Python al 100% e rende la soglia obbligatoria nei test.
+- Aggiorna le istruzioni agent per usare la documentazione tematica al posto di `docs/project.md`.
 
 ## 0.3.1 - 2026-05-11
 
