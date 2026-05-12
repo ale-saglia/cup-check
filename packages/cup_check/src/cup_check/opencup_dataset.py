@@ -4,6 +4,7 @@ import csv
 import hashlib
 import io
 import json
+import logging
 import sqlite3
 import warnings
 from collections.abc import Callable, Iterator
@@ -31,6 +32,7 @@ OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES = 100 * 1024 * 1024
 _DOWNLOAD_BLOCK_SIZE_BYTES = 1024 * 1024
 
 _INSERT_SQL = "INSERT OR IGNORE INTO cup_index (cup, detail_chunk) VALUES (?, NULL)"
+LOGGER = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -123,10 +125,10 @@ def _build_sqlite_from_projects_zip(
             if len(rows) >= 10_000:
                 connection.executemany(_INSERT_SQL, rows)
                 rows.clear()
-                print(f"\r  {total_records:,} record letti...", end="", flush=True)
+                LOGGER.info("%s record letti...", f"{total_records:,}")
         if rows:
             connection.executemany(_INSERT_SQL, rows)
-        print(f"\r  {total_records:,} record letti — inserimento completato.")
+        LOGGER.info("%s record letti - inserimento completato.", f"{total_records:,}")
         connection.commit()
         connection.execute("PRAGMA optimize")
         n_records = int(connection.execute("SELECT COUNT(*) FROM cup_index").fetchone()[0])

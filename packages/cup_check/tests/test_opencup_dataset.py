@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import io
+import logging
 import sqlite3
 import warnings
 from datetime import date
@@ -48,13 +49,20 @@ def test_iter_project_records_reads_semicolon_delimited_utf8_csv(tmp_path: Path)
     assert records[2].cup_master == "M11B22001230001"
 
 
-def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> None:
+def test_build_sqlite_from_projects_zip_deduplicates_cups(
+    tmp_path: Path,
+    caplog: pytest.LogCaptureFixture,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
     source_zip = write_projects_zip(tmp_path)
     sqlite_path = tmp_path / "cup-index.sqlite"
 
-    with pytest.warns(UserWarning, match="CUP duplicati"):
+    with caplog.at_level(logging.INFO, logger=opencup_dataset.__name__), pytest.warns(
+        UserWarning, match="CUP duplicati"
+    ):
         n_records = build_sqlite_from_projects_zip(source_zip, sqlite_path)
     stage_yaml = (tmp_path / "dataset-stage.yaml").read_text(encoding="utf-8")
+    captured = capsys.readouterr()
 
     with sqlite3.connect(sqlite_path) as connection:
         schema = connection.execute(
@@ -72,6 +80,9 @@ def test_build_sqlite_from_projects_zip_deduplicates_cups(tmp_path: Path) -> Non
         ).fetchall()
 
     assert n_records == 2
+    assert captured.out == ""
+    assert captured.err == ""
+    assert "3 record letti - inserimento completato." in caplog.text
     assert "WITHOUT ROWID" in schema
     assert "cup TEXT PRIMARY KEY" in schema
     assert "detail_chunk INTEGER" in schema
