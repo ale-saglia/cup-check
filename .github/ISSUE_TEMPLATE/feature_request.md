@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Proponi una funzionalita
+about: Proponi una funzionalità
 title: "feat: "
 labels: enhancement
 ---

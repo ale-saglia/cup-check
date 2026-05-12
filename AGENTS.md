@@ -43,7 +43,7 @@ Regole:
 
 Type consigliati:
 
-- `feat`: nuova funzionalita utente;
+- `feat`: nuova funzionalità utente;
 - `fix`: correzione bug;
 - `docs`: documentazione;
 - `test`: fixture o test;

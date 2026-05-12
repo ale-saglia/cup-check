@@ -40,7 +40,7 @@ try {
   );
   assert(result.previewImageCount === 0, 'payload HTML renderizzato come immagine in anteprima');
   assert(result.summary.includes(`${ROW_COUNT} righe`), `riepilogo inatteso: ${result.summary}`);
-  assert(result.groupToggleDefault, 'il toggle raggruppa CUP uguali non e attivo di default');
+  assert(result.groupToggleDefault, 'il toggle raggruppa CUP uguali non è attivo di default');
   assert(
     result.ungroupedSummary.includes(`${ROW_COUNT} righe verificate`),
     `riepilogo non raggruppato inatteso: ${result.ungroupedSummary}`,

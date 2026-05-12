@@ -2,7 +2,7 @@
 
 Libreria Python per validare localmente il formato dei Codici Unici di Progetto (CUP).
 
-La verifica e solo formale: un CUP con formato valido viene restituito come
+La verifica è solo formale: un CUP con formato valido viene restituito come
 `FORMATO_VALIDO_DA_VERIFICARE`, non come CUP esistente.
 
 ```python
@@ -14,7 +14,7 @@ print(result.outcome)
 print(result.failed_rules)
 ```
 
-Per validare piu valori:
+Per validare più valori:
 
 ```python
 from cup_check import validate_many
@@ -56,5 +56,5 @@ checker = OpenCupChecker.from_latest(cache_dir=".cup-check-cache")
 result = checker.check("G17H03000130001")
 ```
 
-Se il dataset non e disponibile, il checker resta cautelativo e restituisce
+Se il dataset non è disponibile, il checker resta cautelativo e restituisce
 `FORMATO_VALIDO_DA_VERIFICARE` per i CUP formalmente validi.

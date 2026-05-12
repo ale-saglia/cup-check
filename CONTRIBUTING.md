@@ -1,6 +1,6 @@
 # Contribuire
 
-`cup-check` e un progetto open source orientato a controlli cautelativi sui CUP. I contributi sono benvenuti quando restano coerenti con i vincoli del progetto: web app statica, nessun servizio server-side nell'MVP, regole auditabili e separazione tra validazione formale e lookup OpenCUP.
+`cup-check` è un progetto open source orientato a controlli cautelativi sui CUP. I contributi sono benvenuti quando restano coerenti con i vincoli del progetto: web app statica, nessun servizio server-side nell'MVP, regole auditabili e separazione tra validazione formale e lookup OpenCUP.
 
 ## Prima Di Aprire Una PR
 
@@ -80,7 +80,7 @@ fix(web): correggi esportazione risultati aggregati
 
 ## Checklist PR
 
-- La modifica e coerente con roadmap e ADR esistenti.
+- La modifica è coerente con roadmap e ADR esistenti.
 - I fixture sono aggiornati prima del codice, se cambia il comportamento.
-- I test pertinenti sono stati eseguiti o il motivo della mancata esecuzione e indicato nella PR.
-- La documentazione utente o tecnica e aggiornata quando cambia il comportamento osservabile.
+- I test pertinenti sono stati eseguiti o il motivo della mancata esecuzione è indicato nella PR.
+- La documentazione utente o tecnica è aggiornata quando cambia il comportamento osservabile.

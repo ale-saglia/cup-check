@@ -119,7 +119,7 @@ describe('parseFile', () => {
   });
 
   it('keeps empty CSV rows and mixed numeric/text cells', async () => {
-    const file = new File(['CUP,quantita,note\nG17H03000130001,12,testo\n,,\nA58C15000390001,7,ok'], 'cups.csv', {
+    const file = new File(['CUP,quantità,note\nG17H03000130001,12,testo\n,,\nA58C15000390001,7,ok'], 'cups.csv', {
       type: 'text/csv',
     });
 
@@ -214,7 +214,7 @@ describe('parseFile', () => {
 
   it('keeps empty XLSX rows and mixed numeric/text cells', async () => {
     const file = await workbookFile([
-      ['CUP', 'quantita', 'note'],
+      ['CUP', 'quantità', 'note'],
       ['G17H03000130001', 12, 'testo'],
       ['', '', ''],
       ['A58C15000390001', 7, 'ok'],

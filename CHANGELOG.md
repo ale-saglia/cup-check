@@ -30,7 +30,7 @@
 - Integra nella web app il lookup locale del dataset OpenCUP con `sql.js`, cache browser e fallback cautelativo.
 - Pubblica il workflow mensile/manuale per creare la release dataset e aggiornare GitHub Pages dal web pinnato.
 - Aggiunge `OpenCupChecker` Python con lookup OpenCUP su indice SQLite locale o scaricato in cache.
-- Aggiunge i contratti Python per manifest e latest dataset, piu test locali e di integrazione sul dataset pubblicato.
+- Aggiunge i contratti Python per manifest e latest dataset, più test locali e di integrazione sul dataset pubblicato.
 - Chiarisce nella web app i limiti dello strumento in sviluppo e del dataset OpenCUP mensile.
 - Documenta la strategia statica via GitHub Releases e Pages con ADR, roadmap e specifiche aggiornate.
 

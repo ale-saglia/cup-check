@@ -18,7 +18,7 @@ describe('service worker build', () => {
     });
   });
 
-  it('usa una cache dedicata per il dataset e mantiene solo l ultima release', async () => {
+  it("usa una cache dedicata per il dataset e mantiene solo l'ultima release", async () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
       const runtime = createServiceWorkerRuntime(serviceWorker, {
         'https://example.test/index.html': new Response('app shell'),
