@@ -1,5 +1,9 @@
 # Changelog
 
+## Unreleased
+
+- Corregge il workflow PyPI: il publish Python ora parte solo da tag software `vX.Y.Z` o da dispatch manuale sullo stesso formato, evitando release dataset e versioni VCS spurie.
+
 ## 0.3.1 - 2026-05-11
 
 - Corregge il deploy del dataset quando il GitHub Release software non è ancora pubblicato (fallback ai git tag).
