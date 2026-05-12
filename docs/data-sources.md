@@ -113,6 +113,7 @@ La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 G
   "cup_index": {
     "base_url": "https://<owner>.github.io/cup-check/datasets/dataset-2026-05",
     "files": ["cup-index.sqlite.000", "cup-index.sqlite.001"],
+    "files_sha256": ["1111...aaaa", "2222...bbbb"],
     "chunk_size_bytes": 52428800,
     "total_size_bytes": 104857600,
     "sha256": "abcd...ef01"
@@ -131,5 +132,7 @@ La stima preliminare per uno SQLite con i campi di coerenza e tra 800 MB e 1.5 G
 ```
 
 `detail_store` e opzionale nella `0.3.0` e diventa obbligatorio quando la `0.4.0` abilita i controlli di coerenza.
+
+`cup_index.sha256` identifica l'indice SQLite ricomposto. `cup_index.files_sha256` identifica i singoli chunk: il browser verifica ogni file scaricato prima del reassembly e ritenta il download dei chunk corrotti o incompleti.
 
 Il contratto architetturale e fissato in [ADR 0007](adr/0007-dataset-statico-indice-dettagli.md). La libreria Python espone loader tipizzati per manifest/latest e `OpenCupChecker`, che riusa gli stessi asset statici scaricando e ricomponendo l'indice SQLite in cache locale.

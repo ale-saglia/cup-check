@@ -60,12 +60,13 @@ Flusso di deploy:
 1. `release-web.yml` builda la web app solo su tag software `v*`, deploya Pages e allega `web-dist.tar.gz` alla release software.
 2. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk nella release dataset (`dataset-YYYY-MM`).
 3. Lo stesso workflow dataset scarica `web-dist.tar.gz` dall'ultima release `v*` oppure, se manca, ricostruisce la web app facendo checkout di quella tag; poi aggiunge `dataset-latest.json` e `datasets/dataset-YYYY-MM/*` e ridistribuisce Pages.
-4. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` su Pages, scarica e cacha l'indice, poi verifica localmente i CUP unici.
+4. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` su Pages, scarica i chunk con verifica SHA-256 per-file e retry, li salva in una cache dataset dedicata distinta dalla cache app-shell, mantiene solo l'ultima release `dataset-YYYY-MM` e poi verifica localmente i CUP unici.
 5. La libreria Python usa `OpenCupChecker` per scaricare e cachare localmente gli stessi asset statici, ricomporre l'indice SQLite e verificare i CUP via `sqlite3`.
 
 Componenti principali aggiunti in `0.3.0`:
 
-- `packages/web/src/dataset-loader.js` — discovery ultimo dataset, download/cache dei chunk SQLite, inizializzazione `sql.js` e lookup locale.
+- `packages/web/src/dataset-loader.js` — discovery ultimo dataset, download dei chunk SQLite con verifica SHA-256 per-file, inizializzazione `sql.js` e lookup locale.
+- `packages/web/src/sw.js` — cache app-shell e cache dataset separate; eviction esplicita delle release dataset superate.
 - `packages/web/src/results.js#applyDatasetLookup` — trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE`.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
 - `packages/cup_check/src/cup_check/checker.py` — `OpenCupChecker` Python per lookup su indice locale o scaricato in cache.

@@ -3,7 +3,11 @@
 ## Unreleased
 
 - Aggiunge nella preview XLSX un selettore scheda quando il file contiene più fogli.
+- Migliora la UI mobile di header, footer, anteprima, risultati e stato dataset.
 - Corregge il workflow PyPI: il publish Python ora parte solo da tag software `vX.Y.Z` o da dispatch manuale sullo stesso formato, evitando release dataset e versioni VCS spurie.
+- Rafforza il download dei dataset con timeout espliciti e log di avanzamento per il bulk OpenCUP.
+- Verifica nel browser lo SHA-256 di ogni chunk SQLite con retry prima di ricomporre l'indice.
+- Isola gli asset dataset in una cache Service Worker dedicata, mantenendo solo l'ultima release `dataset-YYYY-MM`.
 
 ## 0.3.1 - 2026-05-11
 

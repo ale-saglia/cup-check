@@ -31,7 +31,8 @@ CREATE TABLE cup_index (
 La pipeline genera `cup-index.sqlite`, lo divide in `cup-index.sqlite.000`,
 `cup-index.sqlite.001`, ecc. e pubblica i chunk sia nella release dataset sia nello spazio
 statico GitHub Pages sotto `datasets/dataset-YYYY-MM/`. Il manifest usa la sezione
-`cup_index` per descrivere base URL, file, dimensioni e SHA-256 dell'indice ricomposto.
+`cup_index` per descrivere base URL, file, dimensioni, SHA-256 dell'indice ricomposto e
+SHA-256 dei singoli chunk.
 
 La web app resta pinnata alle release software `v*` e recupera dinamicamente l'ultimo dataset
 disponibile leggendo prima `dataset-latest.json` da GitHub Pages. Le GitHub Releases restano

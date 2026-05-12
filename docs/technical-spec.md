@@ -120,6 +120,8 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 
 La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery; anche in questo caso il `manifest_url` punta a GitHub Pages per evitare blocchi CORS. Se il dataset non è ancora pubblicato su Pages il lookup degrada in modo cautelativo.
 
+Il download dataset e rafforzato a due livelli: il browser verifica lo SHA-256 di ogni chunk prima di ricomporre lo SQLite e ritenta i chunk falliti; il service worker usa una cache dataset dedicata, separata dalla cache app-shell, con eviction delle release `dataset-YYYY-MM` precedenti. La libreria Python usa timeout espliciti per manifest/latest, chunk dataset gia elaborati e download bulk OpenCUP.
+
 La build web ricava la versione dal tag software Git piu vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 
 La build Python accetta solo tag software esatti `vX.Y.Z`: il workflow pubblica su PyPI al push del tag e puo essere rilanciato manualmente con `workflow_dispatch` per recuperare un tag gia esistente. Il controllo sui file `dist/cup_check-X.Y.Z.*` blocca il publish se il versioning VCS produce una versione diversa dal tag.
