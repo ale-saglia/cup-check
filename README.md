@@ -83,6 +83,7 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 - [Roadmap](docs/roadmap.md)
 - [Fonti dati](docs/data-sources.md)
 - [Governance](docs/governance.md)
+- [Contributori](CONTRIBUTORS.md)
 - [Glossario](docs/glossary.md)
 - [ADR](docs/adr/)
 
