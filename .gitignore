@@ -12,6 +12,7 @@ __pycache__/
 *.pyc
 .DS_Store
 *.log
+*.traineddata
 .vscode/
 .claude/
 TODO.md
