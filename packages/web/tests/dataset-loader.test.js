@@ -1,5 +1,5 @@
 import initSqlJs from 'sql.js';
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { discoverLatestDataset, loadDataset } from '../src/dataset-loader.js';
 
 const wasmPath = new URL('../node_modules/sql.js/dist/sql-wasm.wasm', import.meta.url).pathname;
@@ -112,9 +112,59 @@ describe('discoverLatestDataset', () => {
       'https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json',
     );
   });
+
+  it('rejects invalid GitHub releases responses', async () => {
+    await expect(
+      discoverLatestDataset(
+        mockFetch({
+          './dataset-latest.json': { invalid: true },
+          'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': {
+            tag_name: 'dataset-2026-05',
+          },
+        }),
+      ),
+    ).rejects.toThrow('dataset releases response is not an array');
+  });
+
+  it('rejects when no dataset release is available', async () => {
+    await expect(
+      discoverLatestDataset(
+        mockFetch({
+          './dataset-latest.json': { invalid: true },
+          'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
+            { tag_name: 'v0.3.0' },
+          ],
+        }),
+      ),
+    ).rejects.toThrow('latest dataset release not found');
+  });
 });
 
 describe('loadDataset', () => {
+  it('loads only once through loadLatestDataset', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const sqliteBytes = await buildSqliteFixture();
+    const sha256s = [await computeSha256Hex(sqliteBytes)];
+    const fetchFn = vi.fn(
+      mockFetch({
+        './dataset-latest.json': latestPointer(),
+        [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s, {
+          files: ['cup-index.sqlite.000'],
+        }),
+        [CHUNK_URL_0]: sqliteBytes,
+      }),
+    );
+    const initSql = () => initSqlJs({ locateFile: () => wasmPath });
+
+    const first = await loadLatestDataset({ fetchFn, initSql });
+    const second = await loadLatestDataset({ fetchFn, initSql });
+
+    expect(second).toBe(first);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    first.close();
+  });
+
   it('loads chunked SQLite and performs local lookup', async () => {
     const sqliteBytes = await buildSqliteFixture();
     const firstChunk = sqliteBytes.slice(0, 128);
@@ -152,7 +202,91 @@ describe('loadDataset', () => {
       [CHUNK_URL_1]: sqliteBytes.slice(128),
     });
 
-    await expect(loadDataset({ fetchFn })).rejects.toThrow();
+    await expect(loadDataset({ fetchFn })).rejects.toThrow('invalid dataset cup_index');
+  });
+
+  it('loads with the default sql.js initializer', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const sha256s = [await computeSha256Hex(sqliteBytes)];
+    const dataset = await loadDataset({
+      fetchFn: mockFetch({
+        './dataset-latest.json': latestPointer(),
+        [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s, {
+          files: ['cup-index.sqlite.000'],
+        }),
+        [CHUNK_URL_0]: sqliteBytes,
+      }),
+    });
+
+    expect(dataset.hasCup('G17H03000130001')).toBe(true);
+    dataset.close();
+  });
+
+  it('rejects unsupported manifest shapes', async () => {
+    const valid = makeManifest(1, ['hash']);
+    await expect(
+      loadDataset({
+        fetchFn: mockFetch({
+          './dataset-latest.json': latestPointer(),
+          [MANIFEST_URL]: { ...valid, schema_version: 2 },
+        }),
+      }),
+    ).rejects.toThrow('unsupported dataset manifest schema');
+    await expect(
+      loadDataset({
+        fetchFn: mockFetch({
+          './dataset-latest.json': latestPointer(),
+          [MANIFEST_URL]: { ...valid, schema: { table: 'details' } },
+        }),
+      }),
+    ).rejects.toThrow('unsupported dataset table');
+    await expect(
+      loadDataset({
+        fetchFn: mockFetch({
+          './dataset-latest.json': latestPointer(),
+          [MANIFEST_URL]: { ...valid, cup_index: { ...valid.cup_index, files: [] } },
+        }),
+      }),
+    ).rejects.toThrow('invalid dataset cup_index');
+  });
+
+  it('rejects when chunk sizes do not match the manifest', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const firstChunk = sqliteBytes.slice(0, 128);
+    const secondChunk = sqliteBytes.slice(128);
+    const sha256s = await Promise.all([firstChunk, secondChunk].map(computeSha256Hex));
+    const fetchFn = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength + 1, sha256s),
+      [CHUNK_URL_0]: firstChunk,
+      [CHUNK_URL_1]: secondChunk,
+    });
+
+    await expect(loadDataset({ fetchFn })).rejects.toThrow('dataset chunk size mismatch');
+  });
+
+  it('reads chunk responses without a streaming body', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const sha256s = [await computeSha256Hex(sqliteBytes)];
+    const fetchFn = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s, {
+        files: ['cup-index.sqlite.000'],
+      }),
+      [CHUNK_URL_0]: {
+        ok: true,
+        body: null,
+        arrayBuffer: async () => sqliteBytes.buffer.slice(0),
+      },
+    });
+
+    const dataset = await loadDataset({
+      fetchFn,
+      initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+    });
+
+    expect(dataset.hasCup('G17H03000130001')).toBe(true);
+    dataset.close();
   });
 
   it('retries a chunk on HTTP failure and succeeds', async () => {
@@ -251,13 +385,14 @@ function latestPointer() {
   };
 }
 
-function makeManifest(totalSizeBytes, filessha256) {
+function makeManifest(totalSizeBytes, filessha256, overrides = {}) {
   const cupIndex = {
     base_url: 'https://example.test/release',
     files: ['cup-index.sqlite.000', 'cup-index.sqlite.001'],
     chunk_size_bytes: 128,
     total_size_bytes: totalSizeBytes,
     sha256: 'ignored',
+    ...overrides,
   };
   if (filessha256 !== null) {
     cupIndex.files_sha256 = filessha256;
@@ -280,6 +415,7 @@ function mockFetch(routes) {
     const key = String(url);
     const value = routes[key];
     if (value === undefined || value?.notFound) return notFound();
+    if (value?.ok === true && 'arrayBuffer' in value) return value;
     if (value instanceof Uint8Array) return new Response(value);
     return Response.json(value);
   };

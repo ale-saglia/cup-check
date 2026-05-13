@@ -26,6 +26,10 @@ export default defineConfig({
       include: ['src/**/*.js'],
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
+      thresholds: {
+        lines: 100,
+        perFile: true,
+      },
     },
   },
 });

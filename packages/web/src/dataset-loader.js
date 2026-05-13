@@ -14,13 +14,8 @@ export function loadLatestDataset(options = {}) {
 }
 
 export async function discoverLatestDataset(fetchFn = fetch) {
-  try {
-    const latest = await fetchJson(fetchFn, LATEST_DATASET_URL);
-    if (isLatestPointer(latest)) return latest;
-  } catch {
-    // Fallback to GitHub API discovery when the static pointer is unavailable.
-  }
-
+  const latest = await fetchJson(fetchFn, LATEST_DATASET_URL).catch(() => null);
+  if (isLatestPointer(latest)) return latest;
   return discoverLatestFromGitHub(fetchFn);
 }
 
@@ -87,10 +82,6 @@ async function initDefaultSql(options) {
 
 async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
   const chunkHashes = cupIndex.files_sha256;
-  if (!Array.isArray(chunkHashes) || chunkHashes.length !== cupIndex.files.length) {
-    throw new Error('dataset chunk integrity hashes unavailable');
-  }
-
   let loadedBytes = 0;
   onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
 

@@ -229,6 +229,14 @@ describe('parseFile', () => {
       { originalRowNumber: 4, cells: ['A58C15000390001', '7', 'ok'] },
     ]);
   });
+
+  it('rejects unsupported file formats', async () => {
+    const file = new File(['{}'], 'cups.json', { type: 'application/json' });
+
+    await expect(parseFile(file)).rejects.toThrow(
+      'Formato non supportato. Carica un file CSV o XLSX.',
+    );
+  });
 });
 
 async function workbookFile(rows, name = 'cups.xlsx') {

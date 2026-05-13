@@ -75,4 +75,17 @@ describe('displayResults', () => {
     expect(expanded[0].outcome).toBe(results[0].outcome);
     expect(expanded[2].failedRules).toEqual(results[0].failedRules);
   });
+
+  it('sorts expanded rows with missing and textual row labels', () => {
+    const results = [
+      { ...validateCup('A12B23000000001', null, { currentYear: 2026 }), inputRows: [null, '10'] },
+      { ...validateCup('B12B23000000002', '2', { currentYear: 2026 }), inputRows: ['2'] },
+    ];
+
+    expect(displayResults(results, false).map((result) => result.inputRow)).toEqual([
+      '2',
+      '10',
+      null,
+    ]);
+  });
 });
