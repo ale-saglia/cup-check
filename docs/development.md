@@ -48,6 +48,6 @@ Vedi [Technical Spec](technical-spec.md#comandi) per la descrizione dettagliata 
 
 ## Coverage e Codecov
 
-I test Python generano anche `coverage.xml` tramite `pytest-cov`. Il file è ignorato da Git e viene caricato su Codecov dal workflow `ci.yml` usando il secret GitHub Actions `CODECOV_TOKEN`.
+I test Python generano `coverage.xml` tramite `pytest-cov`; i test web generano `coverage/lcov.info` tramite Vitest e `@vitest/coverage-v8`. Entrambi i report sono ignorati da Git e vengono caricati su Codecov dal workflow `ci.yml` usando il secret GitHub Actions `CODECOV_TOKEN`.
 
-La soglia locale resta definita in `packages/cup_check/pyproject.toml` con `--cov-fail-under=100`; le regole di stato Codecov sono dichiarate in `codecov.yml`.
+La soglia locale Python resta definita in `packages/cup_check/pyproject.toml` con `--cov-fail-under=100`. La soglia locale web è definita in `packages/web/vite.config.js` con line coverage al 100% per file. Codecov riceve report separati con flag `python` e `web`; le regole di stato sono dichiarate in `codecov.yml`.

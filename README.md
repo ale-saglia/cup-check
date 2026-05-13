@@ -5,7 +5,8 @@
 [![PyPI](https://img.shields.io/pypi/v/cup-check.svg)](https://pypi.org/project/cup-check/)
 [![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL--1.2-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/ale-saglia/cup-check?sort=semver)](https://github.com/ale-saglia/cup-check/releases)
-[![codecov](https://codecov.io/gh/ale-saglia/cup-check/graph/badge.svg)](https://codecov.io/gh/ale-saglia/cup-check)
+[![Python coverage](https://codecov.io/gh/ale-saglia/cup-check/graph/badge.svg?flag=python)](https://codecov.io/gh/ale-saglia/cup-check?flag=python)
+[![Web coverage](https://codecov.io/gh/ale-saglia/cup-check/graph/badge.svg?flag=web)](https://codecov.io/gh/ale-saglia/cup-check?flag=web)
 
 > Local-first support tool for checking Italian public project codes (CUP) before administrative reporting, with static OpenCUP lookup and a Python library.
 
