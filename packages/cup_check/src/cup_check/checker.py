@@ -64,6 +64,14 @@ class OpenCupChecker:
         *,
         cache_dir: str | Path | None = None,
     ) -> OpenCupChecker:
+        """Costruisce un checker usando l'ultimo dataset OpenCUP disponibile.
+
+        Se la discovery del dataset, il download dei chunk, la verifica hash o
+        l'apertura dell'indice SQLite falliscono, restituisce un checker senza
+        indice e salva il dettaglio in ``fallback_reason``. In quel caso
+        ``check()`` degrada in modo cautelativo alla sola validazione formale,
+        lasciando i CUP formalmente validi come ``FORMATO_VALIDO_DA_VERIFICARE``.
+        """
         try:
             latest = _load_latest_pointer(latest_url_or_path)
             manifest = _load_manifest(latest.manifest_url)
