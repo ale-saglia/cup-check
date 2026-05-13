@@ -12,7 +12,6 @@
         "esbenp.prettier-vscode",
         "alexcvzz.vscode-sqlite",
         "ms-python.python",
-        "spmeesseman.vscode-taskexplorer",
         "vitest.explorer"
       ],
       "settings": {
