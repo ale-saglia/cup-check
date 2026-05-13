@@ -30,9 +30,25 @@ jobs:
         run: make web-audit
       - run: npm run build
 
-  python:
-    name: Python lint and test
+  python-matrix:
+    name: Prepare Python matrix
     runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.matrix }}
+      coverage-python-version: ${{ steps.matrix.outputs.coverage-python-version }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        run: python scripts/python_matrix.py --github-output "$GITHUB_OUTPUT"
+
+  python:
+    name: Python lint and test (${{ matrix.python-version }})
+    needs: python-matrix
+    runs-on: ubuntu-latest
+    continue-on-error: ${{ matrix.experimental }}
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.python-matrix.outputs.matrix) }}
     defaults:
       run:
         working-directory: packages/cup_check
@@ -46,12 +62,12 @@ jobs:
           cache-dependency-glob: packages/cup_check/uv.lock
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python-version }}
       - run: uv sync --dev --locked
       - run: uv run ruff check .
       - run: uv run pytest
       - uses: codecov/codecov-action@v5
-        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        if: ${{ matrix.python-version == needs.python-matrix.outputs.coverage-python-version && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         with:
           files: packages/cup_check/coverage.xml
           flags: python

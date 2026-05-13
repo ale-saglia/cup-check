@@ -1,6 +1,7 @@
 # cup-check
 
 [![CI](https://github.com/ale-saglia/cup-check/actions/workflows/ci.yml/badge.svg)](https://github.com/ale-saglia/cup-check/actions/workflows/ci.yml)
+[![Python CI matrix](https://img.shields.io/badge/python%20ci-%3E%3D3.12%20%2B%20experimental%20minors-blue.svg)](https://github.com/ale-saglia/cup-check/actions/workflows/ci.yml)
 [![PyPI](https://img.shields.io/pypi/v/cup-check.svg)](https://pypi.org/project/cup-check/)
 [![License: EUPL-1.2](https://img.shields.io/badge/license-EUPL--1.2-blue.svg)](LICENSE)
 [![Latest release](https://img.shields.io/github/v/release/ale-saglia/cup-check?sort=semver)](https://github.com/ale-saglia/cup-check/releases)
