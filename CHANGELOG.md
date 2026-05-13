@@ -5,6 +5,11 @@
 - Migliora il README con un'introduzione orientata al problema pubblico e un abstract in inglese.
 - Aggiunge una guida utente non tecnica e un processo contributivo minimo.
 - Aggiunge i badge dinamici al README e integra l'upload della coverage Python su Codecov.
+- Stabilizza il controllo di release web quando l'ambiente non espone il contesto Git completo.
+- Aggiunge coverage Vitest a Codecov, porta la coverage linee web al 100% e copre dark mode, dialog, rendering, stato e Service Worker.
+- Aggiunge un audit accessibilità con axe al test acceptance web.
+- Genera la matrice Python CI da `requires-python` e aggiunge il controllo `npm audit` al workflow web.
+- Aggiunge hook `pre-commit`, policy di sicurezza, sezione maintainer e riconoscimento contributori.
 
 ## 0.3.2 - 2026-05-12
 
