@@ -30,7 +30,7 @@ La tabella `cups` viene creata direttamente come `WITHOUT ROWID` con `PRIMARY KE
 
 I duplicati nel bulk OpenCUP sono un caso limite; per ora non è necessaria una logica di selezione più fine.
 
-Nella milestone `0.4.0`, quando la tabella `cups` accoglierà colonne aggiuntive (es. stato, data aggiornamento), la strategia di deduplicazione diventerà `ON CONFLICT(cup) DO UPDATE SET ... WHERE excluded.updated_on > cups.updated_on`, mantenendo il record più recente senza richiedere una tabella temporanea.
+Nella futura milestone di coerenza atto, quando la tabella `cups` accoglierà colonne aggiuntive (es. stato, data aggiornamento), la strategia di deduplicazione diventerà `ON CONFLICT(cup) DO UPDATE SET ... WHERE excluded.updated_on > cups.updated_on`, mantenendo il record più recente senza richiedere una tabella temporanea.
 
 ## Consequences
 

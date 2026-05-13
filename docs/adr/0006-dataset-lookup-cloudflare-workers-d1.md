@@ -11,10 +11,10 @@ ADR 0005 ha stabilito che la web app leggesse il dataset OpenCUP tramite HTTP Ra
 Nell'implementare questa soluzione sono emersi tre vincoli non superabili:
 
 1. **GitHub Releases non è una CDN.** Le URL delle release redirigono su S3 (`objects.githubusercontent.com`), rompendo il caching CDN e, in alcuni browser, le Range request stesse.
-2. **GitHub Pages ha un limite di 100 MB per file.** Il DB SQLite supera già questa soglia e crescerà con le milestone 0.4.0+.
+2. **GitHub Pages ha un limite di 100 MB per file.** Il DB SQLite supera già questa soglia e crescerà quando verranno introdotti i dettagli per la coerenza atto.
 3. **Le Range request per batch multi-CUP non si accorciano.** Con `sql.js-httpvfs` ogni CUP richiede la traversata di un B-tree indipendente: un batch di N CUP genera O(N × profondità_albero) richieste HTTP, anche con query `IN (...)`.
 
-Sono stati valutati approcci alternativi: file sorted a lunghezza fissa con binary search, Bloom filter su GitHub Pages, storage R2 con httpvfs. Tutti introducono compromessi (falsi positivi, latenza per batch grandi, complessità di build) che si aggravano nelle milestone 0.4.0+ quando il dataset acquisisce colonne aggiuntive e i controlli diventano semantici.
+Sono stati valutati approcci alternativi: file sorted a lunghezza fissa con binary search, Bloom filter su GitHub Pages, storage R2 con httpvfs. Tutti introducono compromessi (falsi positivi, latenza per batch grandi, complessità di build) che si aggravano quando il dataset acquisisce colonne aggiuntive e i controlli diventano semantici.
 
 ## Decision
 

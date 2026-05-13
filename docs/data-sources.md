@@ -36,7 +36,7 @@ dataset-YYYY-MM
 └── details-*.sqlite
 ```
 
-Nella `0.3.0` è obbligatorio solo l'indice CUP. Il dataset dettagli viene introdotto nella `0.4.0`.
+Nella `0.3.0` è obbligatorio solo l'indice CUP. Il dataset dettagli viene introdotto nella milestone di coerenza atto, spostata dopo il tool PDF `0.4.0`.
 
 Schema logico dell'indice CUP:
 
@@ -49,7 +49,7 @@ CREATE TABLE cup_index (
 
 `cup` è la chiave primaria dell'indice. `detail_chunk` indica il chunk del dataset dettagli che contiene i dati completi del CUP; nella `0.3.0` può essere assente o valorizzato a `NULL` finché non esiste il dataset dettagli. Se la build trova duplicati nel bulk OpenCUP, segnala un warning e mantiene il record con data di aggiornamento più recente.
 
-Per la `0.3.0` l'indice contiene solo le informazioni necessarie al lookup esatto di presenza nel perimetro OpenCUP. Gli altri campi sono già dichiarati nel mapping come `destination: false`, così possono essere abilitati in modo esplicito nel dataset dettagli della `0.4.0`.
+Per la `0.3.0` l'indice contiene solo le informazioni necessarie al lookup esatto di presenza nel perimetro OpenCUP. Gli altri campi sono già dichiarati nel mapping come `destination: false`, così possono essere abilitati in modo esplicito nel dataset dettagli quando partirà la milestone di coerenza atto.
 
 La trasformazione CSV -> SQLite è dichiarata in
 `packages/cup_check/src/cup_check/opencup_dataset_schema.yaml`: ogni colonna destinazione
@@ -86,7 +86,7 @@ Queste decisioni non vanno fissate senza misure su un campione reale:
 - valori assenti: normalizzare segnaposto come `DATO NON PRESENTE` e `***************` a `NULL`;
 - stato/revoca: non escludere CUP chiusi o revocati, ma riportare il dettaglio nel risultato.
 
-La stima preliminare per uno SQLite con i campi di coerenza è tra 800 MB e 1.5 GB resta da confermare con misure sul dataset reale. Per evitare di scaricare sempre tutto, la `0.4.0` pubblicherà un dataset dettagli shardato: il browser usa l'indice CUP per capire quali chunk dettagli servono ai CUP caricati e scarica solo quelli necessari. GitHub Pages resta il canale operativo per il consumo browser degli asset statici; GitHub Releases resta archivio versionato della release dataset. Storage statici esterni restano opzioni di fallback solo se Pages o Releases diventassero insufficienti.
+La stima preliminare per uno SQLite con i campi di coerenza è tra 800 MB e 1.5 GB resta da confermare con misure sul dataset reale. Per evitare di scaricare sempre tutto, la milestone di coerenza atto pubblicherà un dataset dettagli shardato: il browser usa l'indice CUP per capire quali chunk dettagli servono ai CUP caricati e scarica solo quelli necessari. GitHub Pages resta il canale operativo per il consumo browser degli asset statici; GitHub Releases resta archivio versionato della release dataset. Storage statici esterni restano opzioni di fallback solo se Pages o Releases diventassero insufficienti.
 
 ## Esiti Futuri
 
@@ -131,7 +131,7 @@ La stima preliminare per uno SQLite con i campi di coerenza è tra 800 MB e 1.5 
 }
 ```
 
-`detail_store` è opzionale nella `0.3.0` e diventa obbligatorio quando la `0.4.0` abilita i controlli di coerenza.
+`detail_store` è opzionale nella `0.3.0` e diventa obbligatorio quando la milestone di coerenza atto abilita i controlli sostanziali.
 
 `cup_index.sha256` identifica l'indice SQLite ricomposto. `cup_index.files_sha256` identifica i singoli chunk: il browser verifica ogni file scaricato prima del reassembly e ritenta il download dei chunk corrotti o incompleti.
 

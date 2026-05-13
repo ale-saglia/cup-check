@@ -10,7 +10,7 @@ ADR 0006 aveva introdotto Cloudflare Workers + D1 per evitare il costo di lettur
 
 La direzione di prodotto resta però quella di una web app statica, deployabile su GitHub Pages e senza servizi server-side nell'MVP esteso. Il Worker potrà essere rivalutato più avanti per eventuali API MEF/Sogei autoritative, ma non deve essere necessario per il lookup OpenCUP self-hosted.
 
-La milestone `0.4.0` richiede inoltre dati più ricchi del solo CUP. Scaricare sempre un database completo con stato, natura, soggetti, importi e descrizioni sarebbe troppo costoso per il browser. Serve quindi distinguere il dato minimo per l'esistenza dal dato completo per i controlli di coerenza.
+La milestone di coerenza atto richiede inoltre dati più ricchi del solo CUP. Scaricare sempre un database completo con stato, natura, soggetti, importi e descrizioni sarebbe troppo costoso per il browser. Serve quindi distinguere il dato minimo per l'esistenza dal dato completo per i controlli di coerenza. Questa milestone è stata spostata dopo la `0.4.0`, che ora è dedicata all'estrazione CUP da PDF.
 
 Un vincolo di prodotto e governance è non introdurre una dipendenza operativa da provider esterni aggiuntivi per la funzionalità core. GitHub è già parte della catena di rilascio del progetto; aggiungere Cloudflare, Turso, R2, Supabase, HuggingFace Datasets o servizi simili implicherebbe account, quote, policy, credenziali, possibili costi futuri e un nuovo punto di failure fuori dal controllo del repository.
 
@@ -29,7 +29,7 @@ Adottiamo un dataset statico pubblicato su GitHub Releases e composto da due liv
 - **indice CUP**: contiene tutti i CUP del mirror OpenCUP e un riferimento al chunk dettagli che contiene il record completo;
 - **dataset dettagli**: contiene i campi necessari ai controlli di coerenza e viene diviso in shard scaricabili separatamente.
 
-Nella `0.3.0` la web app scarica e cacha l'indice CUP per produrre esiti di presenza nel perimetro OpenCUP. Nella `0.4.0` scarica i chunk dettagli solo per i CUP caricati dall'utente e solo quando servono controlli sostanziali.
+Nella `0.3.0` la web app scarica e cacha l'indice CUP per produrre esiti di presenza nel perimetro OpenCUP. Nella futura milestone di coerenza atto scarica i chunk dettagli solo per i CUP caricati dall'utente e solo quando servono controlli sostanziali.
 
 Il manifest dataset descrive entrambi i livelli: tag, snapshot fonte, versione schema, file, dimensioni, hash, numero record e compatibilità minima software.
 
@@ -42,7 +42,7 @@ Non introduciamo Cloudflare D1, Workers o altri servizi backend per il lookup Op
 - La web app resta statica e deployabile su GitHub Pages.
 - Web e Python consumano gli stessi asset dataset e lo stesso manifest.
 - L'indice consente lookup esatto senza strutture probabilistiche.
-- La `0.4.0` può scaricare solo i dettagli necessari ai CUP richiesti.
+- La milestone di coerenza atto può scaricare solo i dettagli necessari ai CUP richiesti.
 - Il Worker resta disponibile come opzione futura per API autoritative, non come dipendenza del dataset OpenCUP.
 
 **Negativi/Trade-off:**

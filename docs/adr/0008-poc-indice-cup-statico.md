@@ -13,7 +13,7 @@ ottimizzazioni successive a dati reali di download, memoria e lookup.
 
 La 0.3.0 introduce solo la verifica di presenza nel perimetro OpenCUP. I dettagli sostanziali
 per controlli su soggetti, importi, stato e descrizione restano fuori scope e vengono rinviati
-alla 0.4.0 tramite `detail_store`.
+alla milestone di coerenza atto tramite `detail_store`.
 
 ## Decision
 
@@ -26,7 +26,7 @@ CREATE TABLE cup_index (
 ) WITHOUT ROWID;
 ```
 
-`detail_chunk` è sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla 0.4.0.
+`detail_chunk` è sempre `NULL` nella 0.3.0 e diventa il riferimento ai dettagli dalla milestone di coerenza atto.
 
 La pipeline genera `cup-index.sqlite`, lo divide in `cup-index.sqlite.000`,
 `cup-index.sqlite.001`, ecc. e pubblica i chunk sia nella release dataset sia nello spazio
@@ -49,7 +49,7 @@ disponibile, la verifica degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
 
 - Il lookup resta statico, senza backend applicativo.
 - La pipeline conserva SQLite come formato semplice, ispezionabile e riusabile in Python.
-- `detail_chunk` prepara il contratto per i dettagli 0.4.0 senza pubblicarli subito.
+- `detail_chunk` prepara il contratto per i dettagli di coerenza atto senza pubblicarli subito.
 - La web app non richiede rebuild per scoprire un dataset più recente.
 - Una release dataset aggiorna gli asset Pages del dataset senza promuovere codice web da HEAD.
 
