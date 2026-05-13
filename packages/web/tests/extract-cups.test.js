@@ -32,8 +32,16 @@ describe('extractCupsFromText', () => {
     },
   );
 
-  it(`${futureYearCase.id}: trova il CUP ma lo marca formalValid=false`, () => {
-    const result = extractCupsFromText(futureYearCase.input);
+  it(`${futureYearCase.id}: non trovato perché l'anno (99) supera il range +15 anni`, () => {
+    // SEARCH_YEAR = currentYear+15: anno 99 è oltre la soglia e viene escluso già
+    // dalla verifica strutturale, evitando falsi positivi da anni implausibili.
+    expect(extractCupsFromText(futureYearCase.input)).toHaveLength(0);
+  });
+
+  it('trova CUP con anno di poco futuro (nel range +15a) ma lo marca formalValid=false', () => {
+    // Anno 35 > currentTwoDigitYear (26) → formalValid=false, ma ≤ 41 → struttura OK
+    const nearFutureCup = 'G17H35000130001';
+    const result = extractCupsFromText(nearFutureCup);
     expect(result).toHaveLength(1);
     expect(result[0].formalValid).toBe(false);
   });
@@ -79,6 +87,36 @@ describe('extractCupsFromText', () => {
     const result = extractCupsFromText(`codice ${h1} ${h2} riportato in fattura`);
     expect(result).toEqual([{ value: validCup, occurrences: 1, formalValid: true }]);
   });
+
+  it('ricompone un CUP spezzato in tre parti (output OCR frammentato)', () => {
+    const [p1, p2, p3] = [validCup.slice(0, 5), validCup.slice(5, 10), validCup.slice(10)];
+    const result = extractCupsFromText(`CUP ${p1} ${p2} ${p3} nel documento`);
+    expect(result).toEqual([{ value: validCup, occurrences: 1, formalValid: true }]);
+  });
+
+  it('corregge la confusione OCR 1→I in posizione 3 con ocrFix=true', () => {
+    // CUP reale: H38I23000670005 → OCR legge "H38123000670005" (I→1 in pos 3)
+    const realCup = 'H38I23000670005';
+    const ocrRead = 'H38123000670005'; // pos 3 = '1' invece di 'I'
+    const result = extractCupsFromText(`CUP ${ocrRead} nel documento`, { ocrFix: true });
+    expect(result).toHaveLength(1);
+    expect(result[0].value).toBe(realCup);
+    expect(result[0].formalValid).toBe(true);
+  });
+
+  it('NON corregge la confusione 1→I senza ocrFix (PDF nativo)', () => {
+    const ocrRead = 'H38123000670005';
+    const result = extractCupsFromText(`CUP ${ocrRead} nel documento`);
+    expect(result).toHaveLength(0);
+  });
+
+  it('corregge la confusione OCR 1→I in posizione 0 con ocrFix=true', () => {
+    const cupStartingWithI = 'I00H23000000001';
+    const ocrRead = '100H23000000001'; // pos 0 = '1' invece di 'I'
+    const result = extractCupsFromText(`CUP ${ocrRead} nel documento`, { ocrFix: true });
+    expect(result).toHaveLength(1);
+    expect(result[0].value).toBe(cupStartingWithI);
+  });
 });
 
 describe('extractCupsFromPages', () => {
@@ -110,5 +148,12 @@ describe('extractCupsFromPages', () => {
     expect(result.status).toBe('ok');
     expect(result.source).toBe('ocr');
     expect(result.cups[0].value).toBe(validCup2);
+  });
+
+  it('esclude i CUP formalmente invalidi e restituisce no_cup se non ne rimangono', () => {
+    // futureYearCase ha formalValid=false — non deve apparire nei risultati
+    const result = extractCupsFromPages('invalid.pdf', [futureYearCase.input], 'text');
+    expect(result.status).toBe('no_cup');
+    expect(result.cups).toEqual([]);
   });
 });

@@ -52,7 +52,7 @@ describe('ocrPdf', () => {
 
     expect(createWorker).toHaveBeenCalledOnce();
     expect(createWorker).toHaveBeenCalledWith(
-      'ita',
+      'ita+eng',
       1,
       expect.objectContaining({ workerPath: expect.stringContaining('/tesseract/') }),
     );
