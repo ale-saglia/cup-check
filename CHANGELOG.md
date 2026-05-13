@@ -24,6 +24,7 @@
 - Aggiunge un audit accessibilità con axe al test acceptance web.
 - Genera la matrice Python CI da `requires-python` e aggiunge il controllo `npm audit` al workflow web.
 - Aggiunge hook `pre-commit`, policy di sicurezza, sezione maintainer e riconoscimento contributori.
+- Corregge il progresso del caricamento dataset che appariva bloccato intorno all'80%: il callback `onBytes` veniva ignorato durante lo streaming dei chunk, aggiornando la barra solo al termine di ciascun chunk intero (~17% per salto). Ora il progresso è continuo e riflette i byte effettivamente ricevuti; in caso di retry il contatore retrocede correttamente.
 
 ## 0.3.2 - 2026-05-12
 

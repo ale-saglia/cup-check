@@ -93,22 +93,25 @@ async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
   let loadedBytes = 0;
   onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
 
+  const reportProgress = (delta) => {
+    loadedBytes += delta;
+    onProgress({
+      loadedBytes,
+      totalBytes: cupIndex.total_size_bytes,
+      percent: Math.min(100, Math.floor((loadedBytes / cupIndex.total_size_bytes) * 100)),
+    });
+  };
+
   const chunks = await Promise.all(
-    cupIndex.files.map(async (file, index) => {
-      const bytes = await fetchAndVerifyChunk(
+    cupIndex.files.map((file, index) =>
+      fetchAndVerifyChunk(
         fetchFn,
         `${cupIndex.base_url}/${file}`,
         chunkHashes[index],
         MAX_CHUNK_RETRIES,
-      );
-      loadedBytes += bytes.byteLength;
-      onProgress({
-        loadedBytes,
-        totalBytes: cupIndex.total_size_bytes,
-        percent: Math.min(100, Math.floor((loadedBytes / cupIndex.total_size_bytes) * 100)),
-      });
-      return bytes;
-    }),
+        reportProgress,
+      ),
+    ),
   );
 
   const totalSize = chunks.reduce((sum, chunk) => sum + chunk.byteLength, 0);
@@ -125,12 +128,20 @@ async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
   return out;
 }
 
-async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries) {
+async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries, onBytes) {
+  let receivedThisAttempt = 0;
   for (let attempt = 0; attempt <= retries; attempt++) {
+    if (attempt > 0) {
+      onBytes(-receivedThisAttempt);
+      receivedThisAttempt = 0;
+    }
     try {
       const response = await fetchFn(url);
       if (!response.ok) throw new Error(`dataset chunk ${url}: HTTP ${response.status}`);
-      const bytes = await readResponseBytes(response, () => {});
+      const bytes = await readResponseBytes(response, (n) => {
+        receivedThisAttempt += n;
+        onBytes(n);
+      });
       await verifySha256(bytes, expectedSha256);
       return bytes;
     } catch (err) {
