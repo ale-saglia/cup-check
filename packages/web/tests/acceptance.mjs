@@ -4,6 +4,7 @@ import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
+import { fileURLToPath } from 'node:url';
 import { setTimeout as delay } from 'node:timers/promises';
 import axe from 'axe-core';
 import JSZip from 'jszip';
@@ -70,6 +71,15 @@ try {
   assert(
     result.offlineOk,
     `reload offline non riuscito: ${result.offlineError ?? 'errore sconosciuto'}`,
+  );
+  assert(
+    result.pdfExtractedCupCount >= 3,
+    `PDF extraction ha trovato meno CUP del previsto: ${result.pdfExtractedCupCount}`,
+  );
+  assert(result.pdfPreviewShown, 'Apri nel verificatore non ha aperto il pannello anteprima');
+  assert(
+    result.pdfColumnSelected === '0',
+    `Colonna cup non preselezionata nell'anteprima: ${result.pdfColumnSelected}`,
   );
 
   console.log(JSON.stringify(result, null, 2));
@@ -140,6 +150,34 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     out.groupToggleDefault = await page.locator('#group-same-cups').isChecked();
     await page.locator('#group-same-cups').uncheck();
     out.ungroupedSummary = await page.locator('#summary').textContent();
+
+    // ── PDF-extract flow ───────────────────────────────────────────────────────
+    const samplesDir = new URL('../../../samples/pdf/', import.meta.url).pathname;
+    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    // Open the Strumenti dropdown and navigate to #/pdf-extract
+    await page.locator('details.nav-menu > summary').click();
+    await page.locator('[role="menuitem"]', { hasText: 'Estrai CUP da fatture PDF' }).click();
+    await page.waitForSelector('#pdf-dropzone', { timeout: 5000 });
+
+    // Upload 2 PDFs (native-text.pdf: 1 CUP, native-multipage.pdf: 2 CUPs)
+    await page.setInputFiles('#pdf-file-input', [
+      join(samplesDir, 'native-text.pdf'),
+      join(samplesDir, 'native-multipage.pdf'),
+    ]);
+    // Wait for both files to finish processing (status "done" → cup cells appear)
+    await page.waitForFunction(
+      () => document.querySelectorAll('.cup-cell').length >= 3,
+      { timeout: 20000 },
+    );
+    out.pdfExtractedCupCount = await page.locator('.cup-cell').count();
+
+    // Click "Apri nel verificatore"
+    await page.locator('#pdf-send-btn').click();
+    // Validator view should load with CSV auto-parsed
+    await page.waitForSelector('#preview-panel:not(.hidden)', { timeout: 10000 });
+    out.pdfPreviewShown = true;
+    out.pdfColumnSelected = await page.locator('#column-select').inputValue();
+    // ── end PDF-extract flow ───────────────────────────────────────────────────
 
     await context.setOffline(true);
     try {
