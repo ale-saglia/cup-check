@@ -10,6 +10,7 @@
 | XLSX parsing               | read-excel-file                | MIT, evita dipendenze pesanti                      |
 | Service Worker             | Vanilla                        | Comportamento esplicito                            |
 | Test web                   | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate                    |
+| Coverage Python            | pytest-cov, Codecov            | Soglia locale e report PR                          |
 | Lint/format                | ESLint, Prettier, EditorConfig | Stile coerente                                     |
 | Fixture                    | YAML                           | Leggibili e consumabili da JS/Python               |
 | Dataset storage            | GitHub Releases + GitHub Pages | Release dataset versionate e asset statici consumabili dal browser |
@@ -159,7 +160,7 @@ La libreria espone anche `validate_many(iterable)` per validare iterabili di val
 
 | Workflow               | Trigger                              | Effetto                                              |
 | ---------------------- | ------------------------------------ | ---------------------------------------------------- |
-| `ci.yml`               | PR e push su `main`                  | lint, test, build                                    |
+| `ci.yml`               | PR e push su `main`                  | lint, test, build, upload coverage Python su Codecov |
 | `release-web.yml`      | push tag `v*`                        | build web statica, deploy Pages e allega `web-dist.tar.gz` alla release |
 | `release-python.yml`   | push tag `v*` o `workflow_dispatch`  | build e publish PyPI                                 |
 | `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset e aggiorna Pages dal web pinnato |
@@ -171,6 +172,8 @@ Il download dataset è rafforzato a due livelli: il browser verifica lo SHA-256 
 La build web ricava la versione dal tag software Git più vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 
 La build Python accetta solo tag software esatti `vX.Y.Z`: il workflow pubblica su PyPI al push del tag e può essere rilanciato manualmente con `workflow_dispatch` per recuperare un tag già esistente. Il controllo sui file `dist/cup_check-X.Y.Z.*` blocca il publish se il versioning VCS produce una versione diversa dal tag.
+
+Il job Python della CI genera `packages/cup_check/coverage.xml` tramite `pytest-cov` e lo carica su Codecov con il secret `CODECOV_TOKEN`. Il badge coverage nel README punta al report Codecov; `codecov.yml` mantiene esplicite le soglie di stato per coverage complessiva e patch.
 
 ## Comandi
 

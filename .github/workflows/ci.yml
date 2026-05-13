@@ -47,6 +47,13 @@ jobs:
       - run: uv sync --dev --locked
       - run: uv run ruff check .
       - run: uv run pytest
+      - uses: codecov/codecov-action@v5
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        with:
+          files: packages/cup_check/coverage.xml
+          flags: python
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
 
   python-integration:
     name: Python integration tests (published dataset)

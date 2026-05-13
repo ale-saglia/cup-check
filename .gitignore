@@ -3,6 +3,7 @@ dist/
 coverage/
 data/
 .coverage
+coverage.xml
 .vite/
 .pytest_cache/
 .ruff_cache/

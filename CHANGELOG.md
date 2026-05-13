@@ -4,6 +4,7 @@
 
 - Migliora il README con un'introduzione orientata al problema pubblico e un abstract in inglese.
 - Aggiunge una guida utente non tecnica e un processo contributivo minimo.
+- Aggiunge i badge dinamici al README e integra l'upload della coverage Python su Codecov.
 
 ## 0.3.2 - 2026-05-12
 

@@ -45,3 +45,9 @@ make web-preview-dataset
 ```
 
 Vedi [Technical Spec](technical-spec.md#comandi) per la descrizione dettagliata di ciascun comando.
+
+## Coverage e Codecov
+
+I test Python generano anche `coverage.xml` tramite `pytest-cov`. Il file è ignorato da Git e viene caricato su Codecov dal workflow `ci.yml` usando il secret GitHub Actions `CODECOV_TOKEN`.
+
+La soglia locale resta definita in `packages/cup_check/pyproject.toml` con `--cov-fail-under=100`; le regole di stato Codecov sono dichiarate in `codecov.yml`.
