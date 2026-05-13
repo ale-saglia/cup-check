@@ -124,4 +124,82 @@ describe('ocrPdf', () => {
 
     expect(calls.every((c) => c.fileName === 'fattura.pdf' && c.totalPages === 2)).toBe(true);
   });
+
+  it('chiama getViewport con scale 2.0', async () => {
+    const getViewport = vi.fn().mockReturnValue({ width: 200, height: 300 });
+    const render = vi.fn().mockReturnValue({ promise: Promise.resolve() });
+    const doc = {
+      numPages: 1,
+      getPage: vi.fn().mockResolvedValue({ getViewport, render }),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    };
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    createWorker.mockResolvedValue(makeWorker());
+
+    const { ocrPdf } = await loadOcr();
+    await ocrPdf(fakeFile);
+
+    expect(getViewport).toHaveBeenCalledWith({ scale: 2.0 });
+  });
+
+  it('passa un HTMLCanvasElement a worker.recognize', async () => {
+    const doc = makeDoc(1);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    const worker = makeWorker();
+    createWorker.mockResolvedValue(worker);
+
+    const { ocrPdf } = await loadOcr();
+    await ocrPdf(fakeFile);
+
+    expect(worker.recognize.mock.calls[0][0]).toBeInstanceOf(HTMLCanvasElement);
+  });
+
+  it('restituisce le pagine nell\'ordine corretto per documenti multi-pagina', async () => {
+    const doc = makeDoc(3);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    const worker = {
+      recognize: vi.fn()
+        .mockResolvedValueOnce({ data: { text: 'pagina uno' } })
+        .mockResolvedValueOnce({ data: { text: 'pagina due' } })
+        .mockResolvedValueOnce({ data: { text: 'pagina tre' } }),
+    };
+    createWorker.mockResolvedValue(worker);
+
+    const { ocrPdf } = await loadOcr();
+    const result = await ocrPdf(fakeFile);
+
+    expect(result.pages).toEqual(['pagina uno', 'pagina due', 'pagina tre']);
+  });
+
+  it('onProgress riporta numeri di pagina sequenziali (worker già caricato)', async () => {
+    const doc = makeDoc(3);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    createWorker.mockResolvedValue(makeWorker());
+
+    const { ocrPdf } = await loadOcr();
+    await ocrPdf(fakeFile); // carica il singleton
+
+    const calls = [];
+    await ocrPdf(fakeFile, { onProgress: (p) => calls.push({ ...p }) });
+
+    expect(calls.map((c) => c.page)).toEqual([0, 1, 2, 3]);
+  });
+
+  it('propaga l\'errore se getDocument rigetta', async () => {
+    getDocument.mockImplementation(() => ({ promise: Promise.reject(new Error('PDF corrotto')) }));
+    createWorker.mockResolvedValue(makeWorker());
+
+    const { ocrPdf } = await loadOcr();
+    await expect(ocrPdf(fakeFile)).rejects.toThrow('PDF corrotto');
+  });
+
+  it('propaga l\'errore se worker.recognize rigetta', async () => {
+    const doc = makeDoc(1);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    const worker = { recognize: vi.fn().mockRejectedValue(new Error('OCR fallito')) };
+    createWorker.mockResolvedValue(worker);
+
+    const { ocrPdf } = await loadOcr();
+    await expect(ocrPdf(fakeFile)).rejects.toThrow('OCR fallito');
+  });
 });
