@@ -23,7 +23,10 @@ describe('textInputLines', () => {
   });
 
   it('keeps the first line when it is not exactly CUP', () => {
-    expect(textInputLines('Codice CUP\nA58C15000390001')).toEqual(['Codice CUP', 'A58C15000390001']);
+    expect(textInputLines('Codice CUP\nA58C15000390001')).toEqual([
+      'Codice CUP',
+      'A58C15000390001',
+    ]);
   });
 
   it('returns empty array for empty input', () => {

@@ -22,9 +22,15 @@ describe('service worker build', () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
       const runtime = createServiceWorkerRuntime(serviceWorker, {
         'https://example.test/index.html': new Response('app shell'),
-        'https://example.test/dataset-latest.json': Response.json({ dataset_tag: 'dataset-2026-06' }),
-        'https://example.test/datasets/dataset-2026-05/cup-index.sqlite.000': new Response('may chunk'),
-        'https://example.test/datasets/dataset-2026-06/cup-index.sqlite.000': new Response('june chunk'),
+        'https://example.test/dataset-latest.json': Response.json({
+          dataset_tag: 'dataset-2026-06',
+        }),
+        'https://example.test/datasets/dataset-2026-05/cup-index.sqlite.000': new Response(
+          'may chunk',
+        ),
+        'https://example.test/datasets/dataset-2026-06/cup-index.sqlite.000': new Response(
+          'june chunk',
+        ),
       });
 
       await runtime.fetch('https://example.test/index.html');
@@ -41,7 +47,9 @@ describe('service worker build', () => {
       await runtime.activate();
 
       expect(runtime.cachedUrls(appCacheName)).toContain('https://example.test/index.html');
-      expect(runtime.cachedUrls(appCacheName)).not.toContain('https://example.test/dataset-latest.json');
+      expect(runtime.cachedUrls(appCacheName)).not.toContain(
+        'https://example.test/dataset-latest.json',
+      );
       expect(runtime.cachedUrls(appCacheName)).not.toContain(
         'https://example.test/datasets/dataset-2026-05/cup-index.sqlite.000',
       );

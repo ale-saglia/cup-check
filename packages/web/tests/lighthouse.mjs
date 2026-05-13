@@ -9,10 +9,14 @@ import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
 
 const MIN_SCORE = 90;
 const port = await getFreePort();
-const server = spawn('npm', ['run', 'preview', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'], {
-  detached: true,
-  stdio: ['ignore', 'pipe', 'pipe'],
-});
+const server = spawn(
+  'npm',
+  ['run', 'preview', '--', '--host', '127.0.0.1', '--port', String(port), '--strictPort'],
+  {
+    detached: true,
+    stdio: ['ignore', 'pipe', 'pipe'],
+  },
+);
 const outputDir = await mkdtemp(join(tmpdir(), 'cup-check-lighthouse-'));
 const outputPath = join(outputDir, 'report.json');
 
@@ -93,7 +97,15 @@ async function checkPwaSurface(url) {
   }
 
   const manifest = await manifestResponse.json();
-  const requiredManifestFields = ['name', 'short_name', 'start_url', 'scope', 'display', 'theme_color', 'background_color'];
+  const requiredManifestFields = [
+    'name',
+    'short_name',
+    'start_url',
+    'scope',
+    'display',
+    'theme_color',
+    'background_color',
+  ];
   const missingFields = requiredManifestFields.filter((field) => !manifest[field]);
   if (missingFields.length > 0) {
     throw new Error(`manifest incompleto: mancano ${missingFields.join(', ')}`);

@@ -23,7 +23,10 @@ export async function findChromePath() {
   const cacheDir = join(process.env.HOME ?? '/home/vscode', '.cache', 'ms-playwright');
   try {
     const entries = await readdir(cacheDir);
-    const chromiumDirs = entries.filter((entry) => entry.startsWith('chromium-')).sort().reverse();
+    const chromiumDirs = entries
+      .filter((entry) => entry.startsWith('chromium-'))
+      .sort()
+      .reverse();
     for (const entry of chromiumDirs) {
       const candidate = join(cacheDir, entry, 'chrome-linux', 'chrome');
       if (existsSync(candidate)) {

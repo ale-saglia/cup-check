@@ -33,7 +33,10 @@ try {
     result.controllerAfterOnlineReload,
     'service worker non controlla la pagina dopo il reload online',
   );
-  assert(result.xssResultsImageCount === 0, 'payload HTML renderizzato come immagine nei risultati');
+  assert(
+    result.xssResultsImageCount === 0,
+    'payload HTML renderizzato come immagine nei risultati',
+  );
   assert(
     result.xssResultsText.includes('<IMG SRC=X ONERROR=ALERT(1)>'),
     `payload HTML non presente come testo nei risultati: ${result.xssResultsText}`,

@@ -36,9 +36,7 @@ describe('buildParsedRows', () => {
     );
 
     expect(parsed.headers).toEqual(['id', 'CUP', 'note']);
-    expect(parsed.rows).toEqual([
-      { originalRowNumber: 2, cells: ['1', 'G17H03000130001', 'ok'] },
-    ]);
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: ['1', 'G17H03000130001', 'ok'] }]);
     expect(parsed.suggestedColumnIndex).toBe(1);
   });
 
@@ -119,9 +117,13 @@ describe('parseFile', () => {
   });
 
   it('keeps empty CSV rows and mixed numeric/text cells', async () => {
-    const file = new File(['CUP,quantità,note\nG17H03000130001,12,testo\n,,\nA58C15000390001,7,ok'], 'cups.csv', {
-      type: 'text/csv',
-    });
+    const file = new File(
+      ['CUP,quantità,note\nG17H03000130001,12,testo\n,,\nA58C15000390001,7,ok'],
+      'cups.csv',
+      {
+        type: 'text/csv',
+      },
+    );
 
     const parsed = await parseFile(file);
 
@@ -149,10 +151,7 @@ describe('parseFile', () => {
     const file = await workbookFileWithSheets([
       {
         name: 'Info',
-        rows: [
-          ['note'],
-          ['nessun CUP qui'],
-        ],
+        rows: [['note'], ['nessun CUP qui']],
       },
       {
         name: 'CUP',
@@ -173,7 +172,9 @@ describe('parseFile', () => {
     expect(selectedSheet.selectedSheetName).toBe('CUP');
     expect(selectedSheet.headers).toEqual(['id', 'Codice CUP']);
     expect(selectedSheet.suggestedColumnIndex).toBe(1);
-    expect(selectedSheet.rows).toEqual([{ originalRowNumber: 2, cells: ['42', 'G17H03000130001'] }]);
+    expect(selectedSheet.rows).toEqual([
+      { originalRowNumber: 2, cells: ['42', 'G17H03000130001'] },
+    ]);
   });
 
   it('parses XLSX without header', async () => {

@@ -1,9 +1,6 @@
 :root {
   color-scheme: light dark;
-  font-family:
-    Georgia,
-    'Times New Roman',
-    serif;
+  font-family: Georgia, 'Times New Roman', serif;
   color: #1b1f23;
   background: #ffffff;
   font-synthesis: none;
@@ -801,7 +798,6 @@ code {
   .dropzone {
     min-width: 100%;
   }
-
 }
 
 @media (prefers-color-scheme: dark) {

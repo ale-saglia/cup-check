@@ -8,9 +8,7 @@
     <script>
       const firstSegment = location.pathname.split('/').filter(Boolean)[0] || '';
       const homePath =
-        firstSegment && location.hostname.endsWith('.github.io')
-          ? `/${firstSegment}/`
-          : '/';
+        firstSegment && location.hostname.endsWith('.github.io') ? `/${firstSegment}/` : '/';
       location.replace(`${homePath}${location.search}${location.hash}`);
     </script>
   </head>

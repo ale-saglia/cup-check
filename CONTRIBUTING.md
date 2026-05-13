@@ -55,6 +55,30 @@ Dalla root del repository:
 make check
 ```
 
+## Hook Pre-Commit
+
+Gli hook locali eseguono Ruff sul package Python, Prettier su web e fixture,
+`end-of-file-fixer`, `trailing-whitespace` e `check-yaml` sui fixture YAML.
+
+Installa prima le dipendenze del progetto:
+
+```bash
+make setup
+```
+
+Poi installa `pre-commit` e registra gli hook:
+
+```bash
+uv tool install pre-commit
+pre-commit install
+```
+
+Per verificare tutto il repository manualmente:
+
+```bash
+pre-commit run --all-files
+```
+
 Per il package Python:
 
 ```bash

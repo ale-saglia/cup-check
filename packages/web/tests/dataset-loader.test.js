@@ -34,19 +34,31 @@ describe('discoverLatestDataset', () => {
           {
             tag_name: 'dataset-2026-04',
             published_at: '2026-04-05T00:00:00Z',
-            assets: [{ name: 'dataset-manifest.json', browser_download_url: 'https://example.test/apr.json' }],
+            assets: [
+              {
+                name: 'dataset-manifest.json',
+                browser_download_url: 'https://example.test/apr.json',
+              },
+            ],
           },
           {
             tag_name: 'dataset-2026-05',
             published_at: '2026-05-05T00:00:00Z',
-            assets: [{ name: 'dataset-manifest.json', browser_download_url: 'https://example.test/may.json' }],
+            assets: [
+              {
+                name: 'dataset-manifest.json',
+                browser_download_url: 'https://example.test/may.json',
+              },
+            ],
           },
         ],
       }),
     );
 
     expect(result.dataset_tag).toBe('dataset-2026-05');
-    expect(result.manifest_url).toBe('https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json');
+    expect(result.manifest_url).toBe(
+      'https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json',
+    );
   });
 
   it('ignores software tags during GitHub dataset discovery', async () => {
@@ -57,29 +69,48 @@ describe('discoverLatestDataset', () => {
           {
             tag_name: 'v0.4.0',
             published_at: '2026-06-01T00:00:00Z',
-            assets: [{ name: 'web-dist.tar.gz', browser_download_url: 'https://example.test/web.tar.gz' }],
+            assets: [
+              { name: 'web-dist.tar.gz', browser_download_url: 'https://example.test/web.tar.gz' },
+            ],
           },
           {
             tag_name: 'dataset-2026-04',
             published_at: '2026-04-05T00:00:00Z',
-            assets: [{ name: 'dataset-manifest.json', browser_download_url: 'https://example.test/apr.json' }],
+            assets: [
+              {
+                name: 'dataset-manifest.json',
+                browser_download_url: 'https://example.test/apr.json',
+              },
+            ],
           },
           {
             tag_name: 'v0.3.1',
             published_at: '2026-05-20T00:00:00Z',
-            assets: [{ name: 'web-dist.tar.gz', browser_download_url: 'https://example.test/web-patch.tar.gz' }],
+            assets: [
+              {
+                name: 'web-dist.tar.gz',
+                browser_download_url: 'https://example.test/web-patch.tar.gz',
+              },
+            ],
           },
           {
             tag_name: 'dataset-2026-05',
             published_at: '2026-05-05T00:00:00Z',
-            assets: [{ name: 'dataset-manifest.json', browser_download_url: 'https://example.test/may.json' }],
+            assets: [
+              {
+                name: 'dataset-manifest.json',
+                browser_download_url: 'https://example.test/may.json',
+              },
+            ],
           },
         ],
       }),
     );
 
     expect(result.dataset_tag).toBe('dataset-2026-05');
-    expect(result.manifest_url).toBe('https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json');
+    expect(result.manifest_url).toBe(
+      'https://ale-saglia.github.io/cup-check/datasets/dataset-2026-05/dataset-manifest.json',
+    );
   });
 });
 

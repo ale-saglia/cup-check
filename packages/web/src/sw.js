@@ -22,7 +22,11 @@ self.addEventListener('fetch', (event) => {
   }
 
   event.respondWith(
-    networkFirst(event, event.request, isDatasetRequest(event.request) ? DATASET_CACHE_NAME : CACHE_NAME),
+    networkFirst(
+      event,
+      event.request,
+      isDatasetRequest(event.request) ? DATASET_CACHE_NAME : CACHE_NAME,
+    ),
   );
 });
 

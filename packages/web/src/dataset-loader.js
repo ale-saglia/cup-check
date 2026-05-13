@@ -1,5 +1,6 @@
 const LATEST_DATASET_URL = './dataset-latest.json';
-const GITHUB_RELEASES_URL = 'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100';
+const GITHUB_RELEASES_URL =
+  'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100';
 const PAGES_DATASETS_URL = 'https://ale-saglia.github.io/cup-check/datasets';
 const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
 const MIN_SCHEMA_VERSION = 1;
@@ -44,7 +45,11 @@ async function discoverLatestFromGitHub(fetchFn) {
   };
 }
 
-export async function loadDataset({ fetchFn = fetch, initSql = initDefaultSql, onProgress = () => {} } = {}) {
+export async function loadDataset({
+  fetchFn = fetch,
+  initSql = initDefaultSql,
+  onProgress = () => {},
+} = {}) {
   const latest = await discoverLatestDataset(fetchFn);
   const manifest = await fetchJson(fetchFn, latest.manifest_url);
   validateManifest(manifest);
