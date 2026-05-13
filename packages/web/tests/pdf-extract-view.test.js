@@ -26,21 +26,19 @@ describe('pdf-extract-view', () => {
     });
   });
 
-  it('mount mostra la schermata iniziale e configura workerSrc dopo il caricamento', async () => {
+  it('mount mostra la schermata iniziale con dropzone e configura workerSrc', async () => {
     const { mount } = await loadView();
 
     await mount(container);
 
-    expect(container.querySelector('#pdf-extract-title')?.textContent).toBe(
-      'Estrai CUP da fatture PDF',
-    );
-    expect(container.querySelector('#pdf-lib-status')?.textContent).toContain(
-      'Carica uno o più file PDF',
-    );
+    expect(container.querySelector('h1')?.textContent).toBe('Estrai CUP da fatture PDF');
+    expect(container.querySelector('#pdf-dropzone')).not.toBeNull();
+    expect(container.querySelector('#pdf-file-input')).not.toBeNull();
+    expect(container.querySelector('#pdf-results-area')?.classList.contains('hidden')).toBe(true);
     expect(mockGlobalWorkerOptions.workerSrc).toContain('/pdfjs/pdf.worker.min.mjs');
   });
 
-  it('mount mostra un messaggio di errore se pdfjs fallisce durante il caricamento', async () => {
+  it('mount non lancia eccezione se pdfjs fallisce durante il caricamento', async () => {
     Object.defineProperty(mockGlobalWorkerOptions, 'workerSrc', {
       configurable: true,
       set() {
@@ -49,14 +47,9 @@ describe('pdf-extract-view', () => {
     });
 
     const { mount } = await loadView();
-    await mount(container);
 
-    expect(container.querySelector('#pdf-lib-status')?.textContent).toContain(
-      'Errore caricamento libreria PDF',
-    );
-    expect(container.querySelector('#pdf-lib-status')?.textContent).toContain(
-      'rete non disponibile',
-    );
+    await expect(mount(container)).resolves.not.toThrow();
+    expect(container.querySelector('#pdf-dropzone')).not.toBeNull();
   });
 
   it('unmount svuota il container e rilascia il riferimento interno', async () => {

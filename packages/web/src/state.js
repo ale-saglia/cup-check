@@ -13,7 +13,10 @@ const INITIAL_STATE = {
   groupSameCups: true,
 };
 
-export const state = createInitialState();
+export const state = {
+  ...createInitialState(),
+  pendingFile: null, // cross-view: set by pdf-extract-view, consumed by validator-view on mount
+};
 
 export function resetState() {
   Object.assign(state, createInitialState());

@@ -6,7 +6,6 @@ import { mountLayout } from '../src/layout.js';
 describe('layout', () => {
   let root;
   let menu;
-  let menuToggle;
   let menuList;
 
   beforeAll(() => {
@@ -14,7 +13,6 @@ describe('layout', () => {
     document.body.appendChild(root);
     mountLayout(root);
     menu = root.querySelector('.nav-menu');
-    menuToggle = root.querySelector('.nav-menu-toggle');
     menuList = root.querySelector('.nav-menu-list');
   });
 

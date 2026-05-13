@@ -25,7 +25,7 @@ import { OUTCOMES, validateCup } from '../validator.js';
 
 let _container = null;
 
-export function mount(container) {
+export async function mount(container) {
   _container = container;
   const dom = mountValidatorContent(container);
   const datasetStatusBar = document.querySelector('#dataset-status-bar');
@@ -211,6 +211,22 @@ export function mount(container) {
   });
 
   sessionStorage.removeItem('cup-check:last-results');
+
+  if (state.pendingFile) {
+    const file = state.pendingFile;
+    state.pendingFile = null;
+    try {
+      selectedFile = file;
+      state.parsed = await parseFile(file);
+      state.fileName = file.name.replace(/\.[^.]+$/, '');
+      state.displayFileName = file.name;
+      state.selectedSheetName = state.parsed.selectedSheetName ?? '';
+      state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
+      renderPreview(state, domWithBar, file);
+    } catch (error) {
+      alert(error.message);
+    }
+  }
 
   function rebuildParsedRows(rawRows, headerPresent) {
     const { sheetNames, selectedSheetName } = state.parsed;
