@@ -1,8 +1,0 @@
-{
-  "eslint.workingDirectories": ["packages/web"],
-  "npm.autoDetect": "off",
-  "taskexplorer.useNpmProvider": true,
-  "vitest.commandLine": "npm --prefix packages/web test --",
-  "vitest.include": ["packages/web/tests/**/*.test.js"],
-  "vitest.rootConfig": "packages/web/vite.config.js"
-}
