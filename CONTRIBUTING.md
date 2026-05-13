@@ -2,6 +2,20 @@
 
 `cup-check` è un progetto open source orientato a controlli cautelativi sui CUP. I contributi sono benvenuti quando restano coerenti con i vincoli del progetto: web app statica, nessun servizio server-side nell'MVP, regole auditabili e separazione tra validazione formale e lookup OpenCUP.
 
+## Maintainers
+
+Il progetto ha un maintainer operativo:
+
+- Alessandro Saglia (`@ale-saglia`): triage delle issue, revisione e approvazione delle PR, decisioni di roadmap e release.
+
+Canali di contatto:
+
+- per bug, proposte e dubbi apri una issue nel repository, collegando eventuali contesti o fixture utili;
+- per PR pronte alla review menziona `@ale-saglia` o richiedi review dalla PR;
+- per vulnerabilità o segnalazioni non pubbliche usa GitHub Security Advisories, come indicato in `SECURITY.md`.
+
+Al momento non ci sono altri maintainer con permesso di approvazione o merge. Nuovi maintainer vanno aggiunti a questa sezione con responsabilità e canale di contatto.
+
 ## Prima Di Aprire Una PR
 
 - Apri una issue o commenta una issue esistente per modifiche funzionali, cambi di semantica, nuove fonti dati o interventi con impatto sulla roadmap.
