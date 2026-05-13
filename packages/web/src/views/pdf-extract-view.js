@@ -1,14 +1,23 @@
 let _container = null;
 
-export function mount(container) {
+export async function mount(container) {
   _container = container;
   container.innerHTML = `
     <section class="view-placeholder" aria-labelledby="pdf-extract-title">
       <h1 id="pdf-extract-title">Estrai CUP da fatture PDF</h1>
-      <p>Questo strumento permetterà di estrarre automaticamente i Codici Unici di Progetto da file PDF tramite analisi del testo e OCR.</p>
-      <p><em>Funzionalità in arrivo.</em></p>
+      <p id="pdf-lib-status">Caricamento libreria PDF…</p>
     </section>
   `;
+
+  try {
+    const { GlobalWorkerOptions } = await import('pdfjs-dist');
+    GlobalWorkerOptions.workerSrc = new URL('/pdfjs/pdf.worker.min.mjs', location.origin).href;
+    container.querySelector('#pdf-lib-status').textContent =
+      'Carica uno o più file PDF per estrarre i CUP.';
+  } catch (error) {
+    container.querySelector('#pdf-lib-status').textContent =
+      `Errore caricamento libreria PDF: ${error.message}`;
+  }
 }
 
 export function unmount() {

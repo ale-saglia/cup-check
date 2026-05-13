@@ -4,6 +4,8 @@ import { readFileSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
+const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
 const fallbackVersion = '0.0.0-dev';
@@ -14,7 +16,7 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
-  plugins: [serviceWorkerPlugin(appVersion)],
+  plugins: [serviceWorkerPlugin(appVersion), pdfjsWorkerPlugin()],
   build: {
     sourcemap: true,
   },
@@ -54,6 +56,30 @@ function readAppVersion() {
   }
 
   return fallbackVersion;
+}
+
+function pdfjsWorkerPlugin() {
+  const workerPath = resolve(webDir, pdfjsWorkerSrc);
+  return {
+    name: 'pdfjs-worker',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        if (request.url !== '/pdfjs/pdf.worker.min.mjs') {
+          next();
+          return;
+        }
+        response.setHeader('Content-Type', 'application/javascript');
+        response.end(readFileSync(workerPath));
+      });
+    },
+    generateBundle() {
+      this.emitFile({
+        type: 'asset',
+        fileName: 'pdfjs/pdf.worker.min.mjs',
+        source: readFileSync(workerPath),
+      });
+    },
+  };
 }
 
 function serviceWorkerPlugin(version) {
