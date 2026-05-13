@@ -20,7 +20,7 @@ Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, u
 
 Il progetto mantiene una postura cautelativa: distingue il formato valido dalla verifica di esistenza, usa un dataset OpenCUP statico e versionato quando disponibile, e non presenta mai il risultato come certificazione autoritativa.
 
-`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico è disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non è disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`.
+`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico è disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non è disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`. Da `0.4.0` la web app include anche un tool per estrarre CUP da fatture PDF, con testo nativo e OCR locale in italiano come fallback per documenti scansionati.
 
 ## English Abstract
 
@@ -42,9 +42,19 @@ Il progetto è rilasciato come web app statica e package Python.
 - Funziona offline dopo la prima visita.
 - Espone una libreria Python installabile come `cup-check`.
 
-## Prossima Priorità
+## Strumenti
 
-La milestone `0.4.0` è orientata all'estrazione CUP da fatture PDF: menu strumenti, vista dedicata, lettura testo con pdf.js, OCR locale italiano con Tesseract.js per PDF scansionati, correzione manuale ed export/passaggio al verificatore. La validazione multicampo di coerenza atto resta in roadmap, ma viene spostata dopo questo flusso.
+### Estrai CUP da fatture PDF
+
+Disponibile nel menu "Strumenti" della web app, il tool estrae automaticamente i codici CUP da uno o più file PDF:
+
+1. Apri il menu **Strumenti** e scegli **Estrai CUP da fatture PDF**.
+2. Carica uno o più PDF tramite la zona di rilascio o il selettore file.
+3. Il tool legge il testo nativo con pdf.js; se il documento è scansionato usa OCR locale in italiano (Tesseract.js, nessuna rete esterna).
+4. Controlla la tabella file/CUP, correggi manualmente eventuali letture imperfette.
+5. Clicca **Apri nel verificatore** per passare l'elenco estratto al verificatore principale, oppure **Esporta CSV** per scaricare il file `cup,file_origine` direttamente.
+
+Il tool mostra la validazione formale del CUP (regex + checksum). La verifica di esistenza nel dataset OpenCUP avviene solo nel verificatore principale, dopo il passaggio. I file PDF sono elaborati interamente nel browser; nessun dato viene trasmesso a server esterni.
 
 ## Privacy
 

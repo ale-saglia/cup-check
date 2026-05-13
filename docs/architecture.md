@@ -66,7 +66,7 @@ Flusso di deploy:
 Componenti principali aggiunti in `0.3.0`:
 
 - `packages/web/src/dataset-loader.js` — discovery ultimo dataset, download dei chunk SQLite con verifica SHA-256 per-file, inizializzazione `sql.js` e lookup locale.
-- `packages/web/src/sw.js` — cache app-shell e cache dataset separate; eviction esplicita delle release dataset superate.
+- `packages/web/src/sw.js` — cache app-shell (`cup-check-v*`, network-first) e cache dataset (`cup-check-dataset-v1`, network-first) separate; eviction esplicita delle release dataset superate. Da `0.4.0` aggiunge cache lazy assets (`cup-check-lazy-v1`, cache-first) per pdfjs e tesseract.
 - `packages/web/src/results.js` — raggruppa i CUP per lookup, trasforma esiti `FORMATO_VALIDO_DA_VERIFICARE` in `TROVATO_OPENCUP`/`NON_TROVATO_OPENCUP_DA_VERIFICARE` e produce la vista aggregata o riga per riga.
 - `packages/cup_check/src/cup_check/opencup_dataset.py` — build pipeline Python per SQLite chunked.
 - `packages/cup_check/src/cup_check/checker.py` — `OpenCupChecker` Python per lookup su indice locale o scaricato in cache.
@@ -99,7 +99,18 @@ Il flusso operativo è:
 4. I CUP estratti vengono validati con lo stesso validatore formale e, se disponibile, con lo stesso lookup OpenCUP del verificatore.
 5. L'utente può correggere manualmente i risultati e poi esportare un CSV file/CUP oppure aprirlo nel verificatore principale come file sintetico.
 
-Gli asset OCR e PDF restano statici, cacheabili e serviti dalla stessa app; non vengono introdotti backend o CDN obbligatorie.
+Gli asset OCR e PDF restano statici, cacheabili e serviti dalla stessa app tramite plugin Vite che li emette da `node_modules`; non vengono introdotti backend o CDN obbligatorie. Il Service Worker li intercetta con strategia cache-first nella cache `cup-check-lazy-v1`, separata dalla cache app-shell e da quella dataset.
+
+Componenti principali aggiunti o aggiornati in `0.4.0`:
+
+- `packages/web/src/router.js` — hash router; monta/smonta le viste in risposta ai cambi di hash.
+- `packages/web/src/tools-registry.js` — registro strumenti; alimenta il menu "Strumenti" e permette di aggiungere nuovi tool senza modificare HTML o Service Worker.
+- `packages/web/src/views/pdf-extract-view.js` — vista `#/pdf-extract`; gestisce caricamento file, drag-and-drop, estrazione testo, OCR, editing manuale, export CSV e passaggio al verificatore tramite `state.pendingFile`.
+- `packages/web/src/views/validator-view.js` — aggiornata per consumare `state.pendingFile` al mount e aprire direttamente l'anteprima del CSV sintetico proveniente dal tool PDF.
+- `packages/web/src/pdf/extract-text.js` — caricamento lazy di pdf.js ed estrazione del testo nativo da ogni pagina.
+- `packages/web/src/pdf/ocr.js` — caricamento lazy di Tesseract.js, OCR con lingua `ita`+`eng` e correzione della confusione `I`/`1` nelle posizioni alfabetiche del CUP.
+- `packages/web/src/pdf/extract-cups.js` — normalizzazione alfanumerica del testo estratto, regex globale per CUP spezzati su token multipli e validazione formale.
+- `packages/web/src/state.js` — stato condiviso tra le viste; espone `pendingFile` per il trasferimento CSV dal tool PDF al verificatore.
 
 ## Architettura Coerenza Atto
 

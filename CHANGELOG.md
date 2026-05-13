@@ -2,6 +2,19 @@
 
 ## Unreleased
 
+- Aggiunge il tool "Estrai CUP da fatture PDF" accessibile dal menu "Strumenti" nella web app.
+- Introduce hash router (`#/`, `#/pdf-extract`) e registro strumenti per supportare tool futuri senza duplicare HTML o Service Worker.
+- Estrae testo da PDF nativi con pdf.js (caricamento lazy all'apertura del tool).
+- Aggiunge OCR locale italiano con Tesseract.js + lingua `ita` e `eng` come fallback per PDF scansionati (caricamento lazy solo se necessario, nessuna CDN esterna).
+- Corregge la confusione OCR `I`/`1` nelle posizioni alfabetiche del CUP.
+- Supporta CUP spezzati su più righe o token OCR frammentati via normalizzazione alfanumerica.
+- Mostra validazione formale (regex + checksum) per ogni CUP estratto; la verifica OpenCUP avviene nel verificatore dopo il passaggio CSV.
+- Permette modifica manuale di qualsiasi CUP con tracciabilità del flag `manuale` nell'export.
+- Esporta CSV `cup,file_origine` verso il verificatore o CSV `cup;file_origine;formato_valido;fonte;manuale` per archivio.
+- Aggiunge cache Service Worker dedicata (`cup-check-lazy-v1`) con strategia cache-first per gli asset pdf.js e Tesseract.
+- Porta la coverage linee web al 100% con suite Vitest per la nuova vista PDF, le operazioni di edit, i CSV builder e il flusso `state.pendingFile` nel verificatore.
+- Aggiunge il flusso PDF-extract al test acceptance Playwright end-to-end.
+- Aggiunge fixture PDF in `samples/pdf/`: testo nativo mono/multi-pagina, CUP spezzato, testo scarso (OCR), senza CUP.
 - Riallinea la roadmap: la `0.4.0` diventa il tool di estrazione CUP da PDF e la validazione multicampo viene spostata a una milestone successiva.
 - Migliora il README con un'introduzione orientata al problema pubblico e un abstract in inglese.
 - Aggiunge una guida utente non tecnica e un processo contributivo minimo.

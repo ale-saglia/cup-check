@@ -37,17 +37,33 @@ Le righe vuote vengono ignorate.
 
 ## Estrazione CUP Da PDF
 
-La roadmap `0.4.0` introduce un tool dedicato per estrarre CUP da fatture PDF prima del controllo principale.
+Disponibile nel menu **Strumenti** della web app, il tool estrae automaticamente i codici CUP da fatture e documenti PDF prima di passarli al verificatore principale.
 
-Il flusso previsto è:
+### Flusso base
 
-1. Apri il menu "Strumenti" e scegli "Estrai CUP da fatture PDF".
-2. Carica uno o più PDF.
-3. La web app prova a leggere il testo del PDF; se il documento è scansionato usa OCR locale in italiano.
-4. Controlla la tabella file/CUP, correggendo manualmente eventuali letture OCR imperfette.
-5. Esporta il CSV file/CUP oppure apri i risultati nel verificatore per applicare gli stessi controlli già disponibili.
+1. Apri il menu **Strumenti** e scegli **Estrai CUP da fatture PDF**.
+2. Trascina uno o più PDF nella zona di rilascio, oppure usa il pulsante per selezionarli.
+3. La web app legge il testo nativo del PDF con pdf.js. Se il documento è scansionato (testo assente o scarso), attiva automaticamente l'OCR locale in italiano — nessun dato viene inviato a server esterni.
+4. La tabella si popola con una riga per ogni coppia *file ↔ CUP*. Per ogni CUP viene mostrata la validazione formale (struttura e checksum), ma non ancora la verifica OpenCUP.
 
-Il tool PDF non sostituisce la verifica: prepara l'elenco dei CUP da controllare e mantiene l'origine del file come colonna esportabile.
+### Correzione manuale
+
+Se l'OCR ha letto male un CUP (ad esempio ha confuso `I` con `1`), clicca **modifica** sulla riga, correggi il valore e premi Invio o clicca **salva**. Il CUP corretto viene marcato come **manuale** nell'export. Puoi anche aggiungere CUP mancanti su righe con errore o senza CUP rilevato con il pulsante **+ aggiungi CUP**.
+
+### Azioni finali
+
+- **Apri nel verificatore** (azione principale): genera un CSV `cup,file_origine` e lo passa al verificatore, che lo apre come file caricato con la colonna `cup` già selezionata. La verifica OpenCUP avviene in questa fase.
+- **Esporta CSV (file ↔ CUP)**: scarica un file semicolonne `cup;file_origine;formato_valido;fonte;manuale` per archiviazione o elaborazione esterna.
+- **Pulisci**: azzera tutti i risultati della sessione corrente.
+
+### Limiti del tool PDF
+
+- L'OCR usa solo la lingua italiana (con inglese come supporto). Documenti in altre lingue o con grafica complessa possono produrre letture imperfette.
+- La qualità dell'OCR dipende dalla risoluzione e dalla nitidezza del PDF scansionato: usa sempre la correzione manuale per i CUP dubbi.
+- La validazione mostrata nella tabella è solo **formale** (regole `R0`–`R5`). La verifica di esistenza nel dataset OpenCUP si esegue nel verificatore dopo il passaggio.
+- Il tool non deduplicano i CUP: se lo stesso codice appare in più file, viene riportato una volta per file. La deduplicazione è disponibile nel verificatore tramite il toggle "Raggruppa CUP uguali".
+
+Il tool PDF non sostituisce il verificatore: prepara l'elenco dei CUP da controllare e mantiene l'origine del file come colonna tracciabile fino all'export finale.
 
 ## Lettura Degli Esiti
 
