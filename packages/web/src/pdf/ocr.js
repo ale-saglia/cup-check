@@ -13,7 +13,7 @@ function tesseractPaths() {
 async function getOcrWorker() {
   if (!_worker) {
     const { createWorker } = await import('tesseract.js');
-    _worker = await createWorker('ita', 1, tesseractPaths());
+    _worker = await createWorker('ita+eng', 1, tesseractPaths());
   }
   return _worker;
 }

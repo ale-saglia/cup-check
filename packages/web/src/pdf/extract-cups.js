@@ -1,15 +1,43 @@
 import { validateCup, OUTCOMES } from '../validator.js';
 
-// Year 9999 disables the time-dependent part of R4 (year ≤ current year)
-// while still requiring positions 4-5 to be two digits, matching the full
-// structural spec of the validator.
-const SEARCH_YEAR = { currentYear: 9999 };
+// Use a lookahead window of +15 years to accept CUPs planned for the near
+// future without opening the door to clearly implausible year values (e.g. 74)
+// that inflate false-positive rates, especially with the 3-token OCR window.
+const SEARCH_YEAR = { currentYear: new Date().getFullYear() + 15 };
 
 function isStructuralCandidate(value) {
   return validateCup(value, null, SEARCH_YEAR).failedRules.length === 0;
 }
 
-export function extractCupsFromText(text) {
+// OCR engines often confuse '1' (one) with 'I' (capital i). Positions 0 and 3
+// of a CUP must be letters, so we try the substitution there before giving up.
+// Only applied when ocrFix is true (i.e. the text comes from Tesseract).
+function ocrVariants(value) {
+  if (value.length !== 15) return [];
+  const variants = [];
+  for (const pos of [0, 3]) {
+    if (value[pos] === '1') {
+      variants.push(value.slice(0, pos) + 'I' + value.slice(pos + 1));
+    }
+  }
+  return variants;
+}
+
+function addCandidate(counts, value, ocrFix) {
+  if (isStructuralCandidate(value)) {
+    counts.set(value, (counts.get(value) ?? 0) + 1);
+    return;
+  }
+  if (ocrFix) {
+    for (const v of ocrVariants(value)) {
+      if (isStructuralCandidate(v)) {
+        counts.set(v, (counts.get(v) ?? 0) + 1);
+      }
+    }
+  }
+}
+
+export function extractCupsFromText(text, { ocrFix = false } = {}) {
   const normalized = text.toUpperCase();
   const counts = new Map();
 
@@ -17,18 +45,17 @@ export function extractCupsFromText(text) {
   const scanRegex = /[A-Z0-9]{15}/g;
   let m;
   while ((m = scanRegex.exec(normalized)) !== null) {
-    if (isStructuralCandidate(m[0])) {
-      counts.set(m[0], (counts.get(m[0]) ?? 0) + 1);
-    }
+    addCandidate(counts, m[0], ocrFix);
   }
 
-  // Pass 2: adjacent alphanumeric tokens whose concatenation forms a CUP.
-  // PDFs produced by SDI sometimes break a code at a line boundary.
+  // Pass 2: sliding windows of 2-3 adjacent alphanumeric tokens whose
+  // concatenation forms a CUP. Handles both line-boundary splits common in
+  // SDI-generated PDFs and multi-fragment splits from OCR segmentation.
   const tokens = normalized.split(/[^A-Z0-9]+/).filter(Boolean);
   for (let i = 0; i < tokens.length - 1; i++) {
-    const joined = tokens[i] + tokens[i + 1];
-    if (joined.length === 15 && isStructuralCandidate(joined)) {
-      counts.set(joined, (counts.get(joined) ?? 0) + 1);
+    for (let w = 2; w <= 3 && i + w <= tokens.length; w++) {
+      const joined = tokens.slice(i, i + w).join('');
+      if (joined.length === 15) addCandidate(counts, joined, ocrFix);
     }
   }
 
@@ -40,7 +67,9 @@ export function extractCupsFromText(text) {
 }
 
 export function extractCupsFromPages(fileName, pages, source) {
-  const cups = extractCupsFromText(pages.join('\n'));
+  const cups = extractCupsFromText(pages.join('\n'), { ocrFix: source === 'ocr' }).filter(
+    (c) => c.formalValid,
+  );
   return {
     fileName,
     status: cups.length > 0 ? 'ok' : 'no_cup',

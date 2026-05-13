@@ -9,13 +9,11 @@ const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
 
-function itaTraineddataPath() {
-  const itaDir = resolve(webDir, 'node_modules/@tesseract.js-data/ita');
-  const subdir = readdirSync(itaDir).find(
-    (d) => d.includes('best_int') && d.endsWith('best_int'),
-  );
-  if (!subdir) throw new Error('ita traineddata (best_int) not found in @tesseract.js-data/ita');
-  return `node_modules/@tesseract.js-data/ita/${subdir}/ita.traineddata.gz`;
+function traineddataPath(lang) {
+  const dir = resolve(webDir, `node_modules/@tesseract.js-data/${lang}`);
+  const subdir = readdirSync(dir).find((d) => d.includes('best_int') && d.endsWith('best_int'));
+  if (!subdir) throw new Error(`${lang} traineddata (best_int) not found in @tesseract.js-data/${lang}`);
+  return `node_modules/@tesseract.js-data/${lang}/${subdir}/${lang}.traineddata.gz`;
 }
 
 const tesseractAssets = [
@@ -35,7 +33,11 @@ const tesseractAssets = [
   ]),
   {
     urlPath: '/tesseract/ita.traineddata.gz',
-    srcPath: itaTraineddataPath(),
+    srcPath: traineddataPath('ita'),
+  },
+  {
+    urlPath: '/tesseract/eng.traineddata.gz',
+    srcPath: traineddataPath('eng'),
   },
 ];
 const fallbackVersion = '0.0.0-dev';

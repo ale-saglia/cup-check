@@ -15,6 +15,7 @@
     "format": "prettier --write . ../../tests/fixtures"
   },
   "dependencies": {
+    "@tesseract.js-data/eng": "^1.0.0",
     "@tesseract.js-data/ita": "^1.0.0",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^5.7.284",
