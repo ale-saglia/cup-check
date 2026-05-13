@@ -1,7 +1,7 @@
 import { createServer } from 'node:net';
 import { once } from 'node:events';
 import { spawn } from 'node:child_process';
-import { readFile, mkdtemp, rm } from 'node:fs/promises';
+import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
@@ -22,6 +22,7 @@ const outputPath = join(outputDir, 'report.json');
 
 try {
   const url = `http://127.0.0.1:${port}/`;
+  await writeLocalUnavailableDataset();
   await waitForHttp(url);
   await runLighthouse(url, outputPath);
   const report = JSON.parse(await readFile(outputPath, 'utf8'));
@@ -43,7 +44,26 @@ try {
   console.log(JSON.stringify({ ...scores, pwa }, null, 2));
 } finally {
   stopServer(server);
+  await removeLocalUnavailableDataset();
   await rm(outputDir, { recursive: true, force: true });
+}
+
+async function writeLocalUnavailableDataset() {
+  await writeFile(
+    'dist/dataset-latest.json',
+    JSON.stringify({
+      dataset_tag: 'dataset-2026-05',
+      manifest_url: './dataset-manifest.json',
+      sources_snapshot_date: '2026-05-01',
+      released_at: '2026-05-01T00:00:00Z',
+    }),
+  );
+  await writeFile('dist/dataset-manifest.json', JSON.stringify({ schema_version: 0 }));
+}
+
+async function removeLocalUnavailableDataset() {
+  await rm('dist/dataset-latest.json', { force: true });
+  await rm('dist/dataset-manifest.json', { force: true });
 }
 
 async function runLighthouse(url, outputPath) {

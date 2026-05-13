@@ -9,7 +9,15 @@ const MAX_CHUNK_RETRIES = 2;
 let datasetPromise = null;
 
 export function loadLatestDataset(options = {}) {
-  datasetPromise ??= loadDataset(options);
+  if (!datasetPromise) {
+    const pendingDataset = loadDataset(options).catch((error) => {
+      if (datasetPromise === pendingDataset) {
+        datasetPromise = null;
+      }
+      throw error;
+    });
+    datasetPromise = pendingDataset;
+  }
   return datasetPromise;
 }
 

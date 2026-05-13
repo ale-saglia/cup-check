@@ -141,6 +141,42 @@ describe('discoverLatestDataset', () => {
 });
 
 describe('loadDataset', () => {
+  it('returns the same in-flight promise through loadLatestDataset', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const pendingFetch = vi.fn(() => new Promise(() => {}));
+
+    const first = loadLatestDataset({ fetchFn: pendingFetch });
+    const second = loadLatestDataset({ fetchFn: vi.fn() });
+
+    expect(second).toBe(first);
+    expect(pendingFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('clears the cached promise after a failed loadLatestDataset call', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const firstFetch = vi.fn(async () => {
+      throw new Error('first dataset discovery failed');
+    });
+    const retryFetch = vi.fn(async () => {
+      throw new Error('retry dataset discovery failed');
+    });
+
+    const first = loadLatestDataset({ fetchFn: firstFetch });
+    const sameFailure = loadLatestDataset({ fetchFn: vi.fn() });
+
+    expect(sameFailure).toBe(first);
+    await expect(first).rejects.toThrow('first dataset discovery failed');
+
+    const retry = loadLatestDataset({ fetchFn: retryFetch });
+
+    expect(retry).not.toBe(first);
+    await expect(retry).rejects.toThrow('retry dataset discovery failed');
+    expect(firstFetch).toHaveBeenCalledTimes(2);
+    expect(retryFetch).toHaveBeenCalledTimes(2);
+  });
+
   it('loads only once through loadLatestDataset', async () => {
     vi.resetModules();
     const { loadLatestDataset } = await import('../src/dataset-loader.js');
