@@ -16,7 +16,8 @@ export function mountApp(root = document.querySelector('#app')) {
 
       <main class="shell" aria-labelledby="title">
         <section class="project-note" aria-labelledby="title">
-          <p id="title">cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
+          <h1 id="title" class="visually-hidden">Verifica CUP</h1>
+          <p>cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
           Il servizio verifica il formato dei Codici Unici di Progetto e produce un report esportabile per revisione, audit o rendicontazione.</p>
           <p>Il controllo non sostituisce le fonti autoritative: consulta i <button id="open-limits-desc" class="link-button" type="button">Limiti del controllo</button> per capire cosa viene verificato e cosa resta escluso.</p>
         </section>
@@ -49,7 +50,7 @@ export function mountApp(root = document.querySelector('#app')) {
         </div>
       </section>
 
-      <section class="workspace" aria-label="Verifica CUP">
+      <section class="workspace" aria-label="Area operativa verifica CUP">
         <section id="preview-panel" class="control-panel hidden" aria-labelledby="preview-title">
           <button id="preview-toggle" class="panel-toggle" type="button" aria-expanded="true" aria-controls="preview-controls">
             <span id="preview-title">Anteprima</span>

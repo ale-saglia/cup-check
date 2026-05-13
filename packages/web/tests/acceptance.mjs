@@ -5,6 +5,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
+import axe from 'axe-core';
 import JSZip from 'jszip';
 import { chromium } from 'playwright';
 import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
@@ -93,6 +94,7 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
 
   try {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    out.a11y = await runA11yAudit(page);
     out.darkMode = await page.evaluate(() => ({
       matches: window.matchMedia('(prefers-color-scheme: dark)').matches,
       rootBackground: getComputedStyle(document.documentElement).backgroundColor,
@@ -142,7 +144,7 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     await context.setOffline(true);
     try {
       await page.reload({ waitUntil: 'domcontentloaded', timeout: 15000 });
-      await page.waitForSelector('#title', { timeout: 15000 });
+      await page.waitForSelector('#title', { state: 'attached', timeout: 15000 });
       out.offlineOk = true;
       out.offlineTitle = await page.locator('#title').textContent();
       out.offlineSummary = await page
@@ -158,6 +160,32 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
   } finally {
     await browser.close();
   }
+}
+
+async function runA11yAudit(page) {
+  await page.addScriptTag({ content: axe.source });
+  const result = await page.evaluate(async () => {
+    return window.axe.run(document, {
+      resultTypes: ['violations'],
+    });
+  });
+
+  const violations = result.violations.map((violation) => ({
+    id: violation.id,
+    impact: violation.impact,
+    help: violation.help,
+    nodes: violation.nodes.length,
+  }));
+
+  if (violations.length > 0) {
+    console.warn(`A11y warning: axe-core ha trovato ${violations.length} violazioni.`);
+    console.warn(JSON.stringify(violations, null, 2));
+  }
+
+  return {
+    tool: 'axe-core',
+    violations: violations.length,
+  };
 }
 
 async function writeAcceptanceWorkbook() {
