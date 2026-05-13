@@ -515,8 +515,6 @@ describe('pdf-extract-view: edit operations', () => {
     const container = setupContainer();
     await mountWithCup(container, CUP1);
 
-    // Add manual entry
-    const addBtn = container.querySelector('[data-action="add-manual"]');
     // First show the no-cup state by loading with no cups and then add-manual
     // Use the error path instead which also has add-manual
   });
@@ -597,7 +595,7 @@ describe('pdf-extract-view: edit operations', () => {
     const saveBtn = container.querySelector('[data-action="save-edit"]');
 
     const event = new MouseEvent('mousedown', { bubbles: true });
-    const preventSpy = vi.spyOn(event, 'preventDefault');
+    vi.spyOn(event, 'preventDefault');
     container.querySelector('#pdf-results-body').dispatchEvent(event);
     // Only prevent when clicking save/cancel
     const eventOnSave = new MouseEvent('mousedown', { bubbles: true });
