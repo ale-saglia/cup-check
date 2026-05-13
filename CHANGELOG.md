@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.4.0 - 2026-05-13
 
 - Aggiunge il tool "Estrai CUP da fatture PDF" accessibile dal menu "Strumenti" nella web app.
 - Introduce hash router (`#/`, `#/pdf-extract`) e registro strumenti per supportare tool futuri senza duplicare HTML o Service Worker.
