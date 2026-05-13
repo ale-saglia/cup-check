@@ -12,6 +12,7 @@ describe('mountApp', () => {
 
     expect(root.querySelector('.brand')?.textContent).toBe('Verifica CUP');
     expect(root.querySelector('.project-link')?.textContent).toBe(`cup-check ${PRODUCT_VERSION}`);
+    expect(dom.datasetStatusBar.id).toBe('dataset-status-bar');
     expect(dom.fileInput.id).toBe('file-input');
     expect(dom.cupTextarea.id).toBe('cup-textarea');
     expect(dom.resultsTable.id).toBe('results-table');

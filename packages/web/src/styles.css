@@ -124,6 +124,87 @@ button {
   font-weight: 400;
 }
 
+.nav-menu {
+  position: relative;
+}
+
+.nav-menu-toggle {
+  list-style: none;
+  cursor: pointer;
+  padding: 4px 10px;
+  border-radius: 4px;
+  color: var(--link);
+  font-size: 0.92rem;
+  font-family: inherit;
+  background: none;
+  border: 1px solid transparent;
+  user-select: none;
+}
+
+.nav-menu-toggle::-webkit-details-marker {
+  display: none;
+}
+
+.nav-menu-toggle::marker {
+  display: none;
+}
+
+.nav-menu[open] .nav-menu-toggle {
+  border-color: var(--line);
+  background: var(--panel);
+}
+
+.nav-menu-toggle:hover {
+  background: var(--panel);
+}
+
+.nav-menu-toggle:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: 2px;
+}
+
+.nav-menu-list {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  box-shadow: 0 4px 16px var(--shadow);
+  list-style: none;
+  padding: 4px 0;
+  margin: 0;
+  min-width: 260px;
+  z-index: 9;
+}
+
+.nav-menu-item {
+  display: block;
+  padding: 9px 16px;
+  color: var(--text);
+  text-decoration: none;
+  font-size: 0.92rem;
+}
+
+a.nav-menu-item:hover {
+  background: var(--panel);
+}
+
+a.nav-menu-item:focus-visible {
+  outline: 2px solid var(--link);
+  outline-offset: -2px;
+}
+
+.nav-menu-item--disabled {
+  color: var(--muted);
+  cursor: default;
+}
+
+.view-placeholder {
+  padding: 48px 0 32px;
+  color: var(--muted);
+}
+
 h1,
 h2,
 p {
