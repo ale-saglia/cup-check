@@ -58,3 +58,15 @@ result = checker.check("G17H03000130001")
 
 Se il dataset non è disponibile, il checker resta cautelativo e restituisce
 `FORMATO_VALIDO_DA_VERIFICARE` per i CUP formalmente validi.
+
+## Logging
+
+La libreria usa logger nel namespace `cup_check` e non configura handler o
+livelli globali. Le applicazioni chiamanti possono governare la verbosità con
+il logging standard di Python:
+
+```python
+import logging
+
+logging.getLogger("cup_check").setLevel(logging.INFO)
+```

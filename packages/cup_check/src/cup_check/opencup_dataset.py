@@ -1,3 +1,12 @@
+"""Build e pubblicazione del dataset statico OpenCUP.
+
+Il modulo usa logger con namespace ``cup_check`` e non configura handler o livelli
+globali. Le applicazioni chiamanti possono governare la verbosita configurando
+il logging standard di Python, per esempio:
+
+    logging.getLogger("cup_check").setLevel(logging.INFO)
+"""
+
 from __future__ import annotations
 
 import csv
