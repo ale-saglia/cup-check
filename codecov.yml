@@ -1,8 +1,23 @@
 coverage:
   status:
     project:
-      default:
+      default: off
+      python:
         target: 100%
+        flags:
+          - python
+      web:
+        target: auto
+        flags:
+          - web
     patch:
       default:
         target: 100%
+
+flags:
+  python:
+    paths:
+      - packages/cup_check/
+  web:
+    paths:
+      - packages/web/src/

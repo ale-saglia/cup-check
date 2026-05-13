@@ -20,6 +20,13 @@ export default defineConfig({
   },
   test: {
     environment: 'node',
+    coverage: {
+      provider: 'v8',
+      all: true,
+      include: ['src/**/*.js'],
+      reporter: ['text', 'lcov'],
+      reportsDirectory: 'coverage',
+    },
   },
 });
 

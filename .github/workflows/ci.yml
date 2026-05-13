@@ -24,7 +24,14 @@ jobs:
           cache-dependency-path: packages/web/package-lock.json
       - run: npm ci
       - run: npm run lint
-      - run: npm test -- --run
+      - run: npm run test:coverage
+      - uses: codecov/codecov-action@v5
+        if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
+        with:
+          files: packages/web/coverage/lcov.info
+          flags: web
+          fail_ci_if_error: true
+          token: ${{ secrets.CODECOV_TOKEN }}
       - name: Audit runtime dependencies
         working-directory: .
         run: make web-audit
