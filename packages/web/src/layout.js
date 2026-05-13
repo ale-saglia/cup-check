@@ -1,10 +1,14 @@
 import { tools } from './tools-registry.js';
 import { PRODUCT_VERSION } from './version.js';
 
+function esc(str) {
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
 function buildMenuItems() {
   return tools
     .filter((tool) => tool.enabled)
-    .map((tool) => `<li role="none"><a class="nav-menu-item" role="menuitem" href="${tool.path}">${tool.label}</a></li>`)
+    .map((tool) => `<li role="none"><a class="nav-menu-item" role="menuitem" href="${esc(tool.path)}">${esc(tool.label)}</a></li>`)
     .join('');
 }
 

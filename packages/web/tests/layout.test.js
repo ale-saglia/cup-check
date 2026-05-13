@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
-import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
+
 import { mountLayout } from '../src/layout.js';
 
 describe('layout', () => {
@@ -76,5 +77,28 @@ describe('layout', () => {
     const before = document.activeElement;
     menuList.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
     expect(document.activeElement).toBe(before);
+  });
+});
+
+describe('layout: escaping voci menu', () => {
+  it('label e path delle voci vengono escaped prima di essere inseriti nell\'HTML', async () => {
+    vi.resetModules();
+    vi.doMock('../src/tools-registry.js', () => ({
+      tools: [{ id: 'xss', label: '<script>alert(1)</script>', path: '"><img src=x>', enabled: true }],
+    }));
+    vi.doMock('../src/version.js', () => ({ PRODUCT_VERSION: 'test' }));
+
+    const { mountLayout: mountFresh } = await import('../src/layout.js');
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    mountFresh(root);
+
+    const html = root.querySelector('.nav-menu-list').innerHTML;
+    expect(html).not.toContain('<script>');
+    expect(html).toContain('&lt;script&gt;');
+    expect(html).not.toContain('"><img');
+
+    document.body.removeChild(root);
+    vi.resetModules();
   });
 });

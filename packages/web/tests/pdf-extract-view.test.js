@@ -883,6 +883,88 @@ describe('pdf-extract-view: CSV builders', () => {
     const csv = await capturedBlob.text();
     expect(csv).toContain('"fattura;2024.pdf"');
   });
+
+  it('csvComma prefissa con apostrofo i filename che iniziano con caratteri formula', async () => {
+    const fileName = '=formula.pdf';
+    const stateObj = { pendingFile: null };
+    const { mount } = await loadView({
+      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+      stateObj,
+    });
+    const container = setupContainer();
+    await mount(container);
+
+    const input = container.querySelector('#pdf-file-input');
+    const file = new File([''], fileName, { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    await flushPromises();
+
+    container.querySelector('#pdf-send-btn').click();
+    const csv = await stateObj.pendingFile.text();
+    expect(csv).toContain("'=formula.pdf");
+    expect(csv).not.toContain(',=formula.pdf');
+  });
+
+  it('csvSemi prefissa con apostrofo i filename che iniziano con caratteri formula', async () => {
+    const fileName = '+bonus.pdf';
+    let capturedBlob;
+    URL.createObjectURL = vi.fn().mockImplementation((b) => { capturedBlob = b; return 'blob:mock'; });
+
+    const { mount } = await loadView({
+      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+    });
+    const container = setupContainer();
+    await mount(container);
+
+    const input = container.querySelector('#pdf-file-input');
+    const file = new File([''], fileName, { type: 'application/pdf' });
+    Object.defineProperty(input, 'files', { value: [file] });
+    input.dispatchEvent(new Event('change'));
+    await flushPromises();
+
+    container.querySelector('#pdf-export-btn').click();
+    const csv = await capturedBlob.text();
+    expect(csv).toContain("'+bonus.pdf");
+    expect(csv).not.toContain(';+bonus.pdf');
+  });
+});
+
+describe('pdf-extract-view: clearAll durante elaborazione', () => {
+  it('clearAll durante processEntry non lascia _processing bloccato quando si aggiungono nuovi file', async () => {
+    let resolvePdf;
+    const slowPdf = new Promise((r) => { resolvePdf = r; });
+
+    const { mount } = await loadView({
+      extractPdfTextImpl: vi.fn().mockReturnValue(slowPdf),
+      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult()),
+    });
+    const container = setupContainer();
+    await mount(container);
+
+    // Start processing a file (processEntry is now awaiting slowPdf)
+    const input = container.querySelector('#pdf-file-input');
+    Object.defineProperty(input, 'files', { value: [makeFile('lento.pdf')], configurable: true });
+    input.dispatchEvent(new Event('change'));
+
+    // clearAll while processEntry is suspended
+    container.querySelector('#pdf-clear-btn').click();
+    expect(container.querySelector('#pdf-results-area').classList.contains('hidden')).toBe(true);
+
+    // Add a new file — a fresh drainQueue should start immediately
+    Object.defineProperty(input, 'files', { value: [makeFile('nuovo.pdf')], configurable: true });
+    input.dispatchEvent(new Event('change'));
+
+    // Resolve the old slow PDF (the old drainQueue should abort, not process stale entry)
+    resolvePdf({ pages: ['testo'], totalChars: 100, needsOcr: false });
+    await flushPromises();
+    await flushPromises();
+
+    // Only 'nuovo.pdf' should appear (the stale 'lento.pdf' entry was cleared)
+    const rows = container.querySelectorAll('[data-entry-id]');
+    expect([...rows].every((r) => r.querySelector('td')?.textContent !== 'lento.pdf')).toBe(true);
+    expect(container.querySelector('#pdf-results-area').classList.contains('hidden')).toBe(false);
+  });
 });
 
 describe('pdf-extract-view: render helpers', () => {

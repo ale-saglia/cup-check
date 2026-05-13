@@ -10,6 +10,7 @@ let _entries = [];
 let _nextId = 0;
 let _processing = false;
 let _queue = [];
+let _generation = 0;
 
 export async function mount(container) {
   _container = container;
@@ -17,6 +18,7 @@ export async function mount(container) {
   _nextId = 0;
   _processing = false;
   _queue = [];
+  _generation++;
 
   try {
     const { GlobalWorkerOptions } = await import('pdfjs-dist');
@@ -180,11 +182,12 @@ function addFiles(files) {
 async function drainQueue() {
   if (_processing) return;
   _processing = true;
-  while (_queue.length > 0) {
+  const gen = _generation;
+  while (_queue.length > 0 && gen === _generation) {
     const entry = _queue.shift();
     await processEntry(entry);
   }
-  _processing = false;
+  if (gen === _generation) _processing = false;
 }
 
 async function processEntry(entry) {
@@ -321,6 +324,7 @@ function exportCsv() {
 }
 
 function clearAll() {
+  _generation++;
   _entries = [];
   _queue = [];
   _processing = false;
@@ -353,16 +357,20 @@ function buildExportCsv() {
   return `\ufeff${rows.join('\n')}`;
 }
 
+function safeCell(s) {
+  return /^[=+\-@]/.test(s) ? `'${s}` : s;
+}
+
 function csvComma(value) {
   const s = String(value ?? '');
   if (/[,"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-  return s;
+  return safeCell(s);
 }
 
 function csvSemi(value) {
   const s = String(value ?? '');
   if (/[;"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-  return s;
+  return safeCell(s);
 }
 
 // ── Render ─────────────────────────────────────────────────────────────────────
