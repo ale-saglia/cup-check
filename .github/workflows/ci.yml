@@ -25,6 +25,9 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test -- --run
+      - name: Audit runtime dependencies
+        working-directory: .
+        run: make web-audit
       - run: npm run build
 
   python:

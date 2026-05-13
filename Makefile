@@ -65,7 +65,7 @@ web-build: ## Genera la build statica web
 
 .PHONY: web-audit
 web-audit: ## Controlla vulnerabilità nelle dipendenze runtime web
-	cd $(WEB_DIR) && npm audit --omit=dev
+	cd $(WEB_DIR) && npm audit --omit=dev --audit-level=high
 
 .PHONY: web-clean
 web-clean: ## Rimuove la build web
