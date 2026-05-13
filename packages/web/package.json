@@ -15,10 +15,12 @@
     "format": "prettier --write . ../../tests/fixtures"
   },
   "dependencies": {
+    "@tesseract.js-data/ita": "^1.0.0",
     "papaparse": "^5.5.3",
     "pdfjs-dist": "^5.7.284",
     "read-excel-file": "^5.8.8",
-    "sql.js": "^1.14.1"
+    "sql.js": "^1.14.1",
+    "tesseract.js": "^7.0.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.26.0",

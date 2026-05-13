@@ -1,6 +1,6 @@
 import { defineConfig } from 'vite';
 import { execSync } from 'node:child_process';
-import { readFileSync } from 'node:fs';
+import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -8,6 +8,36 @@ const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
 
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
+
+function itaTraineddataPath() {
+  const itaDir = resolve(webDir, 'node_modules/@tesseract.js-data/ita');
+  const subdir = readdirSync(itaDir).find(
+    (d) => d.includes('best_int') && d.endsWith('best_int'),
+  );
+  if (!subdir) throw new Error('ita traineddata (best_int) not found in @tesseract.js-data/ita');
+  return `node_modules/@tesseract.js-data/ita/${subdir}/ita.traineddata.gz`;
+}
+
+const tesseractAssets = [
+  {
+    urlPath: '/tesseract/worker.min.js',
+    srcPath: 'node_modules/tesseract.js/dist/worker.min.js',
+  },
+  ...['lstm', 'simd-lstm', 'relaxedsimd-lstm'].flatMap((variant) => [
+    {
+      urlPath: `/tesseract/tesseract-core-${variant}.wasm.js`,
+      srcPath: `node_modules/tesseract.js-core/tesseract-core-${variant}.wasm.js`,
+    },
+    {
+      urlPath: `/tesseract/tesseract-core-${variant}.wasm`,
+      srcPath: `node_modules/tesseract.js-core/tesseract-core-${variant}.wasm`,
+    },
+  ]),
+  {
+    urlPath: '/tesseract/ita.traineddata.gz',
+    srcPath: itaTraineddataPath(),
+  },
+];
 const fallbackVersion = '0.0.0-dev';
 const appVersion = readAppVersion();
 
@@ -16,7 +46,7 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
-  plugins: [serviceWorkerPlugin(appVersion), pdfjsWorkerPlugin()],
+  plugins: [serviceWorkerPlugin(appVersion), pdfjsWorkerPlugin(), tesseractAssetsPlugin()],
   build: {
     sourcemap: true,
   },
@@ -78,6 +108,33 @@ function pdfjsWorkerPlugin() {
         fileName: 'pdfjs/pdf.worker.min.mjs',
         source: readFileSync(workerPath),
       });
+    },
+  };
+}
+
+function tesseractAssetsPlugin() {
+  const mimeOf = (url) => (url.endsWith('.wasm') ? 'application/wasm' : 'application/javascript');
+  return {
+    name: 'tesseract-assets',
+    configureServer(server) {
+      server.middlewares.use((request, response, next) => {
+        const asset = tesseractAssets.find((a) => a.urlPath === request.url);
+        if (!asset) {
+          next();
+          return;
+        }
+        response.setHeader('Content-Type', mimeOf(asset.urlPath));
+        response.end(readFileSync(resolve(webDir, asset.srcPath)));
+      });
+    },
+    generateBundle() {
+      for (const asset of tesseractAssets) {
+        this.emitFile({
+          type: 'asset',
+          fileName: asset.urlPath.slice(1),
+          source: readFileSync(resolve(webDir, asset.srcPath)),
+        });
+      }
     },
   };
 }
