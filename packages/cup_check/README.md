@@ -5,6 +5,10 @@ Libreria Python per validare localmente il formato dei Codici Unici di Progetto 
 La verifica è solo formale: un CUP con formato valido viene restituito come
 `FORMATO_VALIDO_DA_VERIFICARE`, non come CUP esistente.
 
+## Requirements
+
+- Python 3.12 o versioni successive.
+
 ```python
 from cup_check import validate_format
 
