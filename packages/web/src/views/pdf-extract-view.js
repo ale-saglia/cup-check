@@ -49,7 +49,7 @@ export async function mount(container) {
           <thead>
             <tr>
               <th scope="col">File</th>
-              <th scope="col">CUP</th>
+              <th scope="col" class="pdf-cup-col">CUP</th>
               <th scope="col">Formato</th>
               <th scope="col">Fonte</th>
               <th scope="col">Manuale</th>
@@ -504,7 +504,7 @@ function completedEntries() {
 }
 
 function truncateName(name, max = 40) {
-  return name.length <= max ? name : `…${name.slice(-(max - 1))}`; // keep the extension visible
+  return name.length <= max ? name : `${name.slice(0, max - 1)}…`;
 }
 
 function escHtml(str) {

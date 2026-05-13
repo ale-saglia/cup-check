@@ -3,12 +3,8 @@ import { PRODUCT_VERSION } from './version.js';
 
 function buildMenuItems() {
   return tools
-    .map((tool) => {
-      if (!tool.enabled) {
-        return `<li role="none"><span class="nav-menu-item nav-menu-item--disabled" aria-disabled="true">${tool.label}</span></li>`;
-      }
-      return `<li role="none"><a class="nav-menu-item" role="menuitem" href="${tool.path}">${tool.label}</a></li>`;
-    })
+    .filter((tool) => tool.enabled)
+    .map((tool) => `<li role="none"><a class="nav-menu-item" role="menuitem" href="${tool.path}">${tool.label}</a></li>`)
     .join('');
 }
 
@@ -17,14 +13,16 @@ export function mountLayout(root = document.querySelector('#app')) {
     <div class="app-shell">
       <nav class="site-nav" aria-label="Navigazione principale">
         <div class="nav-inner">
-          <a class="brand" href="#/">Verifica CUP</a>
-          <div class="nav-links">
+          <div class="nav-left">
+            <a class="brand" href="#/">Verifica CUP</a>
             <details class="nav-menu">
               <summary class="nav-menu-toggle" aria-haspopup="menu">Strumenti</summary>
               <ul class="nav-menu-list" role="menu">
                 ${buildMenuItems()}
               </ul>
             </details>
+          </div>
+          <div class="nav-links">
             <a class="project-link" href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noreferrer">cup-check ${PRODUCT_VERSION}</a>
             <span id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></span>
           </div>

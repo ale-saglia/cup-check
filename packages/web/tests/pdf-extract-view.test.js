@@ -888,7 +888,7 @@ describe('pdf-extract-view: CSV builders', () => {
 });
 
 describe('pdf-extract-view: render helpers', () => {
-  it('truncateName tronca nomi lunghi con ellissi davanti', async () => {
+  it('truncateName tronca nomi lunghi con ellissi in fondo', async () => {
     const longName = 'a'.repeat(50) + '.pdf';
     const { mount } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue({ fileName: longName, status: 'no_cup', source: 'text', cups: [] }),
@@ -903,7 +903,7 @@ describe('pdf-extract-view: render helpers', () => {
     await flushPromises();
 
     const cell = container.querySelector('.detail-cell');
-    expect(cell?.textContent).toMatch(/^…/);
+    expect(cell?.textContent).toMatch(/…$/);
   });
 
   it('escHtml escapa caratteri speciali nelle stringhe di errore', async () => {
