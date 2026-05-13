@@ -15,8 +15,10 @@ import io
 import json
 import logging
 import sqlite3
+import time
 import warnings
 from collections.abc import Callable, Iterator
+from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
 from decimal import Decimal, InvalidOperation
@@ -37,6 +39,8 @@ OPENCUP_PROJECTS_URL = (
 OPENCUP_DATASET_SCHEMA = "opencup_dataset_schema.yaml"
 OPENCUP_DOWNLOAD_TIMEOUT_SECONDS = 60 * 60
 OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES = 100 * 1024 * 1024
+OPENCUP_DOWNLOAD_RETRIES = 3
+OPENCUP_DOWNLOAD_RETRY_BACKOFF_SECONDS = 2.0
 _DOWNLOAD_BLOCK_SIZE_BYTES = 1024 * 1024
 
 _INSERT_SQL = "INSERT OR IGNORE INTO cup_index (cup, detail_chunk) VALUES (?, NULL)"
@@ -80,27 +84,96 @@ def download_projects_zip(
     *,
     source_url: str = OPENCUP_PROJECTS_URL,
     timeout: float | None = OPENCUP_DOWNLOAD_TIMEOUT_SECONDS,
+    retries: int = OPENCUP_DOWNLOAD_RETRIES,
+    retry_backoff_seconds: float = OPENCUP_DOWNLOAD_RETRY_BACKOFF_SECONDS,
     progress_interval_bytes: int = OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES,
     on_progress: Callable[[int], None] | None = None,
 ) -> Path:
     destination_path = Path(destination)
     destination_path.parent.mkdir(parents=True, exist_ok=True)
+    _download_url_to_path(
+        source_url,
+        destination_path,
+        timeout=timeout,
+        retries=retries,
+        retry_backoff_seconds=retry_backoff_seconds,
+        progress_interval_bytes=progress_interval_bytes,
+        on_progress=on_progress,
+    )
+    return destination_path
+
+
+def _download_url_to_path(
+    source_url: str,
+    destination_path: Path,
+    *,
+    timeout: float | None,
+    retries: int,
+    retry_backoff_seconds: float,
+    progress_interval_bytes: int,
+    on_progress: Callable[[int], None] | None = None,
+) -> None:
     if on_progress is not None and progress_interval_bytes <= 0:
         raise ValueError("progress_interval_bytes must be positive")
+    if retries < 1:
+        raise ValueError("retries must be positive")
+    if retry_backoff_seconds < 0:
+        raise ValueError("retry_backoff_seconds must be non-negative")
 
+    for attempt in range(1, retries + 1):
+        try:
+            _copy_download_to_path(
+                source_url,
+                destination_path,
+                timeout=timeout,
+                progress_interval_bytes=progress_interval_bytes,
+                on_progress=on_progress,
+            )
+            return
+        except Exception as exc:
+            destination_path.unlink(missing_ok=True)
+            if attempt == retries:
+                raise
+            LOGGER.warning(
+                "Download fallito da %s, ritento (%s/%s): %s",
+                source_url,
+                attempt,
+                retries,
+                exc,
+            )
+            if retry_backoff_seconds > 0:
+                time.sleep(retry_backoff_seconds)
+
+
+def _copy_download_to_path(
+    source_url: str,
+    destination_path: Path,
+    *,
+    timeout: float | None,
+    progress_interval_bytes: int,
+    on_progress: Callable[[int], None] | None,
+) -> None:
     downloaded_bytes = 0
     next_progress_bytes = progress_interval_bytes
-    with urlopen(source_url, timeout=timeout) as response, destination_path.open("wb") as output:
-        while True:
-            chunk = response.read(_DOWNLOAD_BLOCK_SIZE_BYTES)
-            if not chunk:
-                break
+    with _open_download_response(source_url, timeout=timeout) as response, destination_path.open(
+        "wb"
+    ) as output:
+        while chunk := response.read(_DOWNLOAD_BLOCK_SIZE_BYTES):
             output.write(chunk)
             downloaded_bytes += len(chunk)
             while on_progress is not None and downloaded_bytes >= next_progress_bytes:
                 on_progress(next_progress_bytes)
                 next_progress_bytes += progress_interval_bytes
-    return destination_path
+
+
+@contextmanager
+def _open_download_response(
+    source_url: str,
+    *,
+    timeout: float | None,
+) -> Iterator[Any]:
+    with urlopen(source_url, timeout=timeout) as response:
+        yield response
 
 
 def build_sqlite_from_projects_zip(

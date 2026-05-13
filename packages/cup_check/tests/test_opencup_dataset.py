@@ -281,6 +281,71 @@ def test_download_projects_zip_reports_progress_every_interval(
     assert progress_calls == [3, 6]
 
 
+def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch) -> None:
+    class Response:
+        def __init__(self):
+            self._content = io.BytesIO(b"dataset")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return None
+
+        def read(self, size=-1):
+            return self._content.read(size)
+
+    attempts = 0
+    sleep_calls: list[float] = []
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        nonlocal attempts
+        attempts += 1
+        assert source_url == "https://example.test/opencup.zip"
+        assert timeout == 123
+        if attempts == 1:
+            raise OSError("temporary network failure")
+        return Response()
+
+    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
+    monkeypatch.setattr(opencup_dataset.time, "sleep", sleep_calls.append)
+
+    destination = download_projects_zip(
+        tmp_path / "OpendataProgetti.zip",
+        source_url="https://example.test/opencup.zip",
+        timeout=123,
+        retries=2,
+        retry_backoff_seconds=0.5,
+    )
+
+    assert destination.read_bytes() == b"dataset"
+    assert attempts == 2
+    assert sleep_calls == [0.5]
+
+
+def test_download_projects_zip_raises_after_retry_exhaustion(
+    tmp_path: Path, monkeypatch
+) -> None:
+    attempts = 0
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        nonlocal attempts
+        attempts += 1
+        raise OSError("network unavailable")
+
+    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
+
+    with pytest.raises(OSError, match="network unavailable"):
+        download_projects_zip(
+            tmp_path / "OpendataProgetti.zip",
+            source_url="https://example.test/opencup.zip",
+            retries=2,
+            retry_backoff_seconds=0,
+        )
+
+    assert attempts == 2
+
+
 def test_download_projects_zip_requires_positive_progress_interval_when_reporting(
     tmp_path: Path,
 ) -> None:
@@ -290,6 +355,24 @@ def test_download_projects_zip_requires_positive_progress_interval_when_reportin
             source_url="https://example.test/opencup.zip",
             progress_interval_bytes=0,
             on_progress=lambda downloaded_bytes: None,
+        )
+
+
+def test_download_projects_zip_requires_positive_retries(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="retries must be positive"):
+        download_projects_zip(
+            tmp_path / "OpendataProgetti.zip",
+            source_url="https://example.test/opencup.zip",
+            retries=0,
+        )
+
+
+def test_download_projects_zip_requires_non_negative_retry_backoff(tmp_path: Path) -> None:
+    with pytest.raises(ValueError, match="retry_backoff_seconds must be non-negative"):
+        download_projects_zip(
+            tmp_path / "OpendataProgetti.zip",
+            source_url="https://example.test/opencup.zip",
+            retry_backoff_seconds=-1,
         )
 
 
