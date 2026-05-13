@@ -8,6 +8,8 @@
 | Web build                  | Vite                           | Dev server rapido, output statico per GitHub Pages |
 | CSV parsing                | PapaParse                      | Maturo e leggero                                   |
 | XLSX parsing               | read-excel-file                | MIT, evita dipendenze pesanti                      |
+| PDF parsing                | pdf.js                         | Estrazione testo browser-side da PDF nativi        |
+| OCR                        | Tesseract.js + lingua `ita`    | Fallback locale per PDF scansionati                |
 | Service Worker             | Vanilla                        | Comportamento esplicito                            |
 | Test web                   | Vitest, Playwright, Lighthouse | Unit, acceptance e quality gate                    |
 | Coverage                   | pytest-cov, Vitest V8, Codecov | Soglie locali e report PR per Python e web         |
@@ -48,6 +50,8 @@ cup-check/
 ```
 
 Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici versionati su GitHub Releases e pubblicati su GitHub Pages per il consumo browser e Python.
+
+Da `0.4.0` la web app introduce viste indirizzabili con hash router e un registro strumenti. Il verificatore resta la vista `#/`; il tool `#/pdf-extract` carica pigramente pdf.js e, solo quando necessario, Tesseract.js con asset OCR locali in `packages/web/public/tesseract/`.
 
 ## Fixture
 
@@ -155,6 +159,23 @@ with OpenCupChecker.from_latest(cache_dir=".cup-check-cache") as checker:
 ```
 
 La libreria espone anche `validate_many(iterable)` per validare iterabili di valori senza introdurre parser file nel core. `validate_format` resta solo formale; `OpenCupChecker` scarica/cacha l'indice OpenCUP oppure apre un indice SQLite locale e trasforma i CUP formalmente validi in `TROVATO_OPENCUP` o `NON_TROVATO_OPENCUP_DA_VERIFICARE`. Se il dataset non è disponibile, il checker degrada a `FORMATO_VALIDO_DA_VERIFICARE`.
+
+## Tool Estrazione PDF
+
+Il tool PDF della `0.4.0` è un'estensione frontend del verificatore, non un nuovo backend.
+
+Comportamento previsto:
+
+- routing tramite `#/pdf-extract`;
+- caricamento multi-file con input e drag-and-drop;
+- estrazione testo nativa con pdf.js;
+- OCR italiano locale con Tesseract.js solo quando il testo medio per pagina è sotto soglia;
+- regex CUP condivisa con il validatore, in variante globale per cercare codici nel testo;
+- una riga risultato per ogni coppia file/CUP, senza deduplicazione nel tool;
+- possibilità di inserire o correggere manualmente un CUP, marcando il risultato come manuale;
+- export CSV `file ↔ CUP` e passaggio al verificatore come file sintetico con colonne `cup,file_origine`.
+
+Il tool PDF non introduce nuovi outcome nel validatore formale. Gli esiti restano quelli del contratto esistente; eventuali informazioni di origine (`testo`, `ocr`, `manuale`) sono metadati di UI/export.
 
 ## Workflow
 

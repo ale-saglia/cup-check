@@ -2,6 +2,7 @@
 
 ## Unreleased
 
+- Riallinea la roadmap: la `0.4.0` diventa il tool di estrazione CUP da PDF e la validazione multicampo viene spostata a una milestone successiva.
 - Migliora il README con un'introduzione orientata al problema pubblico e un abstract in inglese.
 - Aggiunge una guida utente non tecnica e un processo contributivo minimo.
 - Aggiunge i badge dinamici al README e integra l'upload della coverage Python su Codecov.

@@ -35,6 +35,20 @@ Usa l'area di testo quando hai una lista breve o un elenco copiato da un documen
 
 Le righe vuote vengono ignorate.
 
+## Estrazione CUP Da PDF
+
+La roadmap `0.4.0` introduce un tool dedicato per estrarre CUP da fatture PDF prima del controllo principale.
+
+Il flusso previsto è:
+
+1. Apri il menu "Strumenti" e scegli "Estrai CUP da fatture PDF".
+2. Carica uno o più PDF.
+3. La web app prova a leggere il testo del PDF; se il documento è scansionato usa OCR locale in italiano.
+4. Controlla la tabella file/CUP, correggendo manualmente eventuali letture OCR imperfette.
+5. Esporta il CSV file/CUP oppure apri i risultati nel verificatore per applicare gli stessi controlli già disponibili.
+
+Il tool PDF non sostituisce la verifica: prepara l'elenco dei CUP da controllare e mantiene l'origine del file come colonna esportabile.
+
 ## Lettura Degli Esiti
 
 Gli esiti sono cautelativi:
@@ -48,9 +62,9 @@ Un `NON_TROVATO_OPENCUP_DA_VERIFICARE` non dimostra che il CUP non esista. Può 
 
 ## Privacy e Offline
 
-I file caricati, i CUP incollati e i report vengono elaborati nel browser. La web app non invia i dati a un backend applicativo.
+I file caricati, i CUP incollati, i PDF e i report vengono elaborati nel browser. La web app non invia i dati a un backend applicativo.
 
-La web app può scaricare asset pubblici e cacheabili, incluso il dataset OpenCUP statico. Dopo la prima visita l'interfaccia può funzionare offline; il lookup OpenCUP dipende dalla disponibilità del dataset già scaricato o raggiungibile.
+La web app può scaricare asset pubblici e cacheabili, incluso il dataset OpenCUP statico e, per il tool PDF, gli asset OCR locali serviti dalla stessa applicazione. Dopo la prima visita l'interfaccia può funzionare offline; il lookup OpenCUP dipende dalla disponibilità del dataset già scaricato o raggiungibile.
 
 ## Buone Pratiche
 

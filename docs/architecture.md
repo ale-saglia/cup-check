@@ -74,7 +74,36 @@ Componenti principali aggiunti in `0.3.0`:
 
 ## Architettura 0.4.0
 
-La release `0.4.0` separa il dataset in due livelli:
+La release `0.4.0` introduce il primo tool laterale oltre al verificatore principale: estrazione CUP da fatture PDF. La web app resta statica e viene organizzata in viste indirizzabili tramite hash router:
+
+```text
+GitHub Pages
+  └─ HTML + vanilla JS + Service Worker
+        │
+        ▼
+Browser utente
+  ├─ #/             verificatore CUP esistente
+  └─ #/pdf-extract estrazione CUP da PDF
+        ├─ pdf.js caricato all'apertura della vista
+        ├─ Tesseract.js + ita.traineddata caricati solo se serve OCR
+        └─ CSV sintetico cup,file_origine passato al verificatore
+```
+
+Il menu "Strumenti" è alimentato da un registro interno, così nuovi tool possono essere aggiunti senza duplicare HTML o service worker. Il tool PDF produce una riga per ogni coppia file/CUP, senza deduplicare: eventuale raggruppamento resta responsabilità del verificatore tramite il toggle già presente.
+
+Il flusso operativo è:
+
+1. L'utente apre `#/pdf-extract` e carica uno o più PDF.
+2. La vista prova prima l'estrazione testo nativa con `pdf.js`.
+3. Se il documento è scansionato, carica dinamicamente Tesseract.js e gli asset OCR locali in italiano.
+4. I CUP estratti vengono validati con lo stesso validatore formale e, se disponibile, con lo stesso lookup OpenCUP del verificatore.
+5. L'utente può correggere manualmente i risultati e poi esportare un CSV file/CUP oppure aprirlo nel verificatore principale come file sintetico.
+
+Gli asset OCR e PDF restano statici, cacheabili e serviti dalla stessa app; non vengono introdotti backend o CDN obbligatorie.
+
+## Architettura Coerenza Atto
+
+La milestone di coerenza atto, spostata dopo `0.4.0`, separa il dataset in due livelli:
 
 - **indice CUP**: contiene tutti i CUP pubblicati e, per ogni CUP, l'identificativo del chunk dettagli;
 - **dataset dettagli**: contiene i campi necessari ai controlli di coerenza e viene scaricato solo per i chunk richiesti dai CUP caricati dall'utente.

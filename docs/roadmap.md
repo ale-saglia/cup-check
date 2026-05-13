@@ -6,10 +6,11 @@
 | `0.1.x` | Hardening | Bug fix, polish UX, auto-detect colonne, fixture aggiuntivi | nessuna |
 | `0.2.0` | Libreria Python | `pip install cup-check`, API `validate_format`, parity sui fixture, nessun parser file nel core | account PyPI |
 | `0.3.0` | Dataset OpenCUP statico + lookup browser/Python | Pipeline mensile, indice SQLite CUP esatto versionato su GitHub Releases e servito da Pages, latest dataset dinamico, verifica esistenza CUP da web e Python, cache browser/Python, nuovi esiti OpenCUP | nessuna |
-| `0.4.0` | Coerenza atto | Dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
+| `0.4.0` | Estrazione CUP da PDF | Tool web per fatture PDF: router strumenti, estrazione testo con pdf.js, OCR locale italiano con Tesseract.js, correzione manuale, export file/CUP e passaggio al verificatore | nessuna |
 | `0.5.0` | UX & a11y | WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
-| `0.6.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
-| `0.7.0` | API autoritativa | completamento per nature non pubblicate, checker puntuale con credenziali o proxy documentato | API key |
+| `0.6.0` | Coerenza atto | Dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
+| `0.7.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
+| `0.8.0` | API autoritativa | completamento per nature non pubblicate, checker puntuale con credenziali o proxy documentato | API key |
 | `1.0.0` | Produzione stabile | documentazione utente consolidata, hardening, dichiarazione accessibilita | da valutare |
 
 ## Milestone `0.2.0`
@@ -38,6 +39,20 @@
 10. ADR per strategia statica browser lookup (ADR 0007) e SQLite chunked distribuito via Pages/Releases (ADR 0008).
 
 ## Milestone `0.4.0`
+
+1. Hash router minimale con vista verificatore `#/` e vista PDF `#/pdf-extract`.
+2. Navbar con menu "Strumenti" popolato da registro interno.
+3. Refactor della UI esistente in layout e vista verificatore senza cambio funzionale.
+4. Estrazione testo nativa dai PDF con pdf.js caricato dinamicamente.
+5. Heuristica per distinguere PDF nativi e scansionati.
+6. OCR fallback locale con Tesseract.js, asset `ita` serviti da `public/tesseract/` e nessuna CDN obbligatoria.
+7. Pattern CUP condiviso tra validatore e tool PDF, con supporto a CUP spezzati da newline o spazi.
+8. Tabella risultati file/CUP con fonte `testo`/`ocr`, stato, modifica manuale e rimozione.
+9. Export CSV file/CUP e azione "Apri nel verificatore" tramite file sintetico `cup,file_origine`.
+10. Test unitari per estrazione testo, normalizzazione CUP ed export CSV; acceptance end-to-end dal menu strumenti al verificatore.
+11. Documentazione utente e tecnica del flusso PDF, inclusi limiti OCR e privacy locale.
+
+## Milestone `0.6.0`
 
 1. Espansione schema dataset: colonne `attivo`, `natura_index`, `cup_master`, `updated_on_sort`, `piva_cf_titolare`, `piva_cf_beneficiario`, `costo_progetto_cents`, `finanziamento_progetto_cents`, `descrizione_full`.
 2. Strategia dedup aggiornata a `ON CONFLICT(cup) DO UPDATE SET ... WHERE excluded.updated_on_sort > cups.updated_on_sort`.

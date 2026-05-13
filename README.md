@@ -42,6 +42,10 @@ Il progetto è rilasciato come web app statica e package Python.
 - Funziona offline dopo la prima visita.
 - Espone una libreria Python installabile come `cup-check`.
 
+## Prossima Priorità
+
+La milestone `0.4.0` è orientata all'estrazione CUP da fatture PDF: menu strumenti, vista dedicata, lettura testo con pdf.js, OCR locale italiano con Tesseract.js per PDF scansionati, correzione manuale ed export/passaggio al verificatore. La validazione multicampo di coerenza atto resta in roadmap, ma viene spostata dopo questo flusso.
+
 ## Privacy
 
 File CSV/XLSX e testi incollati vengono elaborati localmente nel browser. L'app non carica i CUP, i file o i report su un backend applicativo.
