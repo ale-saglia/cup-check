@@ -1,5 +1,6 @@
 const CACHE_NAME = 'cup-check-v__APP_VERSION__-__BUILD_ID__';
 const DATASET_CACHE_NAME = 'cup-check-dataset-v1';
+const LAZY_ASSETS_CACHE_NAME = 'cup-check-lazy-v1';
 const DATASET_TAG_PATTERN = /dataset-\d{4}-\d{2}/;
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
 // eslint-disable-next-line no-undef -- injected by the Vite service worker plugin.
@@ -18,6 +19,11 @@ self.addEventListener('activate', (event) => {
 
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET') {
+    return;
+  }
+
+  if (isLazyAssetRequest(event.request)) {
+    event.respondWith(cacheFirst(event, event.request, LAZY_ASSETS_CACHE_NAME));
     return;
   }
 
@@ -40,11 +46,16 @@ function isDatasetRequest(request) {
   );
 }
 
+function isLazyAssetRequest(request) {
+  const url = new URL(request.url);
+  return url.pathname.startsWith('/pdfjs/') || url.pathname.startsWith('/tesseract/');
+}
+
 async function activateCaches() {
   const keys = await caches.keys();
   await Promise.all(
     keys
-      .filter((key) => key !== CACHE_NAME && key !== DATASET_CACHE_NAME)
+      .filter((key) => key !== CACHE_NAME && key !== DATASET_CACHE_NAME && key !== LAZY_ASSETS_CACHE_NAME)
       .map((key) => caches.delete(key)),
   );
 
@@ -74,6 +85,18 @@ function networkFirst(event, request, cacheName) {
       return response;
     })
     .catch(() => caches.match(request).then((cached) => cached ?? Response.error()));
+}
+
+function cacheFirst(event, request, cacheName) {
+  return caches.match(request).then((cached) => {
+    if (cached) return cached;
+    return fetch(request).then((response) => {
+      if (!response.ok) return response;
+      const copy = response.clone();
+      event.waitUntil(caches.open(cacheName).then((cache) => cache.put(request, copy)));
+      return response;
+    });
+  });
 }
 
 function datasetTagFromUrl(url) {

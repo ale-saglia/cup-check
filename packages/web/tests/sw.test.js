@@ -81,6 +81,56 @@ describe('service worker', () => {
     expect(event.respondWith).not.toHaveBeenCalled();
   });
 
+  it('uses cache-first for lazy assets (/pdfjs/* and /tesseract/*)', async () => {
+    await import('../src/sw.js');
+    // Force a cache miss so cacheFirst falls through to fetch and stores the response
+    cachesMock.match.mockResolvedValueOnce(undefined);
+    const pdfEvent = {
+      request: request('https://example.test/pdfjs/pdf.worker.min.mjs'),
+      waitUntil: vi.fn((promise) => promise),
+      respondWith: vi.fn(),
+    };
+
+    handlers.fetch(pdfEvent);
+    const response = await pdfEvent.respondWith.mock.calls[0][0];
+
+    expect(response.ok).toBe(true);
+    await pdfEvent.waitUntil.mock.calls[0][0];
+    expect(cachesMock.open).toHaveBeenCalledWith('cup-check-lazy-v1');
+  });
+
+  it('cache-first returns cached response for lazy assets without network request', async () => {
+    await import('../src/sw.js');
+    const cachedResponse = new Response('cached worker', { status: 200 });
+    cachesMock.match.mockResolvedValueOnce(cachedResponse);
+    const event = {
+      request: request('https://example.test/tesseract/worker.min.js'),
+      waitUntil: vi.fn(),
+      respondWith: vi.fn(),
+    };
+
+    handlers.fetch(event);
+    const response = await event.respondWith.mock.calls[0][0];
+
+    expect(await response.text()).toBe('cached worker');
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('activateCaches preserva la cache lazy-assets durante l\'attivazione', async () => {
+    await import('../src/sw.js');
+    cachesMock.stores.set('old-app-cache', makeCache());
+    cachesMock.stores.set('cup-check-lazy-v1', makeCache());
+    const appCache = makeCache([]);
+    cachesMock.stores.set('cup-check-v__APP_VERSION__-__BUILD_ID__', appCache);
+    const waitUntil = vi.fn();
+
+    handlers.activate({ waitUntil });
+    await waitUntil.mock.calls[0][0];
+
+    expect(cachesMock.delete).toHaveBeenCalledWith('old-app-cache');
+    expect(cachesMock.delete).not.toHaveBeenCalledWith('cup-check-lazy-v1');
+  });
+
   it('uses network-first caching for app and dataset requests', async () => {
     await import('../src/sw.js');
     const event = {

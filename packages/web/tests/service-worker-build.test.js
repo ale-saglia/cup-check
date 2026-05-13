@@ -18,6 +18,37 @@ describe('service worker build', () => {
     });
   });
 
+  it('usa una cache dedicata per gli asset lazy (pdfjs e tesseract) con strategia cache-first', async () => {
+    await withBuiltServiceWorker(async (serviceWorker) => {
+      const runtime = createServiceWorkerRuntime(serviceWorker, {
+        'https://example.test/pdfjs/pdf.worker.min.mjs': new Response('worker js'),
+        'https://example.test/tesseract/worker.min.js': new Response('tesseract js'),
+      });
+
+      // Cache miss → fetch and store
+      await runtime.fetch('https://example.test/pdfjs/pdf.worker.min.mjs');
+      const lazyCacheName = runtime
+        .cacheNames()
+        .find((name) => name.startsWith('cup-check-lazy-'));
+      expect(lazyCacheName).toBeTruthy();
+      expect(runtime.cachedUrls(lazyCacheName)).toContain(
+        'https://example.test/pdfjs/pdf.worker.min.mjs',
+      );
+
+      // Second fetch for tesseract
+      await runtime.fetch('https://example.test/tesseract/worker.min.js');
+      expect(runtime.cachedUrls(lazyCacheName)).toContain(
+        'https://example.test/tesseract/worker.min.js',
+      );
+
+      // App cache should not contain lazy assets
+      const appCacheName = runtime.cacheNames().find((n) => n.startsWith('cup-check-v'));
+      expect(runtime.cachedUrls(appCacheName ?? '')).not.toContain(
+        'https://example.test/pdfjs/pdf.worker.min.mjs',
+      );
+    });
+  });
+
   it("usa una cache dedicata per il dataset e mantiene solo l'ultima release", async () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
       const runtime = createServiceWorkerRuntime(serviceWorker, {
