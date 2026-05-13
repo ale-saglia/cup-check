@@ -426,11 +426,14 @@ function renderEntryRows(entry) {
   }
 
   if (entry.status === 'error') {
-    return `<tr data-entry-id="${entry.id}">
+    const errorRow = `<tr data-entry-id="${entry.id}">
       <td class="detail-cell" ${titleAttr}>${shortName}</td>
       <td colspan="4" class="pdf-status-cell"><span class="badge bad">Errore</span> ${escHtml(entry.error ?? '')}</td>
-      <td><button class="link-button" data-action="add-manual" type="button">+ aggiungi CUP</button></td>
+      <td>${entry.cups.length === 0 ? '<button class="link-button" data-action="add-manual" type="button">+ aggiungi CUP</button>' : ''}</td>
     </tr>`;
+    if (entry.cups.length === 0) return errorRow;
+    // Fall through: render error header + manually added cups
+    return errorRow + renderCupRows(entry, titleAttr, shortName);
   }
 
   // status === 'done'
@@ -442,6 +445,10 @@ function renderEntryRows(entry) {
     </tr>`;
   }
 
+  return renderCupRows(entry, titleAttr, shortName);
+}
+
+function renderCupRows(entry, titleAttr, shortName) {
   return entry.cups
     .map((cup) => {
       if (cup.editing) {
