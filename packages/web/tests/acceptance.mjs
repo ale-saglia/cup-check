@@ -33,6 +33,19 @@ try {
     result.controllerAfterOnlineReload,
     'service worker non controlla la pagina dopo il reload online',
   );
+  assert(result.darkMode.matches, 'prefers-color-scheme: dark non è attivo nel browser');
+  assert(
+    result.darkMode.rootBackground === 'rgb(13, 17, 23)',
+    `background root dark inatteso: ${result.darkMode.rootBackground}`,
+  );
+  assert(
+    result.darkMode.bodyBackground === 'rgb(13, 17, 23)',
+    `background body dark inatteso: ${result.darkMode.bodyBackground}`,
+  );
+  assert(
+    result.darkMode.textColor === 'rgb(255, 255, 255)',
+    `colore testo dark inatteso: ${result.darkMode.textColor}`,
+  );
   assert(
     result.xssResultsImageCount === 0,
     'payload HTML renderizzato come immagine nei risultati',
@@ -74,12 +87,18 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     headless: true,
     args: ['--no-sandbox', '--disable-dev-shm-usage'],
   });
-  const context = await browser.newContext();
+  const context = await browser.newContext({ colorScheme: 'dark' });
   const page = await context.newPage();
   const out = {};
 
   try {
     await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    out.darkMode = await page.evaluate(() => ({
+      matches: window.matchMedia('(prefers-color-scheme: dark)').matches,
+      rootBackground: getComputedStyle(document.documentElement).backgroundColor,
+      bodyBackground: getComputedStyle(document.body).backgroundColor,
+      textColor: getComputedStyle(document.documentElement).color,
+    }));
     await page.waitForFunction(async () => {
       if (!('serviceWorker' in navigator)) {
         return false;
