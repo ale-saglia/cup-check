@@ -63,6 +63,7 @@ class OpenCupChecker:
         latest_url_or_path: str | Path = DEFAULT_LATEST_DATASET_URL,
         *,
         cache_dir: str | Path | None = None,
+        _opener=urlopen,
     ) -> OpenCupChecker:
         """Costruisce un checker usando l'ultimo dataset OpenCUP disponibile.
 
@@ -73,9 +74,9 @@ class OpenCupChecker:
         lasciando i CUP formalmente validi come ``FORMATO_VALIDO_DA_VERIFICARE``.
         """
         try:
-            latest = _load_latest_pointer(latest_url_or_path)
-            manifest = _load_manifest(latest.manifest_url)
-            sqlite_path = _ensure_cached_index(manifest, _cache_root(cache_dir))
+            latest = _load_latest_pointer(latest_url_or_path, opener=_opener)
+            manifest = _load_manifest(latest.manifest_url, opener=_opener)
+            sqlite_path = _ensure_cached_index(manifest, _cache_root(cache_dir), opener=_opener)
             return cls.from_manifest(manifest, sqlite_path=sqlite_path)
         except Exception as exc:  # noqa: BLE001 - fallback cautelativo richiesto dalla API.
             return cls(None, fallback_reason=str(exc))
@@ -149,15 +150,15 @@ def _connect_sqlite_index(sqlite_path: Path) -> sqlite3.Connection:
     return sqlite3.connect(f"file:{sqlite_path}?mode=ro", uri=True)
 
 
-def _load_latest_pointer(source: str | Path) -> DatasetLatest:
+def _load_latest_pointer(source: str | Path, *, opener=urlopen) -> DatasetLatest:
     if _is_url(source):
-        return _latest_from_mapping(_json_from_url(str(source)))
+        return _latest_from_mapping(_json_from_url(str(source), opener=opener))
     return load_dataset_latest(source)
 
 
-def _load_manifest(source: str | Path) -> DatasetManifest:
+def _load_manifest(source: str | Path, *, opener=urlopen) -> DatasetManifest:
     if _is_url(source):
-        return DatasetManifest.from_mapping(_json_from_url(str(source)))
+        return DatasetManifest.from_mapping(_json_from_url(str(source), opener=opener))
     return load_dataset_manifest(source)
 
 
@@ -170,15 +171,15 @@ def _latest_from_mapping(value: dict[str, Any]) -> DatasetLatest:
     )
 
 
-def _json_from_url(url: str) -> dict[str, Any]:
-    with urlopen(url, timeout=_DATASET_JSON_TIMEOUT_SECONDS) as response:
+def _json_from_url(url: str, *, opener=urlopen) -> dict[str, Any]:
+    with opener(url, timeout=_DATASET_JSON_TIMEOUT_SECONDS) as response:
         value = json.loads(response.read())
     if not isinstance(value, dict):
         raise ValueError("dataset json response must be an object")
     return value
 
 
-def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path) -> Path:
+def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path, *, opener=urlopen) -> Path:
     dataset_dir = cache_dir / manifest.dataset_tag
     dataset_dir.mkdir(parents=True, exist_ok=True)
     sqlite_path = dataset_dir / "cup-index.sqlite"
@@ -186,19 +187,19 @@ def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path) -> Path:
         return sqlite_path
 
     tmp_path = sqlite_path.with_suffix(".sqlite.tmp")
-    _download_index(manifest, tmp_path)
+    _download_index(manifest, tmp_path, opener=opener)
     tmp_path.replace(sqlite_path)
     return sqlite_path
 
 
-def _download_index(manifest: DatasetManifest, destination: Path) -> None:
+def _download_index(manifest: DatasetManifest, destination: Path, *, opener=urlopen) -> None:
     digest = hashlib.sha256()
     total_size = 0
     try:
         with destination.open("wb") as output:
             for file_name in manifest.cup_index.files:
                 url = f"{manifest.cup_index.base_url.rstrip('/')}/{file_name}"
-                with urlopen(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
+                with opener(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
                     while True:
                         chunk = response.read(1024 * 1024)
                         if not chunk:

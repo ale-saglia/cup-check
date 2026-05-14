@@ -88,6 +88,7 @@ def download_projects_zip(
     retry_backoff_seconds: float = OPENCUP_DOWNLOAD_RETRY_BACKOFF_SECONDS,
     progress_interval_bytes: int = OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES,
     on_progress: Callable[[int], None] | None = None,
+    _opener=urlopen,
 ) -> Path:
     destination_path = Path(destination)
     destination_path.parent.mkdir(parents=True, exist_ok=True)
@@ -99,6 +100,7 @@ def download_projects_zip(
         retry_backoff_seconds=retry_backoff_seconds,
         progress_interval_bytes=progress_interval_bytes,
         on_progress=on_progress,
+        opener=_opener,
     )
     return destination_path
 
@@ -112,6 +114,7 @@ def _download_url_to_path(
     retry_backoff_seconds: float,
     progress_interval_bytes: int,
     on_progress: Callable[[int], None] | None = None,
+    opener=urlopen,
 ) -> None:
     if on_progress is not None and progress_interval_bytes <= 0:
         raise ValueError("progress_interval_bytes must be positive")
@@ -128,6 +131,7 @@ def _download_url_to_path(
                 timeout=timeout,
                 progress_interval_bytes=progress_interval_bytes,
                 on_progress=on_progress,
+                opener=opener,
             )
             return
         except Exception as exc:
@@ -152,12 +156,14 @@ def _copy_download_to_path(
     timeout: float | None,
     progress_interval_bytes: int,
     on_progress: Callable[[int], None] | None,
+    opener=urlopen,
 ) -> None:
     downloaded_bytes = 0
     next_progress_bytes = progress_interval_bytes
-    with _open_download_response(source_url, timeout=timeout) as response, destination_path.open(
-        "wb"
-    ) as output:
+    with (
+        _open_download_response(source_url, timeout=timeout, opener=opener) as response,
+        destination_path.open("wb") as output,
+    ):
         while chunk := response.read(_DOWNLOAD_BLOCK_SIZE_BYTES):
             output.write(chunk)
             downloaded_bytes += len(chunk)
@@ -171,8 +177,9 @@ def _open_download_response(
     source_url: str,
     *,
     timeout: float | None,
+    opener=urlopen,
 ) -> Iterator[Any]:
-    with urlopen(source_url, timeout=timeout) as response:
+    with opener(source_url, timeout=timeout) as response:
         yield response
 
 

@@ -42,7 +42,7 @@ def test_open_cup_checker_check_many_preserves_input_rows_and_warnings(tmp_path:
     assert results[1].outcome is Outcome.INVALIDO_FORMATO
 
 
-def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path, monkeypatch) -> None:
+def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path) -> None:
     sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
     sqlite_bytes = sqlite_path.read_bytes()
     first_chunk = sqlite_bytes[:20]
@@ -74,12 +74,15 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path, monk
         requests.append((url, timeout))
         return BytesResponse(payloads[url])
 
-    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
-
-    with OpenCupChecker.from_latest(latest_url, cache_dir=tmp_path / "cache") as checker:
+    cache_dir = tmp_path / "cache"
+    with OpenCupChecker.from_latest(
+        latest_url, cache_dir=cache_dir, _opener=fake_urlopen
+    ) as checker:
         assert checker.is_available is True
         assert checker.check("G17H03000130001", current_year=26).outcome is Outcome.TROVATO_OPENCUP
-    with OpenCupChecker.from_latest(latest_url, cache_dir=tmp_path / "cache") as cached_checker:
+    with OpenCupChecker.from_latest(
+        latest_url, cache_dir=cache_dir, _opener=fake_urlopen
+    ) as cached_checker:
         assert cached_checker.is_available is True
 
     assert requests == [
@@ -92,14 +95,14 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path, monk
     ]
 
 
-def test_open_cup_checker_falls_back_when_latest_download_fails(monkeypatch) -> None:
+def test_open_cup_checker_falls_back_when_latest_download_fails() -> None:
     def failing_urlopen(url: str, *, timeout: float | None = None):
         assert timeout == 30
         raise OSError(f"{url}: offline")
 
-    monkeypatch.setattr(checker_module, "urlopen", failing_urlopen)
-
-    checker = OpenCupChecker.from_latest("https://example.test/dataset-latest.json")
+    checker = OpenCupChecker.from_latest(
+        "https://example.test/dataset-latest.json", _opener=failing_urlopen
+    )
     result = checker.check("G17H03000130001", current_year=26)
 
     assert checker.is_available is False
@@ -156,21 +159,19 @@ def test_open_cup_checker_rejects_sqlite_without_cup_index(tmp_path: Path) -> No
         OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
 
 
-def test_json_from_url_requires_object_payload(monkeypatch) -> None:
+def test_json_from_url_requires_object_payload() -> None:
     def fake_urlopen(url: str, *, timeout: float | None = None):
         assert url == "https://example.test/dataset-latest.json"
         assert timeout == 30
         return BytesResponse(b"[]")
 
-    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
-
     with pytest.raises(ValueError, match="dataset json response must be an object"):
-        checker_module._json_from_url("https://example.test/dataset-latest.json")
+        checker_module._json_from_url(
+            "https://example.test/dataset-latest.json", opener=fake_urlopen
+        )
 
 
-def test_download_index_removes_partial_file_on_size_mismatch(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_download_index_removes_partial_file_on_size_mismatch(tmp_path: Path) -> None:
     payload = b"sqlite"
     manifest = manifest_for_chunks(
         base_url="https://example.test/dataset",
@@ -184,17 +185,14 @@ def test_download_index_removes_partial_file_on_size_mismatch(
         return BytesResponse(payload)
 
     destination = tmp_path / "cup-index.sqlite.tmp"
-    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
 
     with pytest.raises(ValueError, match="dataset chunk size mismatch"):
-        checker_module._download_index(manifest, destination)
+        checker_module._download_index(manifest, destination, opener=fake_urlopen)
 
     assert not destination.exists()
 
 
-def test_download_index_removes_partial_file_on_sha_mismatch(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_download_index_removes_partial_file_on_sha_mismatch(tmp_path: Path) -> None:
     payload = b"sqlite"
     manifest = DatasetManifest.from_mapping(
         {
@@ -221,10 +219,9 @@ def test_download_index_removes_partial_file_on_sha_mismatch(
         return BytesResponse(payload)
 
     destination = tmp_path / "cup-index.sqlite.tmp"
-    monkeypatch.setattr(checker_module, "urlopen", fake_urlopen)
 
     with pytest.raises(ValueError, match="dataset sha256 mismatch"):
-        checker_module._download_index(manifest, destination)
+        checker_module._download_index(manifest, destination, opener=fake_urlopen)
 
     assert not destination.exists()
 

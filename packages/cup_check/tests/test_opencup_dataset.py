@@ -216,7 +216,7 @@ def test_project_records_are_independent_from_geographic_area_filename(tmp_path:
     assert {record.natura for record in records} == {"Servizi"}
 
 
-def test_download_projects_zip_writes_response_body(tmp_path: Path, monkeypatch) -> None:
+def test_download_projects_zip_writes_response_body(tmp_path: Path) -> None:
     class Response:
         def __init__(self):
             self._content = io.BytesIO(b"dataset")
@@ -235,19 +235,16 @@ def test_download_projects_zip_writes_response_body(tmp_path: Path, monkeypatch)
         assert timeout == opencup_dataset.OPENCUP_DOWNLOAD_TIMEOUT_SECONDS
         return Response()
 
-    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
-
     destination = download_projects_zip(
         tmp_path / "nested" / "OpendataProgetti.zip",
         source_url="https://example.test/opencup.zip",
+        _opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"dataset"
 
 
-def test_download_projects_zip_reports_progress_every_interval(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_download_projects_zip_reports_progress_every_interval(tmp_path: Path) -> None:
     class ChunkedResponse:
         def __init__(self):
             self._chunks = iter((b"aa", b"bb", b"bb", b"c"))
@@ -266,7 +263,6 @@ def test_download_projects_zip_reports_progress_every_interval(
         assert timeout == 123
         return ChunkedResponse()
 
-    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
     progress_calls: list[int] = []
 
     destination = download_projects_zip(
@@ -275,6 +271,7 @@ def test_download_projects_zip_reports_progress_every_interval(
         timeout=123,
         progress_interval_bytes=3,
         on_progress=progress_calls.append,
+        _opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"aabbbbc"
@@ -307,7 +304,6 @@ def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch
             raise OSError("temporary network failure")
         return Response()
 
-    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
     monkeypatch.setattr(opencup_dataset.time, "sleep", sleep_calls.append)
 
     destination = download_projects_zip(
@@ -316,6 +312,7 @@ def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch
         timeout=123,
         retries=2,
         retry_backoff_seconds=0.5,
+        _opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"dataset"
@@ -323,9 +320,7 @@ def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch
     assert sleep_calls == [0.5]
 
 
-def test_download_projects_zip_raises_after_retry_exhaustion(
-    tmp_path: Path, monkeypatch
-) -> None:
+def test_download_projects_zip_raises_after_retry_exhaustion(tmp_path: Path) -> None:
     attempts = 0
 
     def fake_urlopen(source_url: str, *, timeout: float | None = None):
@@ -333,14 +328,13 @@ def test_download_projects_zip_raises_after_retry_exhaustion(
         attempts += 1
         raise OSError("network unavailable")
 
-    monkeypatch.setattr(opencup_dataset, "urlopen", fake_urlopen)
-
     with pytest.raises(OSError, match="network unavailable"):
         download_projects_zip(
             tmp_path / "OpendataProgetti.zip",
             source_url="https://example.test/opencup.zip",
             retries=2,
             retry_backoff_seconds=0,
+            _opener=fake_urlopen,
         )
 
     assert attempts == 2
