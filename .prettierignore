@@ -1,0 +1,2 @@
+# I file Python sono formattati da Ruff (vedi pyproject.toml), non da Prettier.
+**/*.py
