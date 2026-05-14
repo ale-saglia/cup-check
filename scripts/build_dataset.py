@@ -69,6 +69,8 @@ def main(snapshot_date_str: str, output_dir: str, cup_index_base_url: str) -> No
     elapsed = time.monotonic() - t0
     manifest = result.manifest
     _log(f"[2/3] Build completato in {elapsed:.0f}s")
+    if result.duplicate_cups > 0:
+        _log(f"      Attenzione: {result.duplicate_cups} CUP duplicati rimossi dal bulk OpenCUP")
     _log(f"      Record unici: {manifest.n_records:,}")
     _log(f"      SQLite:       {_mb(result.sqlite_path.stat().st_size)}")
     _log(f"      Chunk:        {len(manifest.cup_index.files)} file da ~{_mb(manifest.cup_index.chunk_size_bytes)} ciascuno")

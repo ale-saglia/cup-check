@@ -54,6 +54,7 @@ class BuildDatasetResult:
     latest_path: Path
     manifest: DatasetManifest
     latest: DatasetLatest
+    duplicate_cups: int
 
 
 @dataclass(frozen=True)
@@ -357,6 +358,7 @@ def build_dataset_release(
         latest_path=latest_path,
         manifest=manifest,
         latest=latest,
+        duplicate_cups=sqlite_result.duplicate_cups,
     )
 
 
