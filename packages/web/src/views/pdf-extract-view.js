@@ -395,7 +395,7 @@ function updateTable() {
   sendBtn.disabled = !hasDone || !hasCups;
   exportBtn.disabled = !hasDone || !hasCups;
 
-  body.innerHTML = _entries.map(renderEntryRows).join('');
+  body.replaceChildren(..._entries.flatMap(renderEntryRows));
 
   // Re-focus active edit input after re-render
   const activeInput = body.querySelector('input[data-editing]');
@@ -407,94 +407,160 @@ function updateTable() {
 
 function renderEntryRows(entry) {
   const name = entry.file.name;
-  const shortName = escHtml(truncateName(name));
-  const titleAttr = `title="${escHtml(name)}"`;
 
   if (entry.status === 'queued') {
-    return `<tr data-entry-id="${entry.id}">
-      <td class="detail-cell" ${titleAttr}>${shortName}</td>
-      <td colspan="5" class="pdf-status-cell"><span class="badge">In coda</span></td>
-    </tr>`;
+    return [makeSimpleStatusRow(entry.id, name, null, 'In coda', 5)];
   }
 
   if (entry.status === 'parsing') {
-    return `<tr data-entry-id="${entry.id}">
-      <td class="detail-cell" ${titleAttr}>${shortName}</td>
-      <td colspan="5" class="pdf-status-cell"><span class="badge">Lettura PDF…</span></td>
-    </tr>`;
+    return [makeSimpleStatusRow(entry.id, name, null, 'Lettura PDF…', 5)];
   }
 
   if (entry.status === 'ocr') {
     const { ocrLoading, page, totalPages } = entry.ocrProgress ?? {};
-    const label = ocrLoading ? 'Caricamento OCR…' : `OCR pagina ${page}&#x202F;/&#x202F;${totalPages}`;
-    return `<tr data-entry-id="${entry.id}">
-      <td class="detail-cell" ${titleAttr}>${shortName}</td>
-      <td colspan="5" class="pdf-status-cell"><span class="badge warn">${label}</span></td>
-    </tr>`;
+    const label = ocrLoading ? 'Caricamento OCR…' : `OCR pagina ${page}\u202F/\u202F${totalPages}`;
+    return [makeSimpleStatusRow(entry.id, name, 'warn', label, 5)];
   }
 
   if (entry.status === 'error') {
-    const errorRow = `<tr data-entry-id="${entry.id}">
-      <td class="detail-cell" ${titleAttr}>${shortName}</td>
-      <td colspan="4" class="pdf-status-cell"><span class="badge bad">Errore</span> ${escHtml(entry.error ?? '')}</td>
-      <td>${entry.cups.length === 0 ? '<button class="link-button" data-action="add-manual" type="button">+ aggiungi CUP</button>' : ''}</td>
-    </tr>`;
-    if (entry.cups.length === 0) return errorRow;
-    // Fall through: render error header + manually added cups
-    return errorRow + renderCupRows(entry, titleAttr, shortName);
+    const badge = document.createElement('span');
+    badge.className = 'badge bad';
+    badge.textContent = 'Errore';
+    const statusTd = document.createElement('td');
+    statusTd.colSpan = 4;
+    statusTd.className = 'pdf-status-cell';
+    statusTd.append(badge, ` ${entry.error ?? ''}`);
+
+    const actionTd = document.createElement('td');
+    if (entry.cups.length === 0) {
+      actionTd.replaceChildren(makeButton('+ aggiungi CUP', 'add-manual'));
+    }
+
+    const errorTr = makeTr(entry.id);
+    errorTr.append(makeNameCell(name), statusTd, actionTd);
+
+    if (entry.cups.length === 0) return [errorTr];
+    return [errorTr, ...renderCupRows(entry)];
   }
 
   // status === 'done'
   if (entry.cups.length === 0) {
-    return `<tr data-entry-id="${entry.id}">
-      <td class="detail-cell" ${titleAttr}>${shortName}</td>
-      <td colspan="4" class="pdf-status-cell pdf-no-cup">Nessun CUP rilevato.</td>
-      <td><button class="link-button" data-action="add-manual" type="button">+ aggiungi CUP</button></td>
-    </tr>`;
+    const noCupTd = document.createElement('td');
+    noCupTd.colSpan = 4;
+    noCupTd.className = 'pdf-status-cell pdf-no-cup';
+    noCupTd.textContent = 'Nessun CUP rilevato.';
+
+    const actionTd = document.createElement('td');
+    actionTd.replaceChildren(makeButton('+ aggiungi CUP', 'add-manual'));
+
+    const tr = makeTr(entry.id);
+    tr.append(makeNameCell(name), noCupTd, actionTd);
+    return [tr];
   }
 
-  return renderCupRows(entry, titleAttr, shortName);
+  return renderCupRows(entry);
 }
 
-function renderCupRows(entry, titleAttr, shortName) {
-  return entry.cups
-    .map((cup) => {
-      if (cup.editing) {
-        return `<tr data-entry-id="${entry.id}" data-cup-id="${cup.id}">
-          <td class="detail-cell" ${titleAttr}>${shortName}</td>
-          <td colspan="2">
-            <input class="pdf-cup-input" type="text" value="${escHtml(cup.value)}" maxlength="15"
-              data-editing data-entry-id="${entry.id}" data-cup-id="${cup.id}" aria-label="Valore CUP">
-          </td>
-          <td>${escHtml(cup.source ?? '')}</td>
-          <td></td>
-          <td>
-            <button class="link-button" data-action="save-edit" type="button">salva</button>
-            &#x20;
-            <button class="link-button" data-action="cancel-edit" type="button">annulla</button>
-          </td>
-        </tr>`;
-      }
+function renderCupRows(entry) {
+  const name = entry.file.name;
+  return entry.cups.map((cup) => {
+    const tr = makeTr(entry.id, cup.id);
 
-      const formatBadge = cup.formalValid
-        ? `<span class="badge good">Valido</span>`
-        : `<span class="badge bad">Invalido</span>`;
-      const manualBadge = cup.manual ? `<span class="badge warn">manuale</span>` : '';
+    if (cup.editing) {
+      const input = document.createElement('input');
+      input.className = 'pdf-cup-input';
+      input.type = 'text';
+      input.value = cup.value;
+      input.maxLength = 15;
+      input.dataset.editing = '';
+      input.dataset.entryId = String(entry.id);
+      input.dataset.cupId = String(cup.id);
+      input.setAttribute('aria-label', 'Valore CUP');
 
-      return `<tr data-entry-id="${entry.id}" data-cup-id="${cup.id}">
-        <td class="detail-cell" ${titleAttr}>${shortName}</td>
-        <td><code class="cup-cell">${escHtml(cup.value)}</code></td>
-        <td>${formatBadge}</td>
-        <td>${escHtml(cup.source ?? '')}</td>
-        <td>${manualBadge}</td>
-        <td>
-          <button class="link-button" data-action="edit" type="button">modifica</button>
-          &#x20;
-          <button class="link-button" data-action="remove" type="button">rimuovi</button>
-        </td>
-      </tr>`;
-    })
-    .join('');
+      const inputTd = document.createElement('td');
+      inputTd.colSpan = 2;
+      inputTd.replaceChildren(input);
+
+      const sourceTd = document.createElement('td');
+      sourceTd.textContent = cup.source ?? '';
+
+      const actionTd = document.createElement('td');
+      actionTd.append(makeButton('salva', 'save-edit'), ' ', makeButton('annulla', 'cancel-edit'));
+
+      tr.append(makeNameCell(name), inputTd, sourceTd, document.createElement('td'), actionTd);
+      return tr;
+    }
+
+    const cupCode = document.createElement('code');
+    cupCode.className = 'cup-cell';
+    cupCode.textContent = cup.value;
+    const cupTd = document.createElement('td');
+    cupTd.replaceChildren(cupCode);
+
+    const formatBadge = document.createElement('span');
+    formatBadge.className = `badge ${cup.formalValid ? 'good' : 'bad'}`;
+    formatBadge.textContent = cup.formalValid ? 'Valido' : 'Invalido';
+    const formatTd = document.createElement('td');
+    formatTd.replaceChildren(formatBadge);
+
+    const sourceTd = document.createElement('td');
+    sourceTd.textContent = cup.source ?? '';
+
+    const manualTd = document.createElement('td');
+    if (cup.manual) {
+      const manualBadge = document.createElement('span');
+      manualBadge.className = 'badge warn';
+      manualBadge.textContent = 'manuale';
+      manualTd.replaceChildren(manualBadge);
+    }
+
+    const actionTd = document.createElement('td');
+    actionTd.append(makeButton('modifica', 'edit'), ' ', makeButton('rimuovi', 'remove'));
+
+    tr.append(makeNameCell(name), cupTd, formatTd, sourceTd, manualTd, actionTd);
+    return tr;
+  });
+}
+
+// ── DOM helpers ────────────────────────────────────────────────────────────────
+
+function makeTr(entryId, cupId = null) {
+  const tr = document.createElement('tr');
+  tr.dataset.entryId = String(entryId);
+  if (cupId !== null) tr.dataset.cupId = String(cupId);
+  return tr;
+}
+
+function makeNameCell(name) {
+  const td = document.createElement('td');
+  td.className = 'detail-cell';
+  td.title = name;
+  td.textContent = truncateName(name);
+  return td;
+}
+
+function makeButton(text, action) {
+  const btn = document.createElement('button');
+  btn.className = 'link-button';
+  btn.type = 'button';
+  btn.dataset.action = action;
+  btn.textContent = text;
+  return btn;
+}
+
+function makeSimpleStatusRow(entryId, name, badgeClass, badgeText, colSpan) {
+  const badge = document.createElement('span');
+  badge.className = badgeClass ? `badge ${badgeClass}` : 'badge';
+  badge.textContent = badgeText;
+
+  const statusTd = document.createElement('td');
+  statusTd.colSpan = colSpan;
+  statusTd.className = 'pdf-status-cell';
+  statusTd.replaceChildren(badge);
+
+  const tr = makeTr(entryId);
+  tr.append(makeNameCell(name), statusTd);
+  return tr;
 }
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
@@ -513,12 +579,4 @@ function completedEntries() {
 
 function truncateName(name, max = 40) {
   return name.length <= max ? name : `${name.slice(0, max - 1)}…`;
-}
-
-function escHtml(str) {
-  return String(str)
-    .replace(/&/g, '&amp;')
-    .replace(/</g, '&lt;')
-    .replace(/>/g, '&gt;')
-    .replace(/"/g, '&quot;');
 }
