@@ -13,17 +13,8 @@ const INITIAL_STATE = {
   groupSameCups: true,
 };
 
-export const state = {
-  ...createInitialState(),
-};
+export const state = structuredClone(INITIAL_STATE);
 
 export function resetState() {
-  Object.assign(state, createInitialState());
-}
-
-function createInitialState() {
-  return {
-    ...INITIAL_STATE,
-    results: [],
-  };
+  Object.assign(state, structuredClone(INITIAL_STATE));
 }

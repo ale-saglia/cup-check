@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { beforeEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const mockGlobalWorkerOptions = { workerSrc: '' };
 
@@ -78,6 +78,10 @@ beforeEach(() => {
   vi.clearAllMocks();
   URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
   URL.revokeObjectURL = vi.fn();
+});
+
+afterEach(() => {
+  vi.clearAllTimers();
 });
 
 describe('pdf-extract-view', () => {
