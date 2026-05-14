@@ -1,5 +1,6 @@
 const routes = new Map();
 let currentUnmount = null;
+let currentPath = null;
 
 export function register(path, mountFn, unmountFn) {
   routes.set(path, { mountFn, unmountFn: unmountFn ?? null });
@@ -11,10 +12,16 @@ export function navigate(path) {
 
 function dispatch() {
   const hash = location.hash || '#/';
-  const route = routes.get(hash) ?? routes.get('#/');
-  if (!route) return;
+  const basePath = hash.split('?')[0] || '#/';
+  if (!routes.has(basePath)) {
+    navigate('#/');
+    return;
+  }
+  if (currentPath === basePath) return;
+  const route = routes.get(basePath);
   currentUnmount?.();
   currentUnmount = route.unmountFn;
+  currentPath = basePath;
   route.mountFn();
 }
 
