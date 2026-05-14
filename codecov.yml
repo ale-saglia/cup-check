@@ -3,10 +3,17 @@ coverage:
     project:
       default: off
       python:
+        # Il 100% è un vincolo esplicito: la suite Python deve coprire ogni riga.
+        # Qualsiasi regressione di coverage blocca il merge.
         target: 100%
         flags:
           - python
       web:
+        # "auto" confronta la coverage del commit corrente con quella della base branch.
+        # Non imponiamo un floor assoluto per il codice web perché alcune path (OCR,
+        # PDF.js, service worker offline) sono difficili da testare in CI in modo
+        # affidabile; preferiamo intercettare regressioni rispetto a fissare una soglia
+        # arbitraria che porterebbe a skip o mock eccessivi.
         target: auto
         flags:
           - web
