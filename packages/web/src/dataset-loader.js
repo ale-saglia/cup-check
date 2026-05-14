@@ -5,6 +5,7 @@ const PAGES_DATASETS_URL = 'https://ale-saglia.github.io/cup-check/datasets';
 const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
 const MIN_SCHEMA_VERSION = 1;
 const MAX_CHUNK_RETRIES = 2;
+const CHUNK_INACTIVITY_TIMEOUT_MS = 30_000;
 
 let datasetPromise = null;
 
@@ -135,17 +136,23 @@ async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries, onByte
       onBytes(-receivedThisAttempt);
       receivedThisAttempt = 0;
     }
+    const controller = new AbortController();
+    let timeoutId = setTimeout(() => controller.abort(), CHUNK_INACTIVITY_TIMEOUT_MS);
     try {
-      const response = await fetchFn(url);
+      const response = await fetchFn(url, { signal: controller.signal });
       if (!response.ok) throw new Error(`dataset chunk ${url}: HTTP ${response.status}`);
       const bytes = await readResponseBytes(response, (n) => {
         receivedThisAttempt += n;
         onBytes(n);
+        clearTimeout(timeoutId);
+        timeoutId = setTimeout(() => controller.abort(), CHUNK_INACTIVITY_TIMEOUT_MS);
       });
       await verifySha256(bytes, expectedSha256);
       return bytes;
     } catch (err) {
       if (attempt === retries) throw err;
+    } finally {
+      clearTimeout(timeoutId);
     }
   }
 }

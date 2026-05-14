@@ -403,6 +403,47 @@ describe('loadDataset', () => {
     dataset.close();
   });
 
+  it('retries a stalled chunk after inactivity timeout', async () => {
+    const sqliteBytes = await buildSqliteFixture();
+    const sha256s = [await computeSha256Hex(sqliteBytes)];
+    const base = mockFetch({
+      './dataset-latest.json': latestPointer(),
+      [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, sha256s, {
+        files: ['cup-index.sqlite.000'],
+      }),
+    });
+
+    let chunkAttempt = 0;
+    const fetchFn = async (url, { signal } = {}) => {
+      if (url !== CHUNK_URL_0) return base(url);
+      chunkAttempt++;
+      if (chunkAttempt === 1) {
+        let streamCtrl;
+        const stream = new ReadableStream({ start(c) { streamCtrl = c; } });
+        signal?.addEventListener('abort', () =>
+          streamCtrl?.error(new DOMException('aborted', 'AbortError')),
+        );
+        return new Response(stream);
+      }
+      return new Response(sqliteBytes);
+    };
+
+    vi.useFakeTimers();
+    try {
+      const loadPromise = loadDataset({
+        fetchFn,
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+      await vi.advanceTimersByTimeAsync(30_001);
+      const dataset = await loadPromise;
+      expect(chunkAttempt).toBe(2);
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('rejects after exhausting chunk retries', async () => {
     const sqliteBytes = await buildSqliteFixture();
     const firstChunk = sqliteBytes.slice(0, 128);
