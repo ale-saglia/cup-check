@@ -24,10 +24,7 @@
       }
     }
   },
-  "containerEnv": {
-    "CHROME_PATH": "/usr/bin/chromium",
-    "PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD": "1"
-  },
+  "containerEnv": {},
   "forwardPorts": [5173],
   "portsAttributes": {
     "5173": {

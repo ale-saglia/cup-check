@@ -53,10 +53,12 @@ web-test-watch: ## Esegue i test Vitest in watch mode
 
 .PHONY: web-acceptance
 web-acceptance: web-build ## Verifica upload XLSX 10k e offline PWA con Chromium
+	cd $(WEB_DIR) && npx playwright install chromium
 	cd $(WEB_DIR) && npm run test:acceptance
 
 .PHONY: web-lighthouse
 web-lighthouse: web-build ## Verifica soglie Lighthouse MVP sulla build statica
+	cd $(WEB_DIR) && npx playwright install chromium
 	cd $(WEB_DIR) && npm run test:lighthouse
 
 .PHONY: web-build

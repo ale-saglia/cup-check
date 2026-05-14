@@ -5,7 +5,8 @@ import { readFile, mkdtemp, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { setTimeout as delay } from 'node:timers/promises';
-import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
+import { findChromePath } from './chrome-path.mjs';
+import { chromium } from 'playwright';
 
 const MIN_SCORE = 90;
 const port = await getFreePort();
@@ -67,10 +68,7 @@ async function removeLocalUnavailableDataset() {
 }
 
 async function runLighthouse(url, outputPath) {
-  const chromePath = await findChromePath();
-  if (!chromePath) {
-    throw new Error(CHROME_NOT_FOUND_MESSAGE);
-  }
+  const chromePath = findChromePath() ?? chromium.executablePath();
   const child = spawn(
     'lighthouse',
     [

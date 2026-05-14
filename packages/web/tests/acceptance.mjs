@@ -3,12 +3,13 @@ import { once } from 'node:events';
 import { spawn } from 'node:child_process';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { writeFile } from 'node:fs/promises';
+import { createHash } from 'node:crypto';
+import { readFile, writeFile } from 'node:fs/promises';
 import { setTimeout as delay } from 'node:timers/promises';
 import axe from 'axe-core';
 import JSZip from 'jszip';
 import { chromium } from 'playwright';
-import { CHROME_NOT_FOUND_MESSAGE, findChromePath } from './chrome-path.mjs';
+import { findChromePath } from './chrome-path.mjs';
 
 const ROW_COUNT = 10000;
 const MAX_TOTAL_MS = 5000;
@@ -86,23 +87,69 @@ try {
   stopServer(server);
 }
 
-async function runBrowserAcceptance(baseUrl, xlsxPath) {
-  const chromePath = await findChromePath();
-  if (!chromePath) {
-    throw new Error(CHROME_NOT_FOUND_MESSAGE);
-  }
+async function setupDatasetMock(context) {
+  const sqliteBytes = await readFile(
+    new URL('./minimal-cup-index.sqlite', import.meta.url).pathname,
+  );
+  const sha256 = createHash('sha256').update(sqliteBytes).digest('hex');
+  const datasetTag = 'dataset-2026-05';
 
-  const browser = await chromium.launch({
-    executablePath: chromePath,
+  // Mock GitHub releases API to avoid external dependency and prevent WASM crash:
+  // loading the full 630KB SQLite database via sql.js in a containerised browser
+  // (Codespaces, Docker with seccomp) reliably crashes the renderer process.
+  // The mock serves a minimal 12KB SQLite with the correct schema so the dataset
+  // loads correctly but without triggering the crash.
+  await context.route('https://api.github.com/**', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify([{ tag_name: datasetTag, published_at: '2026-05-01T00:00:00Z' }]),
+    }),
+  );
+  await context.route('**/*.sqlite*', (route) =>
+    route.fulfill({
+      contentType: 'application/octet-stream',
+      body: Buffer.from(sqliteBytes),
+    }),
+  );
+  await context.route('**/dataset-manifest*', (route) =>
+    route.fulfill({
+      contentType: 'application/json',
+      body: JSON.stringify({
+        schema_version: 1,
+        dataset_tag: datasetTag,
+        schema: { table: 'cup_index' },
+        cup_index: {
+          base_url: `https://ale-saglia.github.io/cup-check/datasets/${datasetTag}`,
+          files: ['cup-index.sqlite.000'],
+          files_sha256: [sha256],
+          total_size_bytes: sqliteBytes.length,
+        },
+      }),
+    }),
+  );
+}
+
+async function runBrowserAcceptance(baseUrl, xlsxPath) {
+  const chromePath = findChromePath();
+  const launchOptions = {
     headless: true,
-    args: ['--no-sandbox', '--disable-dev-shm-usage'],
-  });
+    // --no-zygote and --disable-gpu are required in containers with seccomp filters
+    // (GitHub Codespaces, Docker, CI) where multi-process Chrome crashes when
+    // spawning renderer or GPU processes.
+    args: ['--no-sandbox', '--disable-dev-shm-usage', '--no-zygote', '--disable-gpu'],
+  };
+  if (chromePath) {
+    launchOptions.executablePath = chromePath;
+  }
+  const browser = await chromium.launch(launchOptions);
   const context = await browser.newContext({ colorScheme: 'dark' });
+  await setupDatasetMock(context);
   const page = await context.newPage();
   const out = {};
 
   try {
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'load' });
+    await page.waitForLoadState('networkidle');
     out.a11y = await runA11yAudit(page);
     out.darkMode = await page.evaluate(() => ({
       matches: window.matchMedia('(prefers-color-scheme: dark)').matches,
@@ -117,7 +164,8 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       const registration = await navigator.serviceWorker.ready;
       return Boolean(registration.active);
     });
-    await page.reload({ waitUntil: 'networkidle' });
+    await page.reload({ waitUntil: 'load' });
+    await page.waitForLoadState('networkidle');
     out.controllerAfterOnlineReload = await page.evaluate(() =>
       Boolean(navigator.serviceWorker?.controller),
     );
@@ -152,7 +200,8 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
 
     // ── PDF-extract flow ───────────────────────────────────────────────────────
     const samplesDir = new URL('../../../samples/pdf/', import.meta.url).pathname;
-    await page.goto(baseUrl, { waitUntil: 'networkidle' });
+    await page.goto(baseUrl, { waitUntil: 'load' });
+    await page.waitForLoadState('networkidle');
     // Open the Strumenti dropdown and navigate to #/pdf-extract
     await page.locator('details.nav-menu > summary').click();
     await page.locator('[role="menuitem"]', { hasText: 'Estrai CUP da fatture PDF' }).click();
