@@ -156,6 +156,23 @@ button {
   display: none;
 }
 
+.nav-menu-toggle::after {
+  content: '';
+  display: inline-block;
+  width: 0;
+  height: 0;
+  margin-left: 5px;
+  vertical-align: middle;
+  border-left: 4px solid transparent;
+  border-right: 4px solid transparent;
+  border-top: 5px solid currentColor;
+  transition: transform 0.15s;
+}
+
+.nav-menu[open] .nav-menu-toggle::after {
+  transform: rotate(180deg);
+}
+
 .nav-menu[open] .nav-menu-toggle {
   border-color: var(--line);
   background: var(--panel);
@@ -745,9 +762,13 @@ code {
   }
 
   .nav-left {
-    align-items: baseline;
-    flex-wrap: wrap;
-    gap: 4px 8px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+  }
+
+  .nav-menu-toggle {
+    padding-left: 0;
   }
 
   .nav-links {
