@@ -106,6 +106,7 @@ dataset-build: $(DATA_DIR)/OpendataProgetti.zip ## Genera data/cup-index.sqlite 
 
 .PHONY: dataset-release-local
 dataset-release-local: ## Genera dist/dataset per la preview locale con chunk e manifest
+	@command -v uv >/dev/null 2>&1 || { echo >&2 "Errore: 'uv' non trovato. Esegui prima: make python-install"; exit 1; }
 	SNAPSHOT_DATE="$(DATASET_SNAPSHOT_DATE)"; \
 	cd $(PYTHON_DIR) && uv run python ../../scripts/build_dataset.py \
 		"$$SNAPSHOT_DATE" \
