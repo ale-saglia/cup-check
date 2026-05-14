@@ -138,6 +138,21 @@ describe('discoverLatestDataset', () => {
       ),
     ).rejects.toThrow('latest dataset release not found');
   });
+
+  it('rejects with url and content-type when a JSON endpoint returns HTML', async () => {
+    const htmlResponse = () =>
+      new Response('<html>Error</html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      });
+    const fetchFn = async (url) => {
+      if (String(url) === './dataset-latest.json') return notFound();
+      return htmlResponse();
+    };
+    await expect(discoverLatestDataset(fetchFn)).rejects.toThrow(
+      'unexpected content-type "text/html; charset=utf-8"',
+    );
+  });
 });
 
 describe('loadDataset', () => {
@@ -227,6 +242,19 @@ describe('loadDataset', () => {
     expect(progressEvents.at(-1)).toBe(100);
     expect(progressEvents).toEqual([...progressEvents].sort((a, b) => a - b));
     dataset.close();
+  });
+
+  it('rejects with url and content-type when the manifest returns HTML', async () => {
+    const fetchFn = async (url) => {
+      if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+      return new Response('<html>404 Not Found</html>', {
+        status: 200,
+        headers: { 'content-type': 'text/html; charset=utf-8' },
+      });
+    };
+    await expect(loadDataset({ fetchFn })).rejects.toThrow(
+      `${MANIFEST_URL}: unexpected content-type "text/html; charset=utf-8"`,
+    );
   });
 
   it('rejects when files_sha256 is absent from the manifest', async () => {

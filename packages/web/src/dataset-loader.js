@@ -191,6 +191,10 @@ async function readResponseBytes(response, onBytes) {
 async function fetchJson(fetchFn, url) {
   const response = await fetchFn(url);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
+  const ct = response.headers.get('content-type') ?? '';
+  if (!ct.includes('application/json')) {
+    throw new Error(`${url}: unexpected content-type "${ct}"`);
+  }
   return response.json();
 }
 
