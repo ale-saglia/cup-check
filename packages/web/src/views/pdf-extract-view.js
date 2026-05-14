@@ -49,7 +49,7 @@ export async function mount(container) {
       </div>
 
       <div class="table-wrap">
-        <table>
+        <table aria-label="Risultati estrazione CUP dai PDF">
           <thead>
             <tr>
               <th scope="col">File</th>
