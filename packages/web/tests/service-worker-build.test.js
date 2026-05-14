@@ -94,7 +94,35 @@ describe('service worker build', () => {
       ]);
     });
   });
+
+
+  it('inietta i polyfill nel worker pdfjs per compatibilità con Chrome <124', async () => {
+    await withBuiltAsset('pdfjs/pdf.worker.min.mjs', (worker) => {
+      expect(worker).toContain('Promise.withResolvers');
+      expect(worker).toContain('Promise.try');
+      expect(worker).toContain('getOrInsertComputed');
+      expect(worker).toContain('Symbol.asyncIterator');
+      expect(worker).toContain('toHex');
+      expect(worker).toContain('toBase64');
+      expect(worker).toContain('fromBase64');
+    });
+  }, 15000);
 });
+
+async function withBuiltAsset(assetPath, assertions) {
+  const outDir = await mkdtemp(join(tmpdir(), 'cup-check-web-'));
+  try {
+    await build({
+      configFile: resolve(webDir, 'vite.config.js'),
+      logLevel: 'silent',
+      build: { outDir, emptyOutDir: true },
+    });
+    const content = await readFile(join(outDir, assetPath), 'utf8');
+    await assertions(content);
+  } finally {
+    await rm(outDir, { recursive: true, force: true });
+  }
+}
 
 async function withBuiltServiceWorker(assertions) {
   const outDir = await mkdtemp(join(tmpdir(), 'cup-check-web-'));
