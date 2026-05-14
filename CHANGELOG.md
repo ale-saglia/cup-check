@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.4.1 - 2026-05-14
+
+- Migra `pdf-extract-view` da `innerHTML` a creazione DOM programmatica, eliminando il rischio XSS nei template della tabella risultati.
+- Corregge la race condition nel singleton OCR worker e nel loader pdf.js: la Promise di inizializzazione viene assegnata immediatamente, impedendo la creazione di worker duplicati in caso di caricamento concorrente.
+- Previene il blocco permanente della coda di elaborazione PDF se `processEntry` lancia un'eccezione imprevista.
+- Valida il `Content-Type` della risposta prima di parsare il JSON del dataset, restituendo un messaggio d'errore leggibile invece di un errore di parsing criptico.
+- Aggiunge `inactivity timeout` per-chunk nel download progressivo del dataset: connessioni appese vengono interrotte e segnalate come errore ritentabile.
+- Sostituisce il passaggio `state.pendingFile` tra viste con un registry temporaneo identificato da hash, eliminando la possibile perdita del file in caso di navigazione rapida.
+- Estrae `isStructurallyPlausible` in `validator.js` per unificare le due semantiche di validazione CUP presenti in `extract-cups.js`.
+- Applica debounce al render OCR, libera la memoria PDF dopo l'estrazione e mostra un avviso quando vengono caricati molti file contemporaneamente.
+- Specifica il cache name nel fallback offline del Service Worker per evitare collisioni tra cache app-shell e cache dataset.
+- Aggiunge `fallback runtime` a `PRODUCT_VERSION` per evitare `undefined` fuori dall'ambiente Vite.
+- Aggiunge `aria-label` alla tabella risultati del tool PDF e corregge il menu strumenti su mobile.
+- Aggiunge `rel="noopener"` esplicito su tutti i link `target="_blank"`.
+- Aggiunge fallback esplicito per hash sconosciuti nel router.
+- Inietta `opener` come parametro nelle funzioni HTTP Python invece di usare monkeypatch, rendendo i test più robusti.
+- Aggiunge avvertenza OCR nella UI e nella guida utente sui CUP estratti da PDF scansionati.
+
 ## 0.4.0 - 2026-05-13
 
 - Aggiunge il tool "Estrai CUP da fatture PDF" accessibile dal menu "Strumenti" nella web app.
