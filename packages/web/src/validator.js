@@ -100,6 +100,12 @@ function normalizationWarnings(rawValue, trimmedValue, normalizedValue) {
   ].filter(Boolean);
 }
 
+export function isStructurallyPlausible(value, options = {}) {
+  const { yearLookahead = 0, ...rest } = options;
+  const baseYear = rest.currentYear ?? new Date().getFullYear();
+  return validateCup(value, null, { ...rest, currentYear: baseYear + yearLookahead }).failedRules.length === 0;
+}
+
 export function validateBatch(values, options = {}) {
   const startedAt = performance.now();
   const results = values.map((value, index) => validateCup(value, index + 1, options));

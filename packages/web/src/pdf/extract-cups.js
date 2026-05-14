@@ -1,13 +1,4 @@
-import { validateCup, OUTCOMES } from '../validator.js';
-
-// Use a lookahead window of +15 years to accept CUPs planned for the near
-// future without opening the door to clearly implausible year values (e.g. 74)
-// that inflate false-positive rates, especially with the 3-token OCR window.
-const SEARCH_YEAR = { currentYear: new Date().getFullYear() + 15 };
-
-function isStructuralCandidate(value) {
-  return validateCup(value, null, SEARCH_YEAR).failedRules.length === 0;
-}
+import { validateCup, isStructurallyPlausible, OUTCOMES } from '../validator.js';
 
 // OCR engines often confuse '1' (one) with 'I' (capital i). Positions 0 and 3
 // of a CUP must be letters, so we try the substitution there before giving up.
@@ -24,13 +15,13 @@ function ocrVariants(value) {
 }
 
 function addCandidate(counts, value, ocrFix) {
-  if (isStructuralCandidate(value)) {
+  if (isStructurallyPlausible(value, { yearLookahead: 15 })) {
     counts.set(value, (counts.get(value) ?? 0) + 1);
     return;
   }
   if (ocrFix) {
     for (const v of ocrVariants(value)) {
-      if (isStructuralCandidate(v)) {
+      if (isStructurallyPlausible(v, { yearLookahead: 15 })) {
         counts.set(v, (counts.get(v) ?? 0) + 1);
       }
     }
