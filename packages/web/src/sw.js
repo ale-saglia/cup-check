@@ -84,11 +84,11 @@ function networkFirst(event, request, cacheName) {
       );
       return response;
     })
-    .catch(() => caches.match(request).then((cached) => cached ?? Response.error()));
+    .catch(() => caches.open(cacheName).then((c) => c.match(request)).then((cached) => cached ?? Response.error()));
 }
 
 function cacheFirst(event, request, cacheName) {
-  return caches.match(request).then((cached) => {
+  return caches.open(cacheName).then((c) => c.match(request)).then((cached) => {
     if (cached) return cached;
     return fetch(request).then((response) => {
       if (!response.ok) return response;

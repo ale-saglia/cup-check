@@ -83,8 +83,7 @@ describe('service worker', () => {
 
   it('uses cache-first for lazy assets (/pdfjs/* and /tesseract/*)', async () => {
     await import('../src/sw.js');
-    // Force a cache miss so cacheFirst falls through to fetch and stores the response
-    cachesMock.match.mockResolvedValueOnce(undefined);
+    // Cache miss is the default (makeCache.match returns undefined)
     const pdfEvent = {
       request: request('https://example.test/pdfjs/pdf.worker.min.mjs'),
       waitUntil: vi.fn((promise) => promise),
@@ -102,7 +101,9 @@ describe('service worker', () => {
   it('cache-first returns cached response for lazy assets without network request', async () => {
     await import('../src/sw.js');
     const cachedResponse = new Response('cached worker', { status: 200 });
-    cachesMock.match.mockResolvedValueOnce(cachedResponse);
+    const lazyCache = makeCache();
+    lazyCache.match.mockResolvedValueOnce(cachedResponse);
+    cachesMock.stores.set('cup-check-lazy-v1', lazyCache);
     const event = {
       request: request('https://example.test/tesseract/worker.min.js'),
       waitUntil: vi.fn(),
@@ -148,6 +149,11 @@ describe('service worker', () => {
 
   it('does not cache failed network responses and falls back to cache on errors', async () => {
     await import('../src/sw.js');
+    const appCache = makeCache();
+    appCache.match
+      .mockResolvedValueOnce(new Response('cached:https://example.test/index.html'))
+      .mockResolvedValueOnce(null);
+    cachesMock.stores.set('cup-check-v__APP_VERSION__-__BUILD_ID__', appCache);
     fetchMock.mockResolvedValueOnce(new Response('no', { status: 503 }));
     const failedEvent = {
       request: request('https://example.test/index.html'),
@@ -171,7 +177,6 @@ describe('service worker', () => {
       'cached:https://example.test/index.html',
     );
 
-    cachesMock.match.mockResolvedValueOnce(null);
     fetchMock.mockRejectedValueOnce(new Error('offline'));
     const missingCacheEvent = {
       request: request('https://example.test/missing.html'),
@@ -234,6 +239,7 @@ function makeCache(keys = []) {
     keys: vi.fn(async () => keys),
     delete: vi.fn(async () => true),
     put: vi.fn(async () => {}),
+    match: vi.fn(async () => undefined),
   };
 }
 
