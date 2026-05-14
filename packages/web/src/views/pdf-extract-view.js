@@ -22,7 +22,7 @@ export async function mount(container) {
 
   try {
     const { GlobalWorkerOptions } = await import('pdfjs-dist');
-    GlobalWorkerOptions.workerSrc = new URL('/pdfjs/pdf.worker.min.mjs', location.origin).href;
+    GlobalWorkerOptions.workerSrc = new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href;
   } catch {
     // silently fail; will surface as per-file error during extraction
   }

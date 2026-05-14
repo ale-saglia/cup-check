@@ -1,7 +1,7 @@
 let _workerPromise = null;
 
 function tesseractPaths() {
-  const base = new URL('/tesseract/', location.origin).href;
+  const base = new URL('tesseract/', document.baseURI).href;
   return {
     workerPath: `${base}worker.min.js`,
     corePath: base,

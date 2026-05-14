@@ -48,7 +48,7 @@ function isDatasetRequest(request) {
 
 function isLazyAssetRequest(request) {
   const url = new URL(request.url);
-  return url.pathname.startsWith('/pdfjs/') || url.pathname.startsWith('/tesseract/');
+  return url.pathname.includes('/pdfjs/') || url.pathname.includes('/tesseract/');
 }
 
 async function activateCaches() {
