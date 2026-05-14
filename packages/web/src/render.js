@@ -300,7 +300,7 @@ function renderOpencupCell(result) {
   const link = document.createElement('a');
   link.href = url;
   link.target = '_blank';
-  link.rel = 'noreferrer';
+  link.rel = 'noopener noreferrer';
   link.textContent = 'Apri';
   return link;
 }

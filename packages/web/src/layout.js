@@ -27,7 +27,7 @@ export function mountLayout(root = document.querySelector('#app')) {
             </details>
           </div>
           <div class="nav-links">
-            <a class="project-link" href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noreferrer">cup-check ${PRODUCT_VERSION}</a>
+            <a class="project-link" href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer">cup-check ${PRODUCT_VERSION}</a>
             <span id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></span>
           </div>
         </div>
@@ -35,7 +35,7 @@ export function mountLayout(root = document.querySelector('#app')) {
       <main class="view-slot shell" aria-label="Area principale"></main>
       <footer class="site-footer">
         <span>Sviluppato da <a href="https://ale-saglia.com" rel="noreferrer">Alessandro Saglia</a></span>
-        <span><a href="https://opencup.gov.it" target="_blank" rel="noreferrer">OpenCUP</a> · <a href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noreferrer">Codice sorgente e licenza</a></span>
+        <span><a href="https://opencup.gov.it" target="_blank" rel="noopener noreferrer">OpenCUP</a> · <a href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer">Codice sorgente e licenza</a></span>
       </footer>
     </div>
   `;
