@@ -62,6 +62,7 @@ Se l'OCR ha letto male un CUP (ad esempio ha confuso `I` con `1`), clicca **modi
 - La qualità dell'OCR dipende dalla risoluzione e dalla nitidezza del PDF scansionato: usa sempre la correzione manuale per i CUP dubbi.
 - La validazione mostrata nella tabella è solo **formale** (regole `R0`–`R5`). La verifica di esistenza nel dataset OpenCUP si esegue nel verificatore dopo il passaggio.
 - Il tool non deduplicano i CUP: se lo stesso codice appare in più file, viene riportato una volta per file. La deduplicazione è disponibile nel verificatore tramite il toggle "Raggruppa CUP uguali".
+- Con batch di **50–100 file o più** (caso tipico: invio massivo di fatture) l'elaborazione è completamente sequenziale e la UI rimane reattiva. I file vengono letti uno alla volta e liberati dalla memoria subito dopo l'estrazione; il browser non accumula il contenuto di tutti i PDF contemporaneamente.
 
 Il tool PDF non sostituisce il verificatore: prepara l'elenco dei CUP da controllare e mantiene l'origine del file come colonna tracciabile fino all'export finale.
 

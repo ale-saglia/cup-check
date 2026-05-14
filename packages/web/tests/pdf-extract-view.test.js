@@ -210,6 +210,7 @@ describe('pdf-extract-view: file processing', () => {
   });
 
   it('mostra badge OCR con "Caricamento OCR…" durante il caricamento del worker', async () => {
+    vi.useFakeTimers();
     let progressCb;
     const ocrPdfImpl = vi.fn().mockImplementation((_file, { onProgress }) => {
       progressCb = onProgress;
@@ -226,13 +227,17 @@ describe('pdf-extract-view: file processing', () => {
     Object.defineProperty(input, 'files', { value: [makeFile()] });
     input.dispatchEvent(new Event('change'));
 
-    await flushPromises();
+    // Avanza i timer fittizi: il debounce da 150ms scatta e renderizza lo stato 'ocr'
+    await vi.runAllTimersAsync();
     progressCb?.({ ocrLoading: true, page: 0, totalPages: 2, fileName: 'fattura.pdf' });
+    await vi.runAllTimersAsync();
 
     expect(container.querySelector('#pdf-results-body').innerHTML).toContain('Caricamento OCR');
+    vi.useRealTimers();
   });
 
   it('mostra badge OCR con numero di pagina durante il processing', async () => {
+    vi.useFakeTimers();
     let progressCb;
     const ocrPdfImpl = vi.fn().mockImplementation((_file, { onProgress }) => {
       progressCb = onProgress;
@@ -249,10 +254,13 @@ describe('pdf-extract-view: file processing', () => {
     Object.defineProperty(input, 'files', { value: [makeFile()] });
     input.dispatchEvent(new Event('change'));
 
-    await flushPromises();
+    // Avanza i timer fittizi: il debounce da 150ms scatta e renderizza lo stato 'ocr'
+    await vi.runAllTimersAsync();
     progressCb?.({ ocrLoading: false, page: 1, totalPages: 3, fileName: 'fattura.pdf' });
+    await vi.runAllTimersAsync();
 
     expect(container.querySelector('#pdf-results-body').innerHTML).toContain('OCR pagina');
+    vi.useRealTimers();
   });
 
   it('mostra la riga di errore se extractPdfText rigetta', async () => {

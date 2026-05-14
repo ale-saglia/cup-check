@@ -11,6 +11,7 @@ let _nextId = 0;
 let _processing = false;
 let _queue = [];
 let _generation = 0;
+let _renderPending = false;
 
 export async function mount(container) {
   _container = container;
@@ -29,7 +30,7 @@ export async function mount(container) {
 
   _container.innerHTML = `
     <h1>Estrai CUP da fatture PDF</h1>
-    <p class="project-note">Carica uno o più PDF per estrarre automaticamente i codici CUP. I file sono elaborati interamente in locale, nessun dato viene inviato a server esterni.</p>
+    <p class="project-note">Carica uno o più PDF per estrarre automaticamente i codici CUP. I file sono elaborati interamente in locale, nessun dato viene inviato a server esterni. Per batch grandi i risultati appariranno progressivamente man mano che i PDF vengono elaborati.</p>
 
     <label class="dropzone pdf-dropzone" id="pdf-dropzone" tabindex="0" role="button" aria-label="Zona di rilascio file PDF. Premi Invio o Spazio per selezionare file.">
       <input type="file" id="pdf-file-input" multiple accept="application/pdf" class="visually-hidden">
@@ -75,6 +76,12 @@ export function unmount() {
   _entries = [];
   _queue = [];
   _processing = false;
+}
+
+function scheduleUpdate() {
+  if (_renderPending) return;
+  _renderPending = true;
+  setTimeout(() => { _renderPending = false; updateTable(); }, 150);
 }
 
 // ── Event binding ──────────────────────────────────────────────────────────────
@@ -167,6 +174,7 @@ function addFiles(files) {
   const newEntries = files.map((file) => ({
     id: _nextId++,
     file,
+    name: file.name,
     status: 'queued',
     source: null,
     cups: [],
@@ -195,7 +203,7 @@ async function processEntry(entry) {
 
   try {
     entry.status = 'parsing';
-    updateTable();
+    scheduleUpdate();
 
     const { pages, needsOcr } = await extractPdfText(entry.file);
 
@@ -205,20 +213,20 @@ async function processEntry(entry) {
     if (needsOcr) {
       entry.status = 'ocr';
       entry.ocrProgress = { ocrLoading: true, page: 0, totalPages: 0 };
-      updateTable();
+      scheduleUpdate();
 
       const result = await ocrPdf(entry.file, {
         onProgress: (progress) => {
           if (!_container) return;
           entry.ocrProgress = progress;
-          updateTable();
+          scheduleUpdate();
         },
       });
       finalPages = result.pages;
       source = 'ocr';
     }
 
-    const extracted = extractCupsFromPages(entry.file.name, finalPages, source);
+    const extracted = extractCupsFromPages(entry.name, finalPages, source);
 
     entry.status = 'done';
     entry.source = source;
@@ -234,6 +242,7 @@ async function processEntry(entry) {
     entry.status = 'error';
     entry.error = err.message ?? 'Errore sconosciuto';
   } finally {
+    entry.file = null;
     updateTable();
   }
 }
@@ -337,7 +346,7 @@ function buildVerificatoreCsv() {
   const rows = ['cup,file_origine'];
   for (const entry of completedEntries()) {
     for (const cup of entry.cups) {
-      rows.push(`${csvComma(cup.value)},${csvComma(entry.file.name)}`);
+      rows.push(`${csvComma(cup.value)},${csvComma(entry.name)}`);
     }
   }
   return `\ufeff${rows.join('\n')}`;
@@ -348,7 +357,7 @@ function buildExportCsv() {
   for (const entry of completedEntries()) {
     for (const cup of entry.cups) {
       rows.push(
-        [cup.value, entry.file.name, cup.formalValid ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
+        [cup.value, entry.name, cup.formalValid ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
           .map(csvSemi)
           .join(';'),
       );
@@ -406,7 +415,7 @@ function updateTable() {
 }
 
 function renderEntryRows(entry) {
-  const name = entry.file.name;
+  const name = entry.name;
 
   if (entry.status === 'queued') {
     return [makeSimpleStatusRow(entry.id, name, null, 'In coda', 5)];
@@ -462,7 +471,7 @@ function renderEntryRows(entry) {
 }
 
 function renderCupRows(entry) {
-  const name = entry.file.name;
+  const name = entry.name;
   return entry.cups.map((cup) => {
     const tr = makeTr(entry.id, cup.id);
 
