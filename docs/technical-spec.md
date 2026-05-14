@@ -49,9 +49,7 @@ cup-check/
     └── fixtures/
 ```
 
-Da `0.2.0` esiste `packages/cup_check/` per la libreria Python. Da `0.3.0` la logica per costruire il dataset OpenCUP vive nel package Python; il workflow mensile produce `dataset-manifest.json` e asset statici versionati su GitHub Releases e pubblicati su GitHub Pages per il consumo browser e Python.
-
-Da `0.4.0` la web app introduce viste indirizzabili con hash router e un registro strumenti. Il verificatore resta la vista `#/`; il tool `#/pdf-extract` carica pigramente pdf.js (`/pdfjs/`) e, solo quando necessario, Tesseract.js con asset OCR locali (`/tesseract/`). Entrambi gli insiemi di asset sono serviti dalla stessa app tramite plugin Vite che li emette da `node_modules` al momento della build; il Service Worker li intercetta con una strategia cache-first nella cache dedicata `cup-check-lazy-v1`, separata dalla cache app-shell e da quella dataset.
+Per la descrizione dell'evoluzione architetturale e dei componenti introdotti in ciascuna release, vedi [architecture.md](architecture.md).
 
 ## Fixture
 

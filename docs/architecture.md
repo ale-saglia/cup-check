@@ -1,5 +1,7 @@
 # Architecture
 
+> Per lo stack tecnologico, le regole di formato, i contratti del validatore e i workflow CI/CD, vedi [technical-spec.md](technical-spec.md).
+
 ## MVP 0.1.0
 
 ```text
