@@ -24,7 +24,6 @@ async function loadView({
   ocrPdfImpl,
   extractCupsImpl,
   navigateImpl,
-  stateObj,
 } = {}) {
   vi.resetModules();
 
@@ -52,16 +51,16 @@ async function loadView({
     navigate: navigateImpl ?? vi.fn(),
   }));
 
-  vi.doMock('../src/state.js', () => ({
-    state: stateObj ?? { pendingFile: null },
-  }));
+  const storeTransferMock = vi.fn().mockReturnValue('test-transfer-id');
+  vi.doMock('../src/transfer.js', () => ({ storeTransfer: storeTransferMock }));
 
   vi.doMock('../src/validator.js', () => ({
     validateCup: vi.fn().mockReturnValue({ outcome: 'FORMATO_VALIDO_DA_VERIFICARE' }),
     OUTCOMES: { INVALID: 'INVALIDO_FORMATO' },
   }));
 
-  return import('../src/views/pdf-extract-view.js');
+  const view = await import('../src/views/pdf-extract-view.js');
+  return { ...view, storeTransferMock };
 }
 
 function setupContainer() {
@@ -701,11 +700,9 @@ describe('pdf-extract-view: aggiunta manuale CUP', () => {
 describe('pdf-extract-view: azioni globali', () => {
   async function mountAndProcess(container, cups = [{ value: CUP1, formalValid: true }]) {
     const navigateMock = vi.fn();
-    const stateObj = { pendingFile: null };
-    const { mount } = await loadView({
+    const { mount, storeTransferMock } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult(cups)),
       navigateImpl: navigateMock,
-      stateObj,
     });
     await mount(container);
 
@@ -714,20 +711,20 @@ describe('pdf-extract-view: azioni globali', () => {
     input.dispatchEvent(new Event('change'));
     await flushPromises();
 
-    return { navigateMock, stateObj };
+    return { navigateMock, storeTransferMock };
   }
 
-  it('"Apri nel verificatore" imposta state.pendingFile e naviga a #/', async () => {
+  it('"Apri nel verificatore" salva il file nel registry e naviga con token transfer', async () => {
     const container = setupContainer();
-    const { navigateMock, stateObj } = await mountAndProcess(container);
+    const { navigateMock, storeTransferMock } = await mountAndProcess(container);
 
     const sendBtn = container.querySelector('#pdf-send-btn');
     expect(sendBtn.disabled).toBe(false);
     sendBtn.click();
 
-    expect(stateObj.pendingFile).toBeInstanceOf(File);
-    expect(stateObj.pendingFile.name).toBe('estrazione-cup.csv');
-    expect(navigateMock).toHaveBeenCalledWith('#/');
+    expect(storeTransferMock).toHaveBeenCalledWith(expect.any(File));
+    expect(storeTransferMock.mock.calls[0][0].name).toBe('estrazione-cup.csv');
+    expect(navigateMock).toHaveBeenCalledWith('#/?transfer=test-transfer-id');
   });
 
   it('"Esporta CSV" crea un blob e scatena il download', async () => {
@@ -777,10 +774,8 @@ describe('pdf-extract-view: azioni globali', () => {
 
 describe('pdf-extract-view: CSV builders', () => {
   it('buildVerificatoreCsv produce header cup,file_origine e una riga per CUP', async () => {
-    const stateObj = { pendingFile: null };
-    const { mount } = await loadView({
+    const { mount, storeTransferMock } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
-      stateObj,
     });
     const container = setupContainer();
     await mount(container);
@@ -792,19 +787,15 @@ describe('pdf-extract-view: CSV builders', () => {
 
     container.querySelector('#pdf-send-btn').click();
 
-    const csv = await stateObj.pendingFile.text();
+    const csv = await storeTransferMock.mock.calls[0][0].text();
     expect(csv).toContain('cup,file_origine');
     expect(csv).toContain(CUP1);
     expect(csv).toContain('fattura.pdf');
   });
 
   it('buildVerificatoreCsv include file di errore senza CUP nella lista completati', async () => {
-    const stateObj = { pendingFile: null };
-    const navigateMock = vi.fn();
     const { mount } = await loadView({
       extractPdfTextImpl: vi.fn().mockRejectedValue(new Error('errore')),
-      stateObj,
-      navigateImpl: navigateMock,
     });
     const container = setupContainer();
     await mount(container);
@@ -820,10 +811,8 @@ describe('pdf-extract-view: CSV builders', () => {
   });
 
   it('buildExportCsv produce header con semicolon e colonne formato/fonte/manuale', async () => {
-    const stateObj = { pendingFile: null };
     const { mount } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
-      stateObj,
     });
     const container = setupContainer();
     await mount(container);
@@ -851,10 +840,8 @@ describe('pdf-extract-view: CSV builders', () => {
 
   it('csvComma fa l\'escaping dei valori con virgola o apici', async () => {
     const fileName = 'fattura,2024.pdf'; // contains comma
-    const stateObj = { pendingFile: null };
-    const { mount } = await loadView({
+    const { mount, storeTransferMock } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
-      stateObj,
     });
     const container = setupContainer();
     await mount(container);
@@ -866,7 +853,7 @@ describe('pdf-extract-view: CSV builders', () => {
     await flushPromises();
 
     container.querySelector('#pdf-send-btn').click();
-    const csv = await stateObj.pendingFile.text();
+    const csv = await storeTransferMock.mock.calls[0][0].text();
     expect(csv).toContain('"fattura,2024.pdf"');
   });
 
@@ -894,10 +881,8 @@ describe('pdf-extract-view: CSV builders', () => {
 
   it('csvComma prefissa con apostrofo i filename che iniziano con caratteri formula', async () => {
     const fileName = '=formula.pdf';
-    const stateObj = { pendingFile: null };
-    const { mount } = await loadView({
+    const { mount, storeTransferMock } = await loadView({
       extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
-      stateObj,
     });
     const container = setupContainer();
     await mount(container);
@@ -909,7 +894,7 @@ describe('pdf-extract-view: CSV builders', () => {
     await flushPromises();
 
     container.querySelector('#pdf-send-btn').click();
-    const csv = await stateObj.pendingFile.text();
+    const csv = await storeTransferMock.mock.calls[0][0].text();
     expect(csv).toContain("'=formula.pdf");
     expect(csv).not.toContain(',=formula.pdf');
   });

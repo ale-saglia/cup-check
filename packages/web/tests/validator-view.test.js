@@ -48,12 +48,13 @@ describe('validator-view', () => {
     expect(() => unmount()).not.toThrow();
   });
 
-  it('consuma state.pendingFile al mount e mostra l\'anteprima', async () => {
+  it('consuma il file dal registry transfer al mount e mostra l\'anteprima', async () => {
     const container = setupDom();
     const pendingFile = new File(['cup,file_origine\n'], 'estrazione.csv', { type: 'text/csv' });
-    const stateObj = { pendingFile };
+    const consumeTransferMock = vi.fn().mockImplementation((id) => id === 'testid123' ? pendingFile : null);
 
-    vi.doMock('../src/state.js', () => ({ state: stateObj }));
+    window.history.replaceState({}, '', '#/?transfer=testid123');
+    vi.doMock('../src/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
     vi.doMock('../src/dataset-loader.js', () => ({
       loadLatestDataset: vi.fn().mockResolvedValue({
         manifest: { dataset_tag: 'test' },
@@ -76,16 +77,18 @@ describe('validator-view', () => {
 
     await mount(container);
 
-    expect(stateObj.pendingFile).toBeNull();
+    expect(consumeTransferMock).toHaveBeenCalledWith('testid123');
     expect(parseFileMock).toHaveBeenCalledWith(pendingFile);
+    window.history.replaceState({}, '', '#/');
   });
 
-  it('gestisce l\'errore di parseFile quando state.pendingFile è presente', async () => {
+  it('gestisce l\'errore di parseFile quando il registry transfer ha un file', async () => {
     const container = setupDom();
     const pendingFile = new File(['invalid'], 'estrazione.csv', { type: 'text/csv' });
-    const stateObj = { pendingFile };
+    const consumeTransferMock = vi.fn().mockReturnValue(pendingFile);
 
-    vi.doMock('../src/state.js', () => ({ state: stateObj }));
+    window.history.replaceState({}, '', '#/?transfer=testid123');
+    vi.doMock('../src/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
     vi.doMock('../src/dataset-loader.js', () => ({
       loadLatestDataset: vi.fn().mockResolvedValue({
         manifest: { dataset_tag: 'test' },
@@ -104,7 +107,7 @@ describe('validator-view', () => {
 
     await mount(container);
 
-    expect(stateObj.pendingFile).toBeNull();
     expect(alertMock).toHaveBeenCalledWith('parse error');
+    window.history.replaceState({}, '', '#/');
   });
 });

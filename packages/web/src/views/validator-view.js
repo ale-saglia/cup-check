@@ -20,6 +20,7 @@ import {
 } from '../render.js';
 import { applyDatasetLookup, displayResults, uniqueResultsByCup } from '../results.js';
 import { state, resetState } from '../state.js';
+import { consumeTransfer } from '../transfer.js';
 import { textInputLines } from '../text-input.js';
 import { OUTCOMES, validateCup } from '../validator.js';
 
@@ -212,19 +213,22 @@ export async function mount(container) {
 
   sessionStorage.removeItem('cup-check:last-results');
 
-  if (state.pendingFile) {
-    const file = state.pendingFile;
-    state.pendingFile = null;
-    try {
-      selectedFile = file;
-      state.parsed = await parseFile(file);
-      state.fileName = file.name.replace(/\.[^.]+$/, '');
-      state.displayFileName = file.name;
-      state.selectedSheetName = state.parsed.selectedSheetName ?? '';
-      state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
-      renderPreview(state, domWithBar, file);
-    } catch (error) {
-      alert(error.message);
+  const transferMatch = /^#\/\?transfer=([A-Za-z0-9]+)$/.exec(location.hash);
+  if (transferMatch) {
+    history.replaceState(null, '', '#/');
+    const file = consumeTransfer(transferMatch[1]);
+    if (file) {
+      try {
+        selectedFile = file;
+        state.parsed = await parseFile(file);
+        state.fileName = file.name.replace(/\.[^.]+$/, '');
+        state.displayFileName = file.name;
+        state.selectedSheetName = state.parsed.selectedSheetName ?? '';
+        state.selectedColumnIndex = state.parsed.suggestedColumnIndex;
+        renderPreview(state, domWithBar, file);
+      } catch (error) {
+        alert(error.message);
+      }
     }
   }
 

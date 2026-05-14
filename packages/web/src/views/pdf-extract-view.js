@@ -3,7 +3,7 @@ import { ocrPdf } from '../pdf/ocr.js';
 import { extractCupsFromPages } from '../pdf/extract-cups.js';
 import { validateCup, OUTCOMES } from '../validator.js';
 import { navigate } from '../router.js';
-import { state } from '../state.js';
+import { storeTransfer } from '../transfer.js';
 
 let _container = null;
 let _entries = [];
@@ -317,8 +317,7 @@ function startAddManual(entryId) {
 function sendToVerificatore() {
   const content = buildVerificatoreCsv();
   const file = new File([content], 'estrazione-cup.csv', { type: 'text/csv;charset=utf-8' });
-  state.pendingFile = file;
-  navigate('#/');
+  navigate(`#/?transfer=${storeTransfer(file)}`);
 }
 
 function exportCsv() {
