@@ -113,6 +113,10 @@ dataset-release-local: ## Genera dist/dataset per la preview locale con chunk e 
 		"../../dist/dataset" \
 		"./datasets/dataset-$${SNAPSHOT_DATE:0:7}"
 
+.PHONY: draft-changelog
+draft-changelog: ## Genera un draft della prossima sezione CHANGELOG (uso: make draft-changelog [VERSION=0.5.0])
+	@bash scripts/draft-changelog.sh $(VERSION)
+
 .PHONY: clean
 clean: web-clean ## Rimuove artefatti generati
 	rm -rf .pytest_cache .ruff_cache $(PYTHON_DIR)/.pytest_cache $(PYTHON_DIR)/.ruff_cache $(PYTHON_DIR)/.coverage $(PYTHON_DIR)/dist

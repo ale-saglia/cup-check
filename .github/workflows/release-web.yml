@@ -32,11 +32,19 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release view "${{ github.ref_name }}" --repo "${{ github.repository }}" >/dev/null 2>&1 || \
-            gh release create "${{ github.ref_name }}" \
+          VERSION="${{ github.ref_name }}"
+          VERSION_NO_V="${VERSION#v}"
+          # Estrae la sezione del CHANGELOG corrispondente alla versione corrente
+          NOTES=$(awk "p && /^## /{exit} /^## ${VERSION_NO_V} /{p=1} p" ../../CHANGELOG.md \
+            | sed '1d' | sed -e '/./,$!d' -e :a -e '/^\n*$/{$d;N;ba}')
+          if [ -z "$NOTES" ]; then
+            NOTES="Release software ${VERSION}."
+          fi
+          gh release view "$VERSION" --repo "${{ github.repository }}" >/dev/null 2>&1 || \
+            gh release create "$VERSION" \
               --repo "${{ github.repository }}" \
-              --title "${{ github.ref_name }}" \
-              --notes "Release software ${{ github.ref_name }}."
-          gh release upload "${{ github.ref_name }}" ../../web-dist.tar.gz \
+              --title "$VERSION" \
+              --notes "$NOTES"
+          gh release upload "$VERSION" ../../web-dist.tar.gz \
             --repo "${{ github.repository }}" \
             --clobber
