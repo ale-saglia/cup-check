@@ -60,6 +60,7 @@ async function loadView({
   }));
 
   const view = await import('../src/views/pdf-extract-view.js');
+  _lastView = view;
   return { ...view, storeTransferMock };
 }
 
@@ -73,7 +74,10 @@ async function flushPromises() {
   await new Promise((r) => setTimeout(r, 0));
 }
 
+let _lastView = null;
+
 beforeEach(() => {
+  _lastView = null;
   document.body.innerHTML = '';
   vi.clearAllMocks();
   URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
@@ -81,6 +85,8 @@ beforeEach(() => {
 });
 
 afterEach(() => {
+  _lastView?.unmount();
+  _lastView = null;
   vi.clearAllTimers();
 });
 

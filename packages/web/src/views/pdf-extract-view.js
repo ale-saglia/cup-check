@@ -12,6 +12,7 @@ let _processing = false;
 let _queue = [];
 let _generation = 0;
 let _renderPending = false;
+let _debounceTimer = null;
 
 export async function mount(container) {
   _container = container;
@@ -70,6 +71,11 @@ export async function mount(container) {
 }
 
 export function unmount() {
+  if (_debounceTimer !== null) {
+    clearTimeout(_debounceTimer);
+    _debounceTimer = null;
+  }
+  _renderPending = false;
   if (_container) {
     _container.innerHTML = '';
     _container = null;
@@ -82,7 +88,7 @@ export function unmount() {
 function scheduleUpdate() {
   if (_renderPending) return;
   _renderPending = true;
-  setTimeout(() => { _renderPending = false; updateTable(); }, 150);
+  _debounceTimer = setTimeout(() => { _renderPending = false; _debounceTimer = null; updateTable(); }, 150);
 }
 
 // ── Event binding ──────────────────────────────────────────────────────────────
