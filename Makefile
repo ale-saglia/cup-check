@@ -75,7 +75,7 @@ web-clean: ## Rimuove la build web
 
 .PHONY: python-install
 python-install: ## Installa le dipendenze del package Python
-	cd $(PYTHON_DIR) && uv sync --dev
+	cd $(PYTHON_DIR) && UV_LINK_MODE=copy uv sync --dev
 
 .PHONY: python-lint
 python-lint: ## Esegue Ruff sul package Python
