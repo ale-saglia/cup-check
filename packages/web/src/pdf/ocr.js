@@ -1,4 +1,4 @@
-let _worker = null;
+let _workerPromise = null;
 
 function tesseractPaths() {
   const base = new URL('/tesseract/', location.origin).href;
@@ -10,12 +10,14 @@ function tesseractPaths() {
   };
 }
 
-async function getOcrWorker() {
-  if (!_worker) {
-    const { createWorker } = await import('tesseract.js');
-    _worker = await createWorker('ita+eng', 1, tesseractPaths());
+function getOcrWorker() {
+  if (!_workerPromise) {
+    _workerPromise = (async () => {
+      const { createWorker } = await import('tesseract.js');
+      return createWorker('ita+eng', 1, tesseractPaths());
+    })();
   }
-  return _worker;
+  return _workerPromise;
 }
 
 export async function ocrPdf(file, { onProgress } = {}) {
@@ -24,7 +26,7 @@ export async function ocrPdf(file, { onProgress } = {}) {
   const doc = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
   const totalPages = doc.numPages;
 
-  const needsLoad = !_worker;
+  const needsLoad = !_workerPromise;
   onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: needsLoad });
 
   const worker = await getOcrWorker();

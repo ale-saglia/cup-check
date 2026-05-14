@@ -1,10 +1,10 @@
-let _pdfjs = null;
+let _pdfjsPromise = null;
 
-async function loadPdfjs() {
-  if (!_pdfjs) {
-    _pdfjs = await import('pdfjs-dist');
+function loadPdfjs() {
+  if (!_pdfjsPromise) {
+    _pdfjsPromise = import('pdfjs-dist');
   }
-  return _pdfjs;
+  return _pdfjsPromise;
 }
 
 export async function extractPdfText(file) {
