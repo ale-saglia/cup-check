@@ -967,6 +967,39 @@ describe('pdf-extract-view: clearAll durante elaborazione', () => {
   });
 });
 
+describe('pdf-extract-view: errore imprevisto in processEntry', () => {
+  it('un TypeError non catturato non blocca la coda per i file successivi', async () => {
+    let callCount = 0;
+    const { mount } = await loadView({
+      extractCupsImpl: vi.fn().mockImplementation(() => {
+        callCount++;
+        if (callCount === 1) throw new TypeError('crash simulato');
+        return makeParsedResult();
+      }),
+    });
+    const container = setupContainer();
+    await mount(container);
+
+    const input = container.querySelector('#pdf-file-input');
+    Object.defineProperty(input, 'files', {
+      value: [makeFile('primo.pdf'), makeFile('secondo.pdf')],
+      configurable: true,
+    });
+    input.dispatchEvent(new Event('change'));
+    await flushPromises();
+    await flushPromises();
+
+    const rows = [...container.querySelectorAll('[data-entry-id]')];
+    const texts = rows.map((r) => r.querySelector('td')?.textContent ?? '');
+    expect(texts.some((t) => t.includes('primo.pdf'))).toBe(true);
+    expect(texts.some((t) => t.includes('secondo.pdf'))).toBe(true);
+
+    // primo.pdf deve avere status errore, secondo.pdf deve aver terminato
+    const primoRow = rows.find((r) => r.querySelector('td')?.textContent?.includes('primo.pdf'));
+    expect(primoRow?.querySelector('.badge.bad')).not.toBeNull();
+  });
+});
+
 describe('pdf-extract-view: render helpers', () => {
   it('truncateName tronca nomi lunghi con ellissi in fondo', async () => {
     const longName = 'a'.repeat(50) + '.pdf';

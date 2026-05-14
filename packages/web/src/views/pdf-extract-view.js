@@ -193,10 +193,10 @@ async function drainQueue() {
 async function processEntry(entry) {
   if (!_container) return;
 
-  entry.status = 'parsing';
-  updateTable();
-
   try {
+    entry.status = 'parsing';
+    updateTable();
+
     const { pages, needsOcr } = await extractPdfText(entry.file);
 
     let finalPages = pages;
@@ -233,9 +233,9 @@ async function processEntry(entry) {
   } catch (err) {
     entry.status = 'error';
     entry.error = err.message ?? 'Errore sconosciuto';
+  } finally {
+    updateTable();
   }
-
-  updateTable();
 }
 
 // ── Cup edit operations ────────────────────────────────────────────────────────
