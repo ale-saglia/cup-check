@@ -31,6 +31,7 @@ export async function mount(container) {
   _container.innerHTML = `
     <h1>Estrai CUP da fatture PDF</h1>
     <p class="project-note">Carica uno o più PDF per estrarre automaticamente i codici CUP. I file sono elaborati interamente in locale, nessun dato viene inviato a server esterni. Per batch grandi i risultati appariranno progressivamente man mano che i PDF vengono elaborati.</p>
+    <p class="project-note">I CUP contrassegnati con <strong>ocr</strong> nella colonna Fonte sono stati estratti tramite riconoscimento ottico del testo: verificane sempre la correttezza prima di utilizzarli, poiché errori di lettura (es. confusione tra lettere e cifre) o frammentazioni del testo possono produrre codici inesatti.</p>
 
     <label class="dropzone pdf-dropzone" id="pdf-dropzone" tabindex="0" role="button" aria-label="Zona di rilascio file PDF. Premi Invio o Spazio per selezionare file.">
       <input type="file" id="pdf-file-input" multiple accept="application/pdf" class="visually-hidden">

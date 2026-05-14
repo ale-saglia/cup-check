@@ -56,6 +56,10 @@ Se l'OCR ha letto male un CUP (ad esempio ha confuso `I` con `1`), clicca **modi
 - **Esporta CSV (file ↔ CUP)**: scarica un file semicolonne `cup;file_origine;formato_valido;fonte;manuale` per archiviazione o elaborazione esterna.
 - **Pulisci**: azzera tutti i risultati della sessione corrente.
 
+### Affidabilità dei CUP estratti via OCR
+
+I CUP con fonte **ocr** nella colonna *Fonte* richiedono attenzione particolare: il riconoscimento ottico può confondere caratteri simili (es. `I` ↔ `1`) o frammentare sequenze alfanumeriche in modo inaspettato. Prima di usare questi codici verifica sempre la correttezza con la funzione **modifica**, oppure confronta visivamente il valore con il PDF originale.
+
 ### Limiti del tool PDF
 
 - L'OCR usa solo la lingua italiana (con inglese come supporto). Documenti in altre lingue o con grafica complessa possono produrre letture imperfette.
