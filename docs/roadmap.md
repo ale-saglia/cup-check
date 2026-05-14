@@ -7,6 +7,7 @@
 | `0.2.0` | Libreria Python | `pip install cup-check`, API `validate_format`, parity sui fixture, nessun parser file nel core | account PyPI |
 | `0.3.0` | Dataset OpenCUP statico + lookup browser/Python | Pipeline mensile, indice SQLite CUP esatto versionato su GitHub Releases e servito da Pages, latest dataset dinamico, verifica esistenza CUP da web e Python, cache browser/Python, nuovi esiti OpenCUP | nessuna |
 | `0.4.0` | Estrazione CUP da PDF | Tool web per fatture PDF: router strumenti, estrazione testo con pdf.js, OCR locale italiano con Tesseract.js, correzione manuale, export file/CUP e passaggio al verificatore | nessuna |
+| `0.4.1` | Consolidamento sicurezza e robustezza | Fix XSS (DOM programmatico in pdf-extract-view), race condition OCR worker, blocco coda drainQueue, timeout per-chunk dataset, registry hash per trasferimento CSV, debounce render OCR, fix accessibilità e mobile | nessuna |
 | `0.5.0` | UX & a11y | WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
 | `0.6.0` | Coerenza atto | Dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
 | `0.7.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
