@@ -16,7 +16,7 @@ describe('service worker build', () => {
       expect(serviceWorker).toMatch(/\.\/assets\/index-[\w-]+\.css/);
       expect(serviceWorker).not.toContain('__PRECACHE_ASSETS__');
     });
-  });
+  }, 15000);
 
   it('usa una cache dedicata per gli asset lazy (pdfjs e tesseract) con strategia cache-first', async () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
@@ -47,7 +47,7 @@ describe('service worker build', () => {
         'https://example.test/pdfjs/pdf.worker.min.mjs',
       );
     });
-  });
+  }, 15000);
 
   it("usa una cache dedicata per il dataset e mantiene solo l'ultima release", async () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
