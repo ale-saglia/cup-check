@@ -30,7 +30,11 @@ The project is designed for zero operational cost, browser-side processing, audi
 
 ## Stato
 
-Il progetto è rilasciato come web app statica e package Python.
+**Versione corrente: 0.4.0** — web app statica, package Python `cup-check` su PyPI, tool di estrazione CUP da PDF.
+
+Il dataset OpenCUP statico è uno snapshot mensile; il numero di CUP indicizzati è riportato nel `dataset-manifest.json` della release corrente.
+
+**Roadmap**: `0.4.0` in consolidamento · `0.5.0` in progettazione (UX & accessibilità WCAG AA, batch >100k con Web Worker) · [dettaglio completo](docs/roadmap.md).
 
 ## Cosa Fa
 
