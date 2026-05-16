@@ -78,10 +78,15 @@ CHROMIUM_LEGACY_FLAGS    := --no-sandbox --no-first-run --no-default-browser-che
 
 .PHONY: web-acceptance-chrome-legacy
 web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chromium 109 (installa via npx)
-	cd $(WEB_DIR) && \
-	CHROME109=$$($(CHROMIUM_LEGACY_INSTALL)) && \
-	echo "Chromium 109: $$CHROME109" && \
-	CHROME_PATH="$$CHROME109" npm run test:acceptance
+	@if [ "$$(uname -m)" = "aarch64" ]; then \
+		echo "SKIP: Chromium 109 (rev $(CHROMIUM_LEGACY_REVISION)) esiste solo come build x86_64;"; \
+		echo "      esegui questo target su un host x86_64 (es. CI) per la verifica legacy completa."; \
+	else \
+		cd $(WEB_DIR) && \
+		CHROME109=$$($(CHROMIUM_LEGACY_INSTALL)) && \
+		echo "Chromium 109: $$CHROME109" && \
+		CHROME_PATH="$$CHROME109" npm run test:acceptance; \
+	fi
 
 
 VNC_DISPLAY      := :99
