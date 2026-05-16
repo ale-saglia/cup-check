@@ -14,7 +14,7 @@ function getOcrWorker() {
   if (!_workerPromise) {
     _workerPromise = (async () => {
       const { createWorker } = await import('tesseract.js');
-      return createWorker('ita+eng', 1, tesseractPaths());
+      return createWorker('ita+eng', 1, tesseractPaths(), { user_words_suffix: '' });
     })();
   }
   return _workerPromise;
