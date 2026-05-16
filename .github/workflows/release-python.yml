@@ -60,15 +60,15 @@ jobs:
       run:
         working-directory: packages/cup_check
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ needs.validate.outputs.tag }}
-      - uses: astral-sh/setup-uv@v6
+      - uses: astral-sh/setup-uv@v7
         with:
           enable-cache: true
           cache-dependency-glob: packages/cup_check/uv.lock
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
       - run: uv sync --dev --locked
@@ -82,7 +82,7 @@ jobs:
 
           test -f "dist/cup_check-${VERSION}-py3-none-any.whl"
           test -f "dist/cup_check-${VERSION}.tar.gz"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: python-distributions
           path: packages/cup_check/dist/
@@ -99,7 +99,7 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           name: python-distributions
           path: dist/
