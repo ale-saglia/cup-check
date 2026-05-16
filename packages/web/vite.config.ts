@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { codecovVitePlugin } from '@codecov/vite-plugin';
 import { execSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
@@ -10,7 +11,7 @@ const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
 
-function traineddataPath(lang) {
+function traineddataPath(lang: string) {
   const dir = resolve(webDir, `node_modules/@tesseract.js-data/${lang}`);
   const subdir = readdirSync(dir).find((d) => d.includes('best_int') && d.endsWith('best_int'));
   if (!subdir)
@@ -51,6 +52,7 @@ export default defineConfig({
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
   plugins: [
+    svelte(),
     polyfillsPlugin(),
     serviceWorkerPlugin(appVersion),
     pdfjsWorkerPlugin(),
@@ -69,7 +71,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       all: true,
-      include: ['src/**/*.js'],
+      include: ['src/**/*.{js,ts}'],
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
       thresholds: {
@@ -92,7 +94,6 @@ function readAppVersion() {
       return tag.replace(/^v/, '');
     }
   } catch (error) {
-    // Local archives or CI checkouts without tags get a non-release build marker.
     console.warn(
       `Unable to derive app version from git tags; using ${fallbackVersion}.`,
       error instanceof Error ? error.message : error,
@@ -102,8 +103,6 @@ function readAppVersion() {
   return fallbackVersion;
 }
 
-// Reads polyfills.js, strips ES module exports, and wraps in an IIFE — single source of truth
-// for both the index.html inline script and the PDF.js worker injection.
 function buildPolyfillsScript() {
   const src = readFileSync(resolve(webDir, 'src/polyfills.js'), 'utf8');
   const bare = src.replace(/^export\s+/gm, '');
@@ -124,7 +123,7 @@ function pdfjsWorkerPlugin() {
   const workerWithPolyfills = () => buildPolyfillsScript() + readFileSync(workerPath, 'utf8');
   return {
     name: 'pdfjs-worker',
-    configureServer(server) {
+    configureServer(server: import('vite').ViteDevServer) {
       server.middlewares.use((request, response, next) => {
         if (request.url !== '/pdfjs/pdf.worker.min.mjs') {
           next();
@@ -145,10 +144,11 @@ function pdfjsWorkerPlugin() {
 }
 
 function tesseractAssetsPlugin() {
-  const mimeOf = (url) => (url.endsWith('.wasm') ? 'application/wasm' : 'application/javascript');
+  const mimeOf = (url: string) =>
+    url.endsWith('.wasm') ? 'application/wasm' : 'application/javascript';
   return {
     name: 'tesseract-assets',
-    configureServer(server) {
+    configureServer(server: import('vite').ViteDevServer) {
       server.middlewares.use((request, response, next) => {
         const asset = tesseractAssets.find((a) => a.urlPath === request.url);
         if (!asset) {
@@ -171,8 +171,8 @@ function tesseractAssetsPlugin() {
   };
 }
 
-function serviceWorkerPlugin(version) {
-  const buildId = (precacheAssets = []) => {
+function serviceWorkerPlugin(version: string) {
+  const buildId = (precacheAssets: string[] = []) => {
     const source = precacheAssets.join('|') || 'dev';
     let hash = 0;
     for (let index = 0; index < source.length; index += 1) {
@@ -181,7 +181,7 @@ function serviceWorkerPlugin(version) {
     return hash.toString(36);
   };
 
-  const source = (precacheAssets = []) =>
+  const source = (precacheAssets: string[] = []) =>
     readFileSync(resolve(webDir, 'src/sw.js'), 'utf8')
       .replaceAll('__APP_VERSION__', version)
       .replaceAll('__BUILD_ID__', buildId(precacheAssets))
@@ -189,7 +189,7 @@ function serviceWorkerPlugin(version) {
 
   return {
     name: 'cup-check-service-worker',
-    configureServer(server) {
+    configureServer(server: import('vite').ViteDevServer) {
       server.middlewares.use((request, response, next) => {
         if (request.url !== '/sw.js') {
           next();
@@ -200,7 +200,7 @@ function serviceWorkerPlugin(version) {
         response.end(source());
       });
     },
-    generateBundle(_options, bundle) {
+    generateBundle(_options: unknown, bundle: Record<string, { fileName: string }>) {
       const precacheAssets = Object.values(bundle)
         .map((file) => file.fileName)
         .filter((fileName) => fileName !== 'sw.js')

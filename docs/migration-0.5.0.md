@@ -41,7 +41,7 @@ Creare `packages/web/tsconfig.json`:
 
 > Se `@tsconfig/svelte` non è necessario si può usare una config custom; l'importante è `moduleResolution: "bundler"` per allinearsi a Vite.
 
-### A3. Aggiornamento `vite.config.js` → `vite.config.ts`
+### ✅ A3. Aggiornamento `vite.config.js` → `vite.config.ts`
 
 - Aggiungere `svelte()` ai plugin.
 - Aggiornare il blocco `test.coverage.include` per escludere `*.svelte` dalla coverage v8 (hanno pipeline separata).
