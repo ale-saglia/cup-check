@@ -4,6 +4,7 @@ coverage/
 data/
 .coverage
 coverage.xml
+junit.xml
 .vite/
 .pytest_cache/
 .ruff_cache/

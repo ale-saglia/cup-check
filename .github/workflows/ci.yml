@@ -26,6 +26,14 @@ jobs:
       - run: npm run lint
       - run: npm run test:coverage
       - uses: codecov/codecov-action@v6
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/web/junit.xml
+          flags: web
+          fail_ci_if_error: true
+          report_type: test_results
+      - uses: codecov/codecov-action@v6
         if: ${{ github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository }}
         with:
           files: packages/web/coverage/lcov.info
@@ -75,6 +83,14 @@ jobs:
       - run: uv sync --dev --locked
       - run: uv run ruff check .
       - run: uv run pytest
+      - uses: codecov/codecov-action@v6
+        if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          files: packages/cup_check/junit.xml
+          flags: python
+          fail_ci_if_error: true
+          report_type: test_results
       - uses: codecov/codecov-action@v6
         if: ${{ matrix.python-version == needs.python-matrix.outputs.coverage-python-version && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}
         with:
