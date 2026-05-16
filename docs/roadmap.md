@@ -9,10 +9,19 @@
 | `0.4.0` | Estrazione CUP da PDF | Tool web per fatture PDF: router strumenti, estrazione testo con pdf.js, OCR locale italiano con Tesseract.js, correzione manuale, export file/CUP e passaggio al verificatore | nessuna |
 | `0.4.1` | Consolidamento sicurezza e robustezza | Fix XSS (DOM programmatico in pdf-extract-view), race condition OCR worker, blocco coda drainQueue, timeout per-chunk dataset, registry hash per trasferimento CSV, debounce render OCR, fix accessibilità e mobile | nessuna |
 | `0.5.0` | UX & a11y | WCAG AA piena, drag-drop multi-file, batch >100k con Web Worker, i18n base | nessuna |
-| `0.6.0` | Coerenza atto | Dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; cross-check CUP con dati atto; esiti cautelativi per possibili inversioni | nessuna |
-| `0.7.0` | Arricchimento dato | parsing semantico CUP, tooltip esplicativi, helper Python | nessuna |
-| `0.8.0` | API autoritativa | completamento per nature non pubblicate, checker puntuale con credenziali o proxy documentato | API key |
-| `1.0.0` | Produzione stabile | documentazione utente consolidata, hardening, dichiarazione accessibilita | da valutare |
+| `0.6.0` | Coerenza atto | Tool web: cross-check CUP con dati atto; dataset dettagli chunked (stato, natura, P.IVA/CF, importi, descrizione); download dei soli chunk necessari; esiti cautelativi per possibili inversioni | nessuna |
+| `0.7.0` | CLI Python | `cup-check` come comando invocabile; input da file, stdin e argomento singolo; output tabellare, CSV e JSON; exit code semantico; supera ADR 0004 | nessuna |
+| `0.8.0` | Astrazione verifica remota | interfaccia `RemoteVerificationProvider`, `MockRemoteProvider`, esiti cautelativi verifica remota, ADR boundary BYOK | nessuna |
+| `0.9.0` | Worker Cloudflare + BYOK Python | Tool web: verifica remota opzionale tramite Cloudflare Worker; rate limiting (IP + numero CUP nel payload), KV store, CORS, nessun dato persistente; `RemoteMefProvider` BYOK nel package Python; nessun segreto nel frontend | accesso API MEF |
+| `1.0.0` | Produzione stabile | documentazione utente consolidata, hardening, dichiarazione accessibilità | da valutare |
+
+## Modello di rilascio degli strumenti
+
+A partire dalla `0.4.0` la web app adotta un registro interno degli strumenti (`tools-registry`) che alimenta il menu "Strumenti": nuovi tool possono essere aggiunti come viste indirizzabili (`#/nome-tool`) senza modificare il verificatore principale.
+
+La coerenza atto (`0.6.0`) e la verifica remota (`0.9.0`) seguono questo modello: vengono rilasciati come tool separati nel registro, non come modifica al flusso principale. Questo preserva la coerenza con l'identità del progetto (local-first, statico, senza dipendenze obbligatorie) e permette di attivare funzioni avanzate solo a chi ne ha bisogno.
+
+Ulteriori strumenti potranno essere aggiunti in milestone successive in base al feedback degli utenti, senza richiedere modifiche architetturali.
 
 ## Milestone `0.2.0`
 
@@ -53,6 +62,14 @@
 10. Test unitari per estrazione testo, normalizzazione CUP ed export CSV; acceptance end-to-end dal menu strumenti al verificatore.
 11. Documentazione utente e tecnica del flusso PDF, inclusi limiti OCR e privacy locale.
 
+## Milestone `0.5.0`
+
+1. **Web Worker per batch >100k**: spostare `validateBatch` e il lookup OpenCUP in un Worker dedicato; streaming progressivo dei risultati con progress bar percentuale; cancellazione del job in corso; elaborazione a chunk per contenere il footprint di memoria; parity test su fixture con worker attivo e disattivo.
+2. **Drag-and-drop multi-file nel verificatore principale**: il verificatore accetta più file CSV/XLSX contemporaneamente via input e drag-and-drop; le righe vengono concatenate in un unico batch con colonna `file_origine` aggiunta automaticamente; gestione coerente delle intestazioni tra file multipli.
+3. **WCAG 2.1 AA piena**: audit completo con Lighthouse e axe-core; focus management al cambio vista nel router; live region ARIA per avanzamento asincrono (lookup dataset, OCR, progress Worker); contrasto colore AA su tutti i componenti; etichette ARIA su tabelle risultati, input file e pulsanti icona; navigazione tastiera completa inclusi drag-and-drop; link "Salta al contenuto"; quality gate Lighthouse a11y integrato in CI.
+4. **i18n base**: architettura di traduzione minimale (file JSON `it`/`en` caricato dinamicamente); estrazione di tutte le stringhe UI, etichette esiti e messaggi errore nel bundle traduzioni; selettore lingua con persistenza in `localStorage`; inglese come prima lingua aggiuntiva; fixture e contratti interni restano in italiano.
+5. **Dichiarazione di accessibilità**: documento statico `accessibility.md` con conformità dichiarata, limitazioni note e contatto per segnalazioni.
+
 ## Milestone `0.6.0`
 
 1. Espansione schema dataset: colonne `attivo`, `natura_index`, `cup_master`, `updated_on_sort`, `piva_cf_titolare`, `piva_cf_beneficiario`, `costo_progetto_cents`, `finanziamento_progetto_cents`, `descrizione_full`.
@@ -64,5 +81,35 @@
 7. Esito cautelativo `POSSIBILE_INCOERENZA_DA_VERIFICARE`, mai esito forte di incoerenza automatica.
 8. Dettaglio per campo: match P.IVA/CF titolare o beneficiario, match costo o finanziamento, score descrizione, stato/revoca.
 9. Fixture o mini-dataset di test per parity web/Python sui controlli sostanziali.
-10. ADR per schema dataset e strategia di matching.
+10. ADR 0009 per schema dataset e strategia di matching.
 11. Schema YAML custom in input: `build_sqlite_from_projects_zip`, `build_dataset_release` e `iter_project_records` accettano `schema_path` opzionale per personalizzare il mapping CSV→SQLite; se omesso, viene usato lo schema bundled.
+
+## Milestone `0.7.0`
+
+1. **ADR 0010 — supera ADR 0004**: la libreria è ora matura e la CLI può essere implementata come wrapper sottile senza guidare l'architettura; documenta motivazione, scelte di packaging e compatibilità con le API esistenti.
+2. **Entrypoint `cup-check`**: comando installabile con `pip install cup-check`; subcomandi `verify` e `lookup`; nessuna logica aggiuntiva oltre le API Python già esistenti.
+3. **Input flessibile**: `cup-check verify file.csv`, `cup-check verify -` (stdin), `cup-check verify G17H03000130001` (CUP singolo come argomento); rilevamento automatico del tipo di input.
+4. **Output configurabile**: `--format table` (default, human-readable), `--format csv`, `--format json`; `--no-header` per pipeline; colori opzionali con `--no-color` o variabile `NO_COLOR`.
+5. **Exit code semantico**: `0` tutti validi, `1` almeno un CUP invalido o non trovato, `2` errore di input o sistema; consente uso diretto in script e pipeline CI.
+6. **`cup-check lookup`**: interroga il dataset OpenCUP locale o lo scarica se assente; opzione `--dataset-dir` per cache custom; `--update` per forzare il refresh.
+7. **Test CLI**: test di integrazione per i percorsi principali (file, stdin, argomento singolo, exit code, formati output); nessuna duplicazione dei test di libreria già esistenti.
+
+## Milestone `0.8.0`
+
+1. Definizione interfaccia `RemoteVerificationProvider` condivisa tra web e Python: metodo `verify(cup)` con esito cautelativo, timeout e stato disponibilità.
+2. Implementazione `MockRemoteProvider` per sviluppo e test offline.
+3. Integrazione web: la verifica remota è un provider opzionale; se non disponibile o non configurato, il risultato è `VERIFICA_REMOTA_NON_DISPONIBILE` senza bloccare il flusso locale.
+4. Nuovi esiti cautelativi: `TROVATO_REMOTO`, `NON_TROVATO_REMOTO_DA_VERIFICARE`, `VERIFICA_REMOTA_NON_DISPONIBILE`.
+5. Dichiarazione esplicita nel frontend: il browser non gestisce né conserva credenziali MEF.
+6. ADR 0011 "Remote authoritative verification and BYOK boundary": la web app usa solo il Worker controllato dal progetto; il BYOK MEF è supportato esclusivamente nel package Python; gli enti possono self-hostare un proxy compatibile.
+7. Parity test mock tra web e Python sugli esiti remoti.
+
+## Milestone `0.9.0`
+
+1. Cloudflare Worker: endpoint minimale `/verify`, nessun dato persistente, segreti MEF solo in Cloudflare Secrets.
+2. Rate limiting sul Worker: doppio limite — per IP (es. 20 richieste/minuto) e per numero di CUP nel payload (es. max 50 CUP/richiesta); implementazione con KV store.
+3. Privacy notice chiara sulla verifica remota: l'IP del client può raggiungere il Worker; nessun profilo persistente costruito.
+4. `RemoteMefProvider` nel package Python: accetta credenziali MEF via costruttore o variabile d'ambiente; non entra mai nel frontend.
+5. CORS configurati sul Worker per le sole origini autorizzate (GitHub Pages + localhost dev).
+6. Documentazione modalità self-hosted proxy per enti con credenziali proprie.
+7. Integrazione CI: smoke test contro Worker di staging.

@@ -7,7 +7,7 @@ Istruzioni operative per agenti di coding su questo repo.
 - Nel validatore formale non introdurre esiti di verifica esistenza: gli unici outcome ammessi sono `INVALIDO_FORMATO` e `FORMATO_VALIDO_DA_VERIFICARE`. Il lookup OpenCUP resta separato.
 - Tenere il web package statico e deployabile su GitHub Pages.
 - Preferire modifiche piccole, testate e coerenti con la roadmap.
-- Non aggiungere servizi server-side: il lookup usa asset statici e dataset pubblici.
+- Non aggiungere servizi server-side al web package: il lookup usa asset statici e dataset pubblici. Il Cloudflare Worker per la verifica remota opzionale è un micro-backend separato (fuori da `packages/web`); la web app non gestisce né conserva credenziali MEF.
 
 ## Eseguire i test Python
 
@@ -24,6 +24,15 @@ cd packages/cup_check && uv run pytest tests/test_checker.py
 ```
 
 Se le dipendenze non sono ancora installate: `cd packages/cup_check && uv sync --dev`.
+
+## Firma di commit e tag
+
+Tutti i commit e i tag di rilascio devono essere firmati con GPG (o SSH key configurata come signing key):
+
+- commit: `git commit -S …`
+- tag: `git tag -s <versione> -m "<versione>"` (mai `git tag -a` senza `-s`)
+
+Non usare `--no-gpg-sign` né bypassare la firma in altro modo. Se la chiave non è disponibile nell'ambiente, segnalarlo prima di procedere anziché omettere la firma.
 
 ## Messaggi di commit
 

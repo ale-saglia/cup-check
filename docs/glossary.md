@@ -3,7 +3,10 @@
 - **CUP**: Codice Unico di Progetto, identificatore di 15 caratteri per progetti di investimento pubblico.
 - **DIPE**: Dipartimento per la programmazione e il coordinamento della politica economica.
 - **OpenCUP**: portale open data del DIPE che pubblica un sottoinsieme dei progetti del Sistema CUP.
-- **Sogei**: società tecnologica del MEF; possibile fonte/API da valutare nelle milestone future.
+- **Sogei**: società tecnologica del MEF; possibile fonte autoritativa per la verifica puntuale dei CUP, accessibile tramite API nelle milestone `0.8.0`–`0.9.0` attraverso il Cloudflare Worker o il `RemoteMefProvider` Python.
+- **BYOK** (Bring Your Own Key): modalità in cui l'utente fornisce le proprie credenziali per accedere a una fonte autoritativa esterna. In cup-check è supportata esclusivamente nel package Python (`RemoteMefProvider`); la web app non gestisce né conserva credenziali.
+- **RemoteVerificationProvider**: interfaccia introdotta in `0.8.0` che astrae la fonte di verifica remota. Implementazioni previste: `MockRemoteProvider` (sviluppo/test), Cloudflare Worker (web app), `RemoteMefProvider` BYOK (Python).
+- **Tool**: vista aggiuntiva della web app, registrata nel `tools-registry` e accessibile dal menu "Strumenti" tramite hash router (`#/nome-tool`). Ogni tool è indipendente dal verificatore principale e può essere attivato senza modificare l'app-shell. Esempi: estrazione CUP da PDF (`0.4.0`), coerenza atto (`0.6.0`), verifica remota (`0.9.0`).
 - **SSoT**: Single Source of Truth.
 - **SSoT funzionale**: fixture YAML che definiscono cosa il validatore deve fare.
 - **Parity test**: test che verifica che due implementazioni producano gli stessi output sugli stessi input.

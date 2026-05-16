@@ -4,7 +4,7 @@ MVP `0.1.0`: nessuna fonte dati esterna.
 
 La web app non chiama API e non verifica l'esistenza dei CUP. I link OpenCUP nel report servono solo per verifica manuale da parte dell'utente.
 
-La verifica su dataset OpenCUP self-hosted è prevista da `0.3.0`. La verifica autoritativa via API Sogei resta una milestone successiva e opzionale.
+La verifica su dataset OpenCUP self-hosted è prevista da `0.3.0`. La verifica remota opzionale è pianificata in `0.8.0`–`0.9.0`: la web app la espone come tool tramite un Cloudflare Worker (nessun segreto nel browser); il package Python la supporta con credenziali BYOK configurabili dall'utente (`RemoteMefProvider`).
 
 ## Fonte OpenCUP
 

@@ -120,9 +120,15 @@ I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale normativa.
 
 ```text
 Outcome    = INVALIDO_FORMATO
-           | FORMATO_VALIDO_DA_VERIFICARE   -- formato ok, dataset non disponibile
-           | TROVATO_OPENCUP                 -- CUP presente nel mirror OpenCUP
-           | NON_TROVATO_OPENCUP_DA_VERIFICARE -- CUP assente dal mirror OpenCUP
+           | FORMATO_VALIDO_DA_VERIFICARE        -- formato ok, dataset non disponibile
+           | TROVATO_OPENCUP                      -- CUP presente nel mirror OpenCUP
+           | NON_TROVATO_OPENCUP_DA_VERIFICARE    -- CUP assente dal mirror OpenCUP
+           -- da 0.6.0:
+           | POSSIBILE_INCOERENZA_DA_VERIFICARE   -- discrepanza con dati atto nel dataset
+           -- da 0.8.0:
+           | TROVATO_REMOTO                       -- CUP confermato dalla fonte remota
+           | NON_TROVATO_REMOTO_DA_VERIFICARE     -- CUP non trovato dalla fonte remota
+           | VERIFICA_REMOTA_NON_DISPONIBILE      -- provider remoto assente o non configurato
 FailedRule = R0 | R1 | R2 | R3 | R4 | R5
 Warning    = N1 | N2
 

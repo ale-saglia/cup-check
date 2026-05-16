@@ -12,7 +12,7 @@ Nella PA italiana il CUP è un identificatore obbligatorio per gli atti di finan
 
 `cup-check` nasce per offrire uno strumento leggero che aiuti funzionari e tecnici a individuare rapidamente errori formali prima di successive verifiche manuali o autoritative.
 
-L'evoluzione è incrementale: nelle prime milestone il prodotto risponde alla domanda "questo CUP ha un formato corretto ed è presente nel perimetro dati disponibile?". Da `0.4.0` riduce anche l'attrito a monte, estraendo CUP da fatture PDF e documenti simili prima di passarli al verificatore. In una milestone successiva diventa anche uno strumento di coerenza dell'atto, cioè aiuta a rispondere alla domanda "questo CUP, questa P.IVA/CF, questo importo e questa descrizione sembrano riferirsi allo stesso progetto?". Questa seconda domanda intercetta errori più costosi, come inversioni di CUP tra righe o progetti durante copia-incolla e rendicontazioni, ed è pianificata come milestone successiva.
+L'evoluzione è incrementale: nelle prime milestone il prodotto risponde alla domanda "questo CUP ha un formato corretto ed è presente nel perimetro dati disponibile?". Da `0.4.0` riduce anche l'attrito a monte, estraendo CUP da fatture PDF e documenti simili prima di passarli al verificatore. Da `0.6.0` diventa anche uno strumento di coerenza dell'atto, cioè aiuta a rispondere alla domanda "questo CUP, questa P.IVA/CF, questo importo e questa descrizione sembrano riferirsi allo stesso progetto?". Questa seconda domanda intercetta errori più costosi, come inversioni di CUP tra righe o progetti durante copia-incolla e rendicontazioni. Le funzioni avanzate sono rilasciate come tool separati nel registro strumenti, attivabili indipendentemente dal verificatore principale.
 
 ## Stakeholder
 
@@ -29,8 +29,9 @@ L'evoluzione è incrementale: nelle prime milestone il prodotto risponde alla do
 - Restare offline-first dopo la prima visita.
 - Da `0.3.0`, verificare l'esistenza nel perimetro pubblicato da OpenCUP tramite dataset esatto self-hosted.
 - Da `0.4.0`, estrarre CUP da fatture PDF in modo locale, con testo nativo quando disponibile e OCR italiano come fallback per documenti scansionati.
-- In una milestone successiva, segnalare possibili incoerenze tra CUP e dati associati nell'atto, come soggetto titolare/beneficiario, importo e descrizione progetto.
-- In una milestone successiva, valutare verifica puntuale tramite fonte autoritativa/API.
+- Da `0.6.0`, segnalare possibili incoerenze tra CUP e dati associati nell'atto, come soggetto titolare/beneficiario, importo e descrizione progetto.
+- Da `0.7.0`, offrire una CLI Python (`cup-check`) per uso in script e pipeline CI.
+- Da `0.9.0`, supportare verifica remota opzionale tramite Cloudflare Worker (web app) o credenziali BYOK (package Python), senza introdurre segreti nel frontend.
 
 ## Vincoli
 

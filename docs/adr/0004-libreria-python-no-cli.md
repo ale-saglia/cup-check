@@ -2,7 +2,7 @@
 
 ## Status
 
-Accepted
+Accepted — verrà superato da un ADR dedicato nella milestone `0.7.0`
 
 ## Context
 

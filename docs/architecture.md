@@ -125,4 +125,18 @@ Il browser scarica sempre l'indice solo quando serve la verifica OpenCUP. Scaric
 
 ## Architettura Target
 
-Una futura verifica autoritativa potrà aggiungere un endpoint/proxy API MEF/Sogei o un checker Python con credenziali fornite dall'utente. Questa parte resta fuori dallo scope attuale e deve preservare la regola centrale: nessun esito di esistenza senza fonte autoritativa o dataset esatto.
+La verifica remota opzionale (`0.8.0`–`0.9.0`) introduce un livello aggiuntivo senza modificare la natura statica della web app:
+
+```text
+Browser utente
+  ├─ verifica formale (locale, sempre)
+  ├─ lookup OpenCUP (dataset statico, offline-first)
+  ├─ coerenza atto (dataset dettagli, offline-first)        [tool 0.6.0]
+  └─ verifica remota opzionale                              [tool 0.9.0]
+        └─ Cloudflare Worker (rate limiting, no dati persistenti)
+              └─ API MEF/Sogei (credenziali solo lato Worker)
+```
+
+Il frontend non gestisce né conserva credenziali. L'interfaccia `RemoteVerificationProvider` (`0.8.0`) astrae il provider remoto: la web app usa un `MockRemoteProvider` in sviluppo e il Worker in produzione; il package Python usa `RemoteMefProvider` con credenziali BYOK configurabili dall'utente.
+
+La regola centrale resta invariata: nessun esito di esistenza senza fonte autoritativa o dataset esatto.
