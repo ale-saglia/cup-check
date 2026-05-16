@@ -34,6 +34,38 @@ Tutti i commit e i tag di rilascio devono essere firmati con GPG (o SSH key conf
 
 Non usare `--no-gpg-sign` né bypassare la firma in altro modo. Se la chiave non è disponibile nell'ambiente, segnalarlo prima di procedere anziché omettere la firma.
 
+## Pre-commit
+
+`pre-commit` è una dipendenza dev Python del progetto. Il hook git viene installato
+automaticamente da `make setup` (eseguito dal devcontainer al primo avvio). Per
+reinstallarlo manualmente dopo un clone:
+
+```bash
+cd packages/cup_check && uv run pre-commit install
+```
+
+Per eseguire i check su tutti i file senza fare un commit:
+
+```bash
+cd packages/cup_check && uv run pre-commit run --all-files
+```
+
+## Aggiornare il CHANGELOG
+
+Prima di ogni release, generare un draft della sezione da aggiungere a `CHANGELOG.md` con:
+
+```bash
+make draft-changelog VERSION=0.x.y
+```
+
+Lo script legge la git history dall'ultimo tag e raggruppa i commit per tipo (feat, fix, …), escludendo merge e commit `chore(release)`/`docs(changelog)`. Rivedere e accorpare le voci prima di incollarle in cima al file.
+
+In alternativa, per esplorare i commit non ancora rilasciati:
+
+```bash
+git log $(git describe --tags --abbrev=0)..HEAD --oneline --no-merges
+```
+
 ## Messaggi di commit
 
 Usare Conventional Commits con descrizioni in italiano. Il `type` resta quello standard in inglese (`feat`, `fix`, `docs`, ecc.):
