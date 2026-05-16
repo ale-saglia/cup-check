@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Aggiunge test acceptance e anteprima con Chromium legacy (v109) tramite VNC per verificare la compatibilità con browser meno recenti.
+- Elimina il falso errore Tesseract `failed to load ita.special-words` che compariva alla prima esecuzione OCR.
+- Tronca le celle CUP troppo lunghe nella tabella risultati per evitare overflow visivo.
+- Migra `read-excel-file` alla v9.
+- Aggiorna le dipendenze npm e le GitHub Actions tramite Dependabot.
+
 ## 0.4.1 - 2026-05-14
 
 - Migra `pdf-extract-view` da `innerHTML` a creazione DOM programmatica, eliminando il rischio XSS nei template della tabella risultati.
