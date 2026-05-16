@@ -16,6 +16,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list /
     gnupg \
     make \
     novnc \
+    openbox \
     ripgrep \
     sqlite3 \
     x11vnc \
