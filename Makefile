@@ -84,11 +84,13 @@ web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chrom
 
 VNC_DISPLAY := :99
 VNC_PORT    := 5900
+NOVNC_PORT  := 9000
 
 .PHONY: web-preview-chrome-legacy
-web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy in VNC su :5900 e serve la preview
-	@command -v Xvfb   >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v x11vnc >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy — noVNC browser su :9000, VNC raw su :5900
+	@command -v Xvfb       >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v x11vnc     >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v websockify >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y novnc"; exit 1; }
 	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
 	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
 	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
@@ -99,13 +101,15 @@ web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy in VNC su
 	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
 	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
 	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
-	printf '\033[36mChromium legacy visibile su VNC — porta %s\033[0m\n' $(VNC_PORT); \
+	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
+	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
 	wait
 
 .PHONY: web-preview-dataset-chrome-legacy
-web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chromium legacy in VNC su :5900 e serve la preview
-	@command -v Xvfb   >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v x11vnc >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chromium legacy — noVNC browser su :9000, VNC raw su :5900
+	@command -v Xvfb       >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v x11vnc     >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v websockify >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y novnc"; exit 1; }
 	node scripts/prepare_web_preview_dataset.mjs
 	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
 	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
@@ -117,7 +121,8 @@ web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chrom
 	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
 	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
 	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
-	printf '\033[36mChromium legacy visibile su VNC — porta %s\033[0m\n' $(VNC_PORT); \
+	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
+	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
 	wait
 
 .PHONY: web-build

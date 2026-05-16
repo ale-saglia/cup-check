@@ -15,6 +15,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list /
     fonts-noto-color-emoji \
     gnupg \
     make \
+    novnc \
     ripgrep \
     sqlite3 \
     x11vnc \
