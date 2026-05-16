@@ -39,9 +39,9 @@ async function loadMain({
   HTMLDialogElement.prototype.close = vi.fn();
   vi.stubGlobal('alert', vi.fn());
   vi.stubGlobal('performance', { now: vi.fn().mockReturnValueOnce(10).mockReturnValue(25) });
-  vi.stubGlobal('URL', {
-    createObjectURL: vi.fn(() => 'blob:report'),
-    revokeObjectURL: vi.fn(),
+  vi.stubGlobal('URL', class extends URL {
+    static createObjectURL = vi.fn(() => 'blob:report');
+    static revokeObjectURL = vi.fn();
   });
   vi.stubGlobal('Blob', class Blob {
     constructor(parts, options) {
