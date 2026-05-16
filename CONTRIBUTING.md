@@ -15,6 +15,7 @@ Canali di contatto:
 ## Prima Di Aprire Una PR
 
 - Apri una issue o commenta una issue esistente per modifiche funzionali, cambi di semantica, nuove fonti dati o interventi con impatto sulla roadmap.
+- Non prendere attivita dal file TODO senza coordinarti: e un dump interno di code review AI. Apri prima una issue e allinea priorita e ambito.
 - Per correzioni piccole di documentazione o refusi puoi aprire direttamente una PR.
 - Leggi la documentazione pertinente in `docs/`, in particolare `docs/product.md`, `docs/architecture.md`, `docs/technical-spec.md` e `docs/roadmap.md`.
 

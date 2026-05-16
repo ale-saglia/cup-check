@@ -16,4 +16,3 @@ __pycache__/
 *.traineddata
 .vscode/
 .claude/
-TODO.md
