@@ -55,6 +55,7 @@ describe('ocrPdf', () => {
       'ita+eng',
       1,
       expect.objectContaining({ workerPath: expect.stringContaining('/tesseract/') }),
+      { user_words_suffix: '' },
     );
     expect(worker.recognize).toHaveBeenCalledTimes(2);
     expect(result.pages).toHaveLength(2);
