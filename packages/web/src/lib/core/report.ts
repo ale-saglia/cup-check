@@ -1,7 +1,8 @@
+import type { Rule, Warning, UniqueResult } from '../types.js';
 import { OUTCOMES, RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
 
-export function resultDetail(result) {
+export function resultDetail(result: Pick<UniqueResult, 'warnings' | 'failedRules' | 'outcome'>): string {
   const warnings = result.warnings?.length
     ? ` Avvisi non bloccanti: ${result.warnings.map(formatWarning).join('; ')}`
     : '';
@@ -21,19 +22,19 @@ export function resultDetail(result) {
   return `FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata.${warnings}`;
 }
 
-export function formatRule(rule) {
+export function formatRule(rule: Rule): string {
   return `${rule} - ${RULE_DESCRIPTIONS[rule] ?? 'regola non documentata'}`;
 }
 
-export function formatWarning(warning) {
+export function formatWarning(warning: Warning): string {
   return `${warning} - ${WARNING_DESCRIPTIONS[warning] ?? 'avviso non documentato'}`;
 }
 
-export function opencupUrl(cup) {
+export function opencupUrl(cup: string): string {
   return `https://opencup.gov.it/portale/progetto/-/cup/${encodeURIComponent(cup)}`;
 }
 
-export function opencupUrlForResult(result) {
+export function opencupUrlForResult(result: Pick<UniqueResult, 'normalizedValue'>): string {
   if (!/^[A-Z0-9]{15}$/.test(result.normalizedValue)) {
     return '';
   }
@@ -41,7 +42,7 @@ export function opencupUrlForResult(result) {
   return opencupUrl(result.normalizedValue);
 }
 
-export function buildCsvReport(results) {
+export function buildCsvReport(results: UniqueResult[]): string {
   const headers = ['righe_originali', 'cup_normalizzato', 'esito', 'dettaglio', 'link_opencup'];
   const lines = [
     headers.join(';'),
@@ -61,7 +62,7 @@ export function buildCsvReport(results) {
   return `\ufeff${lines.join('\n')}`;
 }
 
-function csvCell(value) {
+function csvCell(value: unknown): string {
   const text = protectCsvFormula(String(value ?? ''));
 
   if (/[;"\n\r]/.test(text)) {
@@ -71,7 +72,7 @@ function csvCell(value) {
   return text;
 }
 
-function protectCsvFormula(text) {
+function protectCsvFormula(text: string): string {
   if (/^[=+\-@]/.test(text)) {
     // A leading apostrophe prevents formula execution in Excel/Sheets and is ignored as a text prefix;
     // unlike a tab, it does not risk being treated as a field separator by TSV-aware parsers.

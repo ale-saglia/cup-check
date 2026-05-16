@@ -1,3 +1,5 @@
+import type { Dataset, DatasetLatestPointer, DatasetManifest, DatasetCupIndex, DownloadProgress } from '../types.js';
+
 const LATEST_DATASET_URL = './dataset-latest.json';
 const GITHUB_RELEASES_URL =
   'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100';
@@ -7,9 +9,17 @@ const MIN_SCHEMA_VERSION = 1;
 const MAX_CHUNK_RETRIES = 2;
 const CHUNK_INACTIVITY_TIMEOUT_MS = 30_000;
 
-let datasetPromise = null;
+type FetchFn = typeof fetch;
+interface LoadDatasetOptions {
+  fetchFn?: FetchFn;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  initSql?: (options?: Record<string, unknown>) => Promise<any>;
+  onProgress?: (progress: DownloadProgress) => void;
+}
 
-export function loadLatestDataset(options = {}) {
+let datasetPromise: Promise<Dataset> | null = null;
+
+export function loadLatestDataset(options: LoadDatasetOptions = {}): Promise<Dataset> {
   if (!datasetPromise) {
     const pendingDataset = loadDataset(options).catch((error) => {
       if (datasetPromise === pendingDataset) {
@@ -22,21 +32,21 @@ export function loadLatestDataset(options = {}) {
   return datasetPromise;
 }
 
-export async function discoverLatestDataset(fetchFn = fetch) {
+export async function discoverLatestDataset(fetchFn: FetchFn = fetch): Promise<DatasetLatestPointer> {
   const latest = await fetchJson(fetchFn, LATEST_DATASET_URL).catch(() => null);
   if (isLatestPointer(latest)) return latest;
   return discoverLatestFromGitHub(fetchFn);
 }
 
-async function discoverLatestFromGitHub(fetchFn) {
+async function discoverLatestFromGitHub(fetchFn: FetchFn): Promise<DatasetLatestPointer> {
   const releases = await fetchJson(fetchFn, GITHUB_RELEASES_URL);
   if (!Array.isArray(releases)) {
     throw new Error('dataset releases response is not an array');
   }
 
   const release = releases
-    .filter((item) => DATASET_TAG_PATTERN.test(item?.tag_name ?? ''))
-    .sort((a, b) => b.tag_name.localeCompare(a.tag_name))[0];
+    .filter((item: unknown) => DATASET_TAG_PATTERN.test((item as Record<string, string>)?.tag_name ?? ''))
+    .sort((a: Record<string, string>, b: Record<string, string>) => b.tag_name.localeCompare(a.tag_name))[0] as Record<string, string> | undefined;
   if (!release) {
     throw new Error('latest dataset release not found');
   }
@@ -53,9 +63,9 @@ export async function loadDataset({
   fetchFn = fetch,
   initSql = initDefaultSql,
   onProgress = () => {},
-} = {}) {
+}: LoadDatasetOptions = {}): Promise<Dataset> {
   const latest = await discoverLatestDataset(fetchFn);
-  const manifest = await fetchJson(fetchFn, latest.manifest_url);
+  const manifest = await fetchJson(fetchFn, latest.manifest_url) as DatasetManifest;
   validateManifest(manifest);
   const sqliteBytes = await downloadCupIndex(fetchFn, manifest.cup_index, (progress) =>
     onProgress({ ...progress, datasetTag: manifest.dataset_tag }),
@@ -66,7 +76,7 @@ export async function loadDataset({
   return {
     latest,
     manifest,
-    hasCup(cup) {
+    hasCup(cup: string): boolean {
       const statement = db.prepare('SELECT 1 FROM cup_index WHERE cup = ? LIMIT 1');
       try {
         statement.bind([cup]);
@@ -81,20 +91,21 @@ export async function loadDataset({
   };
 }
 
-async function initDefaultSql(options) {
+async function initDefaultSql(options?: Record<string, unknown>) {
   const [{ default: initSqlJs }, { default: sqlWasmUrl }] = await Promise.all([
     import('sql.js'),
+    // @ts-expect-error — Vite URL import, no TS declarations
     import('sql.js/dist/sql-wasm.wasm?url'),
   ]);
   return initSqlJs({ locateFile: () => sqlWasmUrl, ...options });
 }
 
-async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
+async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onProgress: (p: Omit<DownloadProgress, 'datasetTag'>) => void): Promise<Uint8Array> {
   const chunkHashes = cupIndex.files_sha256;
   let loadedBytes = 0;
   onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
 
-  const reportProgress = (delta) => {
+  const reportProgress = (delta: number) => {
     loadedBytes += delta;
     onProgress({
       loadedBytes,
@@ -129,7 +140,7 @@ async function downloadCupIndex(fetchFn, cupIndex, onProgress) {
   return out;
 }
 
-async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries, onBytes) {
+async function fetchAndVerifyChunk(fetchFn: FetchFn, url: string, expectedSha256: string, retries: number, onBytes: (n: number) => void): Promise<Uint8Array> {
   let receivedThisAttempt = 0;
   for (let attempt = 0; attempt <= retries; attempt++) {
     if (attempt > 0) {
@@ -155,10 +166,12 @@ async function fetchAndVerifyChunk(fetchFn, url, expectedSha256, retries, onByte
       clearTimeout(timeoutId);
     }
   }
+  // Unreachable: loop always throws on the last attempt
+  throw new Error('all retries exhausted');
 }
 
-async function verifySha256(bytes, expectedHex) {
-  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes);
+async function verifySha256(bytes: Uint8Array, expectedHex: string): Promise<void> {
+  const hashBuffer = await crypto.subtle.digest('SHA-256', bytes.buffer as ArrayBuffer);
   const hashHex = Array.from(new Uint8Array(hashBuffer))
     .map((b) => b.toString(16).padStart(2, '0'))
     .join('');
@@ -167,7 +180,7 @@ async function verifySha256(bytes, expectedHex) {
   }
 }
 
-async function readResponseBytes(response, onBytes) {
+async function readResponseBytes(response: Response, onBytes: (n: number) => void): Promise<Uint8Array> {
   if (!response.body?.getReader) {
     const bytes = new Uint8Array(await response.arrayBuffer());
     onBytes(bytes.byteLength);
@@ -195,7 +208,7 @@ async function readResponseBytes(response, onBytes) {
   return out;
 }
 
-async function fetchJson(fetchFn, url) {
+async function fetchJson(fetchFn: FetchFn, url: string): Promise<unknown> {
   const response = await fetchFn(url);
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
   const ct = response.headers.get('content-type') ?? '';
@@ -205,35 +218,37 @@ async function fetchJson(fetchFn, url) {
   return response.json();
 }
 
-function validateManifest(manifest) {
-  if (manifest?.schema_version !== MIN_SCHEMA_VERSION) {
+function validateManifest(manifest: unknown): asserts manifest is DatasetManifest {
+  const m = manifest as Record<string, unknown>;
+  if (m?.schema_version !== MIN_SCHEMA_VERSION) {
     throw new Error('unsupported dataset manifest schema');
   }
-  if (manifest?.schema?.table !== 'cup_index') {
+  if ((m?.schema as Record<string, unknown>)?.table !== 'cup_index') {
     throw new Error('unsupported dataset table');
   }
-  const cupIndex = manifest?.cup_index;
+  const cupIndex = m?.cup_index as Record<string, unknown> | undefined;
   if (
     !cupIndex ||
     typeof cupIndex.base_url !== 'string' ||
     !Array.isArray(cupIndex.files) ||
     cupIndex.files.length === 0 ||
-    !cupIndex.files.every((file) => typeof file === 'string') ||
+    !cupIndex.files.every((file: unknown) => typeof file === 'string') ||
     typeof cupIndex.total_size_bytes !== 'number' ||
     !Array.isArray(cupIndex.files_sha256) ||
     cupIndex.files_sha256.length !== cupIndex.files.length ||
-    !cupIndex.files_sha256.every((h) => typeof h === 'string' && h.length > 0)
+    !cupIndex.files_sha256.every((h: unknown) => typeof h === 'string' && h.length > 0)
   ) {
     throw new Error('invalid dataset cup_index');
   }
 }
 
-function isLatestPointer(value) {
+function isLatestPointer(value: unknown): value is DatasetLatestPointer {
+  const v = value as Record<string, unknown>;
   return (
-    DATASET_TAG_PATTERN.test(value?.dataset_tag ?? '') &&
-    typeof value?.manifest_url === 'string' &&
-    value.manifest_url.length > 0 &&
-    typeof value?.sources_snapshot_date === 'string' &&
-    typeof value?.released_at === 'string'
+    DATASET_TAG_PATTERN.test(String(v?.dataset_tag ?? '')) &&
+    typeof v?.manifest_url === 'string' &&
+    v.manifest_url.length > 0 &&
+    typeof v?.sources_snapshot_date === 'string' &&
+    typeof v?.released_at === 'string'
   );
 }

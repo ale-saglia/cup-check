@@ -1,4 +1,4 @@
-export function textInputLines(value) {
+export function textInputLines(value: string): string[] {
   const lines = value
     .split('\n')
     .map((line) => line.trim())

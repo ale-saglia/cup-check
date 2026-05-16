@@ -1,51 +1,57 @@
+import type { Outcome, Rule, Warning, ValidationResult, ValidationSummary } from '../types.js';
+
 export const OUTCOMES = {
-  INVALID: 'INVALIDO_FORMATO',
-  CHECK: 'FORMATO_VALIDO_DA_VERIFICARE',
-  FOUND_OPENCUP: 'TROVATO_OPENCUP',
-  NOT_FOUND_OPENCUP: 'NON_TROVATO_OPENCUP_DA_VERIFICARE',
+  INVALID: 'INVALIDO_FORMATO' as Outcome,
+  CHECK: 'FORMATO_VALIDO_DA_VERIFICARE' as Outcome,
+  FOUND_OPENCUP: 'TROVATO_OPENCUP' as Outcome,
+  NOT_FOUND_OPENCUP: 'NON_TROVATO_OPENCUP_DA_VERIFICARE' as Outcome,
 };
 
 export const RULES = {
-  EMPTY: 'R0',
-  LENGTH: 'R1',
-  CHARSET: 'R2',
-  FIRST_POSITION: 'R3',
-  YEAR: 'R4',
-  FOURTH_POSITION: 'R5',
+  EMPTY: 'R0' as Rule,
+  LENGTH: 'R1' as Rule,
+  CHARSET: 'R2' as Rule,
+  FIRST_POSITION: 'R3' as Rule,
+  YEAR: 'R4' as Rule,
+  FOURTH_POSITION: 'R5' as Rule,
 };
 
-export const RULE_DESCRIPTIONS = {
-  [RULES.EMPTY]: 'riga o cella CUP vuota',
-  [RULES.LENGTH]: 'lunghezza diversa da 15 caratteri dopo trim',
-  [RULES.CHARSET]: 'caratteri non ammessi dopo normalizzazione: usa solo lettere A-Z e cifre 0-9',
-  [RULES.FIRST_POSITION]: 'prima posizione non alfabetica',
-  [RULES.YEAR]: 'anno non plausibile nelle posizioni 5-6 del CUP',
-  [RULES.FOURTH_POSITION]: 'quarta posizione non alfabetica',
+export const RULE_DESCRIPTIONS: Record<Rule, string> = {
+  R0: 'riga o cella CUP vuota',
+  R1: 'lunghezza diversa da 15 caratteri dopo trim',
+  R2: 'caratteri non ammessi dopo normalizzazione: usa solo lettere A-Z e cifre 0-9',
+  R3: 'prima posizione non alfabetica',
+  R4: 'anno non plausibile nelle posizioni 5-6 del CUP',
+  R5: 'quarta posizione non alfabetica',
 };
 
 export const WARNINGS = {
-  TRIMMED: 'N1',
-  UPPERCASED: 'N2',
+  TRIMMED: 'N1' as Warning,
+  UPPERCASED: 'N2' as Warning,
 };
 
-export const WARNING_DESCRIPTIONS = {
-  [WARNINGS.TRIMMED]: 'spazi bianchi rimossi dal CUP',
-  [WARNINGS.UPPERCASED]: 'lettere convertite in maiuscolo',
+export const WARNING_DESCRIPTIONS: Record<Warning, string> = {
+  N1: 'spazi bianchi rimossi dal CUP',
+  N2: 'lettere convertite in maiuscolo',
 };
 
-export function normalizeCup(value) {
+export function normalizeCup(value: unknown): string {
   return String(value ?? '')
     .trim()
     .toUpperCase();
 }
 
-export function validateCup(value, row = null, options = {}) {
+export function validateCup(
+  value: unknown,
+  row: number | null = null,
+  options: { currentYear?: number } = {},
+): ValidationResult {
   const rawValue = String(value ?? '');
   const trimmedValue = rawValue.trim();
   const normalizedValue = normalizeCup(rawValue);
   const currentYear = options.currentYear ?? new Date().getFullYear();
   const currentTwoDigitYear = currentYear % 100;
-  const failedRules = [];
+  const failedRules: Rule[] = [];
   const warnings = normalizationWarnings(rawValue, trimmedValue, normalizedValue);
 
   if (trimmedValue.length === 0) {
@@ -93,14 +99,21 @@ export function validateCup(value, row = null, options = {}) {
   };
 }
 
-function normalizationWarnings(rawValue, trimmedValue, normalizedValue) {
+function normalizationWarnings(
+  rawValue: string,
+  trimmedValue: string,
+  normalizedValue: string,
+): Warning[] {
   return [
     rawValue !== trimmedValue ? WARNINGS.TRIMMED : null,
     trimmedValue !== normalizedValue ? WARNINGS.UPPERCASED : null,
-  ].filter(Boolean);
+  ].filter((w): w is Warning => w !== null);
 }
 
-export function isStructurallyPlausible(value, options = {}) {
+export function isStructurallyPlausible(
+  value: unknown,
+  options: { yearLookahead?: number; currentYear?: number } = {},
+): boolean {
   const { yearLookahead = 0, ...rest } = options;
   const baseYear = rest.currentYear ?? new Date().getFullYear();
   return (
@@ -109,21 +122,26 @@ export function isStructurallyPlausible(value, options = {}) {
   );
 }
 
-export function validateBatch(values, options = {}) {
+export function validateBatch(
+  values: unknown[],
+  options: { currentYear?: number } = {},
+): { results: ValidationResult[]; summary: ValidationSummary } {
   const startedAt = performance.now();
   const results = values.map((value, index) => validateCup(value, index + 1, options));
   const summary = summarizeResults(results, performance.now() - startedAt);
-
   return { results, summary };
 }
 
-export function summarizeResults(results, durationMs = 0) {
+export function summarizeResults(
+  results: Pick<ValidationResult, 'outcome'>[],
+  durationMs = 0,
+): ValidationSummary {
   const total = results.length;
-  const counts = {
-    [OUTCOMES.INVALID]: 0,
-    [OUTCOMES.CHECK]: 0,
-    [OUTCOMES.FOUND_OPENCUP]: 0,
-    [OUTCOMES.NOT_FOUND_OPENCUP]: 0,
+  const counts: Record<Outcome, number> = {
+    INVALIDO_FORMATO: 0,
+    FORMATO_VALIDO_DA_VERIFICARE: 0,
+    TROVATO_OPENCUP: 0,
+    NON_TROVATO_OPENCUP_DA_VERIFICARE: 0,
   };
   for (const result of results) {
     if (result.outcome in counts) counts[result.outcome] += 1;
@@ -134,6 +152,6 @@ export function summarizeResults(results, durationMs = 0) {
     counts,
     percentages: Object.fromEntries(
       Object.entries(counts).map(([k, v]) => [k, total === 0 ? 0 : v / total]),
-    ),
+    ) as Record<Outcome, number>,
   };
 }

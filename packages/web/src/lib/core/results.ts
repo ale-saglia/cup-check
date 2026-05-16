@@ -1,6 +1,10 @@
+import type { ValidationResult, UniqueResult } from '../types.js';
 import { OUTCOMES } from './validator.js';
 
-export function applyDatasetLookup(results, lookupFn) {
+export function applyDatasetLookup(
+  results: UniqueResult[],
+  lookupFn: (cup: string) => boolean,
+): UniqueResult[] {
   return results.map((result) => {
     if (result.outcome !== OUTCOMES.CHECK) return result;
     return {
@@ -12,8 +16,8 @@ export function applyDatasetLookup(results, lookupFn) {
   });
 }
 
-export function uniqueResultsByCup(results) {
-  const grouped = new Map();
+export function uniqueResultsByCup(results: ValidationResult[]): UniqueResult[] {
+  const grouped = new Map<string, UniqueResult>();
 
   results.forEach((result) => {
     const existing = grouped.get(result.normalizedValue);
@@ -37,7 +41,7 @@ export function uniqueResultsByCup(results) {
   return [...grouped.values()];
 }
 
-export function displayResults(results, groupSameCups = true) {
+export function displayResults(results: UniqueResult[], groupSameCups = true): UniqueResult[] {
   if (groupSameCups) return results;
 
   return results
@@ -53,16 +57,19 @@ export function displayResults(results, groupSameCups = true) {
     .sort((left, right) => compareRows(left.inputRow, right.inputRow));
 }
 
-export function resultRowsLabel(result) {
+export function resultRowsLabel(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): string {
   const rows = result.inputRows ?? [result.inputRow];
   return rows.length > 1 ? rows.join(', ') : String(rows[0] ?? '');
 }
 
-function uniqueValues(values) {
+function uniqueValues<T>(values: T[]): T[] {
   return [...new Set(values)];
 }
 
-function compareRows(left, right) {
+function compareRows(
+  left: number | null | undefined,
+  right: number | null | undefined,
+): number {
   if (typeof left === 'number' && typeof right === 'number') {
     return left - right;
   }
