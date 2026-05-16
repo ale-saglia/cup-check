@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { DOMParser } from '@xmldom/xmldom';
-import { buildParsedRows, detectCupColumn, hasHeader, parseFile } from '../src/parser.js';
+import { buildParsedRows, detectCupColumn, hasHeader, parseFile } from '../src/lib/core/parser.js';
 
 globalThis.DOMParser = DOMParser;
 

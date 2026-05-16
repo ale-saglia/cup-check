@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { extractPdfText } from '../src/pdf/extract-text.js';
+import { extractPdfText } from '../src/lib/pdf/extract-text.js';
 import { getDocument } from 'pdfjs-dist';
 
 vi.mock('pdfjs-dist', () => ({
@@ -30,8 +30,7 @@ beforeEach(() => {
 
 describe('extractPdfText', () => {
   it('estrae testo da un PDF nativo monopagina e segnala needsOcr=false', async () => {
-    const text =
-      'CUP J91B21006430001 progetto infrastruttura comunale finanziato da fondi europei';
+    const text = 'CUP J91B21006430001 progetto infrastruttura comunale finanziato da fondi europei';
     const doc = makeDoc([text]);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
 
@@ -74,7 +73,9 @@ describe('extractPdfText', () => {
     getDocument.mockReturnValue({ promise: Promise.resolve(doc1) });
     await extractPdfText(fakeFile);
 
-    const doc2 = makeDoc(['secondo documento con abbondante testo sufficiente per il test cache singleton']);
+    const doc2 = makeDoc([
+      'secondo documento con abbondante testo sufficiente per il test cache singleton',
+    ]);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc2) });
     const result = await extractPdfText(fakeFile);
 

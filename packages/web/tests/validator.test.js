@@ -9,7 +9,7 @@ import {
   summarizeResults,
   validateBatch,
   validateCup,
-} from '../src/validator.js';
+} from '../src/lib/core/validator.js';
 
 const fixtureDir = path.resolve(import.meta.dirname, '../../../tests/fixtures');
 const fixtureFiles = ['valid-cases.yaml', 'invalid-cases.yaml', 'edge-cases.yaml'];

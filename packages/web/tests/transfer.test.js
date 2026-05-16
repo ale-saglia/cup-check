@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { consumeTransfer, storeTransfer } from '../src/transfer.js';
+import { consumeTransfer, storeTransfer } from '../src/lib/data/transfer.js';
 
 describe('transfer registry', () => {
   it('restituisce un id e recupera il file con consume', () => {

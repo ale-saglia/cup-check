@@ -18,8 +18,8 @@ import {
   resetView,
   togglePanel,
 } from '../src/render.js';
-import { applyDatasetLookup, uniqueResultsByCup } from '../src/results.js';
-import { validateCup } from '../src/validator.js';
+import { applyDatasetLookup, uniqueResultsByCup } from '../src/lib/core/results.js';
+import { validateCup } from '../src/lib/core/validator.js';
 
 let dom;
 
@@ -243,7 +243,11 @@ describe('render', () => {
 
   it('resets the view', () => {
     renderPreview(renderState(), dom, { name: 'input.csv' });
-    renderResults(renderState({ results: [validateCup('errato', 1, { currentYear: 2026 })] }), dom, 1);
+    renderResults(
+      renderState({ results: [validateCup('errato', 1, { currentYear: 2026 })] }),
+      dom,
+      1,
+    );
     dom.fileInput.value = '';
     dom.cupTextarea.value = 'A12B23000000001';
     dom.filterSelect.value = 'INVALIDO_FORMATO';

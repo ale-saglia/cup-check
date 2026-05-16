@@ -2,7 +2,7 @@ import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import yaml from 'js-yaml';
-import { extractCupsFromText, extractCupsFromPages } from '../src/pdf/extract-cups.js';
+import { extractCupsFromText, extractCupsFromPages } from '../src/lib/pdf/extract-cups.js';
 
 const fixtureDir = path.resolve(import.meta.dirname, '../../../tests/fixtures');
 const validCases = yaml.load(fs.readFileSync(path.join(fixtureDir, 'valid-cases.yaml'), 'utf8'));
@@ -22,15 +22,12 @@ const structurallyInvalidCases = invalidCases.filter((c) =>
 );
 
 describe('extractCupsFromText', () => {
-  it.each(validCases)(
-    '$id: trova "$input" nel testo e lo marca formalValid=true',
-    ({ input }) => {
-      const result = extractCupsFromText(`testo con CUP ${input} nel documento`);
-      expect(result).toHaveLength(1);
-      expect(result[0].value).toBe(input);
-      expect(result[0].formalValid).toBe(true);
-    },
-  );
+  it.each(validCases)('$id: trova "$input" nel testo e lo marca formalValid=true', ({ input }) => {
+    const result = extractCupsFromText(`testo con CUP ${input} nel documento`);
+    expect(result).toHaveLength(1);
+    expect(result[0].value).toBe(input);
+    expect(result[0].formalValid).toBe(true);
+  });
 
   it(`${futureYearCase.id}: non trovato perché l'anno (99) supera il range +15 anni`, () => {
     // SEARCH_YEAR = currentYear+15: anno 99 è oltre la soglia e viene escluso già

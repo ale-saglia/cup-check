@@ -19,12 +19,7 @@ function makeParsedResult(cups = [{ value: CUP1, formalValid: true }]) {
   return { fileName: 'fattura.pdf', status: cups.length ? 'ok' : 'no_cup', source: 'text', cups };
 }
 
-async function loadView({
-  extractPdfTextImpl,
-  ocrPdfImpl,
-  extractCupsImpl,
-  navigateImpl,
-} = {}) {
+async function loadView({ extractPdfTextImpl, ocrPdfImpl, extractCupsImpl, navigateImpl } = {}) {
   vi.resetModules();
 
   Object.defineProperty(mockGlobalWorkerOptions, 'workerSrc', {
@@ -33,17 +28,19 @@ async function loadView({
     value: '',
   });
 
-  vi.doMock('../src/pdf/extract-text.js', () => ({
+  vi.doMock('../src/lib/pdf/extract-text.js', () => ({
     extractPdfText:
       extractPdfTextImpl ??
-      vi.fn().mockResolvedValue({ pages: ['testo con CUP ' + CUP1], totalChars: 100, needsOcr: false }),
+      vi
+        .fn()
+        .mockResolvedValue({ pages: ['testo con CUP ' + CUP1], totalChars: 100, needsOcr: false }),
   }));
 
-  vi.doMock('../src/pdf/ocr.js', () => ({
+  vi.doMock('../src/lib/pdf/ocr.js', () => ({
     ocrPdf: ocrPdfImpl ?? vi.fn().mockResolvedValue({ pages: ['testo ocr ' + CUP1] }),
   }));
 
-  vi.doMock('../src/pdf/extract-cups.js', () => ({
+  vi.doMock('../src/lib/pdf/extract-cups.js', () => ({
     extractCupsFromPages: extractCupsImpl ?? vi.fn().mockReturnValue(makeParsedResult()),
   }));
 
@@ -52,9 +49,9 @@ async function loadView({
   }));
 
   const storeTransferMock = vi.fn().mockReturnValue('test-transfer-id');
-  vi.doMock('../src/transfer.js', () => ({ storeTransfer: storeTransferMock }));
+  vi.doMock('../src/lib/data/transfer.js', () => ({ storeTransfer: storeTransferMock }));
 
-  vi.doMock('../src/validator.js', () => ({
+  vi.doMock('../src/lib/core/validator.js', () => ({
     validateCup: vi.fn().mockReturnValue({ outcome: 'FORMATO_VALIDO_DA_VERIFICARE' }),
     OUTCOMES: { INVALID: 'INVALIDO_FORMATO' },
   }));
@@ -153,7 +150,7 @@ describe('pdf-extract-view: file processing', () => {
     expect(container.querySelector('[data-entry-id]')).not.toBeNull();
   });
 
-  it('resetta il valore dell\'input dopo la selezione', async () => {
+  it("resetta il valore dell'input dopo la selezione", async () => {
     const { mount } = await loadView({
       extractPdfTextImpl: vi.fn().mockReturnValue(new Promise(() => {})),
     });
@@ -226,7 +223,9 @@ describe('pdf-extract-view: file processing', () => {
       return new Promise(() => {});
     });
     const { mount } = await loadView({
-      extractPdfTextImpl: vi.fn().mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
+      extractPdfTextImpl: vi
+        .fn()
+        .mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
       ocrPdfImpl,
     });
     const container = setupContainer();
@@ -253,7 +252,9 @@ describe('pdf-extract-view: file processing', () => {
       return new Promise(() => {});
     });
     const { mount } = await loadView({
-      extractPdfTextImpl: vi.fn().mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
+      extractPdfTextImpl: vi
+        .fn()
+        .mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
       ocrPdfImpl,
     });
     const container = setupContainer();
@@ -291,7 +292,9 @@ describe('pdf-extract-view: file processing', () => {
 
   it('mostra riga "Nessun CUP rilevato" se il PDF non contiene CUP', async () => {
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName: 'vuoto.pdf', status: 'no_cup', source: 'text', cups: [] }),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue({ fileName: 'vuoto.pdf', status: 'no_cup', source: 'text', cups: [] }),
     });
     const container = setupContainer();
     await mount(container);
@@ -308,7 +311,9 @@ describe('pdf-extract-view: file processing', () => {
   it('non processa entry se il container è smontato durante il processing', async () => {
     let resolvePdf;
     const extractPdfTextImpl = vi.fn().mockReturnValue(
-      new Promise((r) => { resolvePdf = r; }),
+      new Promise((r) => {
+        resolvePdf = r;
+      }),
     );
     const { mount, unmount } = await loadView({ extractPdfTextImpl });
     const container = setupContainer();
@@ -332,7 +337,9 @@ describe('pdf-extract-view: file processing', () => {
       return Promise.resolve({ pages: ['testo'] });
     });
     const { mount, unmount } = await loadView({
-      extractPdfTextImpl: vi.fn().mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
+      extractPdfTextImpl: vi
+        .fn()
+        .mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true }),
       ocrPdfImpl,
     });
     const container = setupContainer();
@@ -345,7 +352,9 @@ describe('pdf-extract-view: file processing', () => {
 
     unmount();
     // Should not throw even if progress is triggered after unmount
-    expect(() => progressCb?.({ ocrLoading: false, page: 1, totalPages: 1, fileName: 'f.pdf' })).not.toThrow();
+    expect(() =>
+      progressCb?.({ ocrLoading: false, page: 1, totalPages: 1, fileName: 'f.pdf' }),
+    ).not.toThrow();
   });
 });
 
@@ -429,7 +438,9 @@ describe('pdf-extract-view: drag and drop', () => {
 describe('pdf-extract-view: edit operations', () => {
   async function mountWithCup(container, cup = CUP1) {
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: cup, formalValid: true }])),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue(makeParsedResult([{ value: cup, formalValid: true }])),
     });
     await mount(container);
 
@@ -566,7 +577,15 @@ describe('pdf-extract-view: edit operations', () => {
     await mountWithCup(container);
 
     const body = container.querySelector('#pdf-results-body');
-    expect(() => body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true, target: document.createElement('input') }))).not.toThrow();
+    expect(() =>
+      body.dispatchEvent(
+        new KeyboardEvent('keydown', {
+          key: 'Enter',
+          bubbles: true,
+          target: document.createElement('input'),
+        }),
+      ),
+    ).not.toThrow();
   });
 
   it('click su "rimuovi" rimuove il CUP dalla riga', async () => {
@@ -580,7 +599,7 @@ describe('pdf-extract-view: edit operations', () => {
     expect(after).toBeLessThan(before);
   });
 
-  it('apertura nuova edit chiude l\'edit precedente su altro CUP', async () => {
+  it("apertura nuova edit chiude l'edit precedente su altro CUP", async () => {
     const cups = [
       { value: CUP1, formalValid: true },
       { value: CUP2, formalValid: true },
@@ -785,7 +804,9 @@ describe('pdf-extract-view: azioni globali', () => {
 describe('pdf-extract-view: CSV builders', () => {
   it('buildVerificatoreCsv produce header cup,file_origine e una riga per CUP', async () => {
     const { mount, storeTransferMock } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
     });
     const container = setupContainer();
     await mount(container);
@@ -822,7 +843,9 @@ describe('pdf-extract-view: CSV builders', () => {
 
   it('buildExportCsv produce header con semicolon e colonne formato/fonte/manuale', async () => {
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
     });
     const container = setupContainer();
     await mount(container);
@@ -848,10 +871,15 @@ describe('pdf-extract-view: CSV builders', () => {
     expect(csv).toContain('NO'); // manual=false
   });
 
-  it('csvComma fa l\'escaping dei valori con virgola o apici', async () => {
+  it("csvComma fa l'escaping dei valori con virgola o apici", async () => {
     const fileName = 'fattura,2024.pdf'; // contains comma
     const { mount, storeTransferMock } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+      extractCupsImpl: vi.fn().mockReturnValue({
+        fileName,
+        status: 'ok',
+        source: 'text',
+        cups: [{ value: CUP1, formalValid: true }],
+      }),
     });
     const container = setupContainer();
     await mount(container);
@@ -867,13 +895,21 @@ describe('pdf-extract-view: CSV builders', () => {
     expect(csv).toContain('"fattura,2024.pdf"');
   });
 
-  it('csvSemi fa l\'escaping dei valori con punto-e-virgola o apici', async () => {
+  it("csvSemi fa l'escaping dei valori con punto-e-virgola o apici", async () => {
     const fileName = 'fattura;2024.pdf';
     let capturedBlob;
-    URL.createObjectURL = vi.fn().mockImplementation((b) => { capturedBlob = b; return 'blob:mock'; });
+    URL.createObjectURL = vi.fn().mockImplementation((b) => {
+      capturedBlob = b;
+      return 'blob:mock';
+    });
 
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+      extractCupsImpl: vi.fn().mockReturnValue({
+        fileName,
+        status: 'ok',
+        source: 'text',
+        cups: [{ value: CUP1, formalValid: true }],
+      }),
     });
     const container = setupContainer();
     await mount(container);
@@ -892,7 +928,12 @@ describe('pdf-extract-view: CSV builders', () => {
   it('csvComma prefissa con apostrofo i filename che iniziano con caratteri formula', async () => {
     const fileName = '=formula.pdf';
     const { mount, storeTransferMock } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+      extractCupsImpl: vi.fn().mockReturnValue({
+        fileName,
+        status: 'ok',
+        source: 'text',
+        cups: [{ value: CUP1, formalValid: true }],
+      }),
     });
     const container = setupContainer();
     await mount(container);
@@ -912,10 +953,18 @@ describe('pdf-extract-view: CSV builders', () => {
   it('csvSemi prefissa con apostrofo i filename che iniziano con caratteri formula', async () => {
     const fileName = '+bonus.pdf';
     let capturedBlob;
-    URL.createObjectURL = vi.fn().mockImplementation((b) => { capturedBlob = b; return 'blob:mock'; });
+    URL.createObjectURL = vi.fn().mockImplementation((b) => {
+      capturedBlob = b;
+      return 'blob:mock';
+    });
 
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName, status: 'ok', source: 'text', cups: [{ value: CUP1, formalValid: true }] }),
+      extractCupsImpl: vi.fn().mockReturnValue({
+        fileName,
+        status: 'ok',
+        source: 'text',
+        cups: [{ value: CUP1, formalValid: true }],
+      }),
     });
     const container = setupContainer();
     await mount(container);
@@ -936,7 +985,9 @@ describe('pdf-extract-view: CSV builders', () => {
 describe('pdf-extract-view: clearAll durante elaborazione', () => {
   it('clearAll durante processEntry non lascia _processing bloccato quando si aggiungono nuovi file', async () => {
     let resolvePdf;
-    const slowPdf = new Promise((r) => { resolvePdf = r; });
+    const slowPdf = new Promise((r) => {
+      resolvePdf = r;
+    });
 
     const { mount } = await loadView({
       extractPdfTextImpl: vi.fn().mockReturnValue(slowPdf),
@@ -1007,7 +1058,9 @@ describe('pdf-extract-view: render helpers', () => {
   it('truncateName tronca nomi lunghi con ellissi in fondo', async () => {
     const longName = 'a'.repeat(50) + '.pdf';
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue({ fileName: longName, status: 'no_cup', source: 'text', cups: [] }),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue({ fileName: longName, status: 'no_cup', source: 'text', cups: [] }),
     });
     const container = setupContainer();
     await mount(container);
@@ -1040,7 +1093,9 @@ describe('pdf-extract-view: render helpers', () => {
 
   it('renderEntryRows mostra il badge CUP invalido per CUP non formalmente valido', async () => {
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: 'INVALIDO', formalValid: false }])),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue(makeParsedResult([{ value: 'INVALIDO', formalValid: false }])),
     });
     const container = setupContainer();
     await mount(container);
@@ -1056,7 +1111,9 @@ describe('pdf-extract-view: render helpers', () => {
   it('input di edit con valore non vuoto viene selezionato al focus dopo re-render', async () => {
     const container = setupContainer();
     const { mount } = await loadView({
-      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
+      extractCupsImpl: vi
+        .fn()
+        .mockReturnValue(makeParsedResult([{ value: CUP1, formalValid: true }])),
     });
     await mount(container);
 

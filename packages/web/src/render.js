@@ -1,6 +1,6 @@
-import { opencupUrlForResult, resultDetail } from './report.js';
-import { displayResults, resultRowsLabel } from './results.js';
-import { OUTCOMES, summarizeResults } from './validator.js';
+import { opencupUrlForResult, resultDetail } from './lib/core/report.js';
+import { displayResults, resultRowsLabel } from './lib/core/results.js';
+import { OUTCOMES, summarizeResults } from './lib/core/validator.js';
 
 const MAX_RENDERED_RESULT_ROWS = 500;
 

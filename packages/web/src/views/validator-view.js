@@ -1,8 +1,8 @@
 import { initDialogs, showDetailDialog } from '../dialogs.js';
-import { loadLatestDataset } from '../dataset-loader.js';
+import { loadLatestDataset } from '../lib/data/dataset-loader.js';
 import { mountValidatorContent } from '../dom.js';
-import { buildParsedRows, parseFile } from '../parser.js';
-import { buildCsvReport } from '../report.js';
+import { buildParsedRows, parseFile } from '../lib/core/parser.js';
+import { buildCsvReport } from '../lib/core/report.js';
 import {
   collapsePanel,
   renderDatasetChecking,
@@ -18,11 +18,11 @@ import {
   resetView,
   togglePanel,
 } from '../render.js';
-import { applyDatasetLookup, displayResults, uniqueResultsByCup } from '../results.js';
+import { applyDatasetLookup, displayResults, uniqueResultsByCup } from '../lib/core/results.js';
 import { state, resetState } from '../state.js';
-import { consumeTransfer } from '../transfer.js';
+import { consumeTransfer } from '../lib/data/transfer.js';
 import { textInputLines } from '../text-input.js';
-import { OUTCOMES, validateCup } from '../validator.js';
+import { OUTCOMES, validateCup } from '../lib/core/validator.js';
 
 let _container = null;
 

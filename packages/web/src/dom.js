@@ -1,5 +1,5 @@
 import { mountLayout } from './layout.js';
-import { OUTCOMES } from './validator.js';
+import { OUTCOMES } from './lib/core/validator.js';
 
 export function mountValidatorContent(container) {
   container.innerHTML = `

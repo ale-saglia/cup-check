@@ -53,7 +53,7 @@ Creare `packages/web/tsconfig.json`:
 - `.prettierrc.json`: aggiungere il plugin `prettier-plugin-svelte`.
 - Aggiungere `svelte-check --tsconfig tsconfig.json` come script `check` in `package.json` e come step nel CI.
 
-### A5. Riorganizzazione `src/`
+### ✅ A5. Riorganizzazione `src/`
 
 Spostare i file esistenti (senza modificarli) nella struttura target. Aggiornare i path di import:
 

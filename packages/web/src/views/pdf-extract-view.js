@@ -1,9 +1,9 @@
-import { extractPdfText } from '../pdf/extract-text.js';
-import { ocrPdf } from '../pdf/ocr.js';
-import { extractCupsFromPages } from '../pdf/extract-cups.js';
-import { validateCup, OUTCOMES } from '../validator.js';
+import { extractPdfText } from '../lib/pdf/extract-text.js';
+import { ocrPdf } from '../lib/pdf/ocr.js';
+import { extractCupsFromPages } from '../lib/pdf/extract-cups.js';
+import { validateCup, OUTCOMES } from '../lib/core/validator.js';
 import { navigate } from '../router.js';
-import { storeTransfer } from '../transfer.js';
+import { storeTransfer } from '../lib/data/transfer.js';
 
 let _container = null;
 let _entries = [];

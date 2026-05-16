@@ -2,7 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { mountApp } from '../src/dom.js';
-import { OUTCOMES } from '../src/validator.js';
+import { OUTCOMES } from '../src/lib/core/validator.js';
 import { PRODUCT_VERSION } from '../src/version.js';
 
 describe('mountApp', () => {

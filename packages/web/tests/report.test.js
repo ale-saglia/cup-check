@@ -1,7 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { buildCsvReport, formatRule, opencupUrlForResult, resultDetail } from '../src/report.js';
-import { displayResults, uniqueResultsByCup } from '../src/results.js';
-import { OUTCOMES, validateCup } from '../src/validator.js';
+import {
+  buildCsvReport,
+  formatRule,
+  opencupUrlForResult,
+  resultDetail,
+} from '../src/lib/core/report.js';
+import { displayResults, uniqueResultsByCup } from '../src/lib/core/results.js';
+import { OUTCOMES, validateCup } from '../src/lib/core/validator.js';
 
 describe('resultDetail', () => {
   it('shows non-blocking normalization warnings for valid CUPs', () => {

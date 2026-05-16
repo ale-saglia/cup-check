@@ -18,13 +18,13 @@ describe('validator-view', () => {
   }
 
   async function loadView() {
-    vi.doMock('../src/dataset-loader.js', () => ({
+    vi.doMock('../src/lib/data/dataset-loader.js', () => ({
       loadLatestDataset: vi.fn().mockResolvedValue({
         manifest: { dataset_tag: 'test' },
         hasCup: () => false,
       }),
     }));
-    vi.doMock('../src/parser.js', () => ({
+    vi.doMock('../src/lib/core/parser.js', () => ({
       parseFile: vi.fn(),
       buildParsedRows: vi.fn(),
     }));
@@ -48,14 +48,16 @@ describe('validator-view', () => {
     expect(() => unmount()).not.toThrow();
   });
 
-  it('consuma il file dal registry transfer al mount e mostra l\'anteprima', async () => {
+  it("consuma il file dal registry transfer al mount e mostra l'anteprima", async () => {
     const container = setupDom();
     const pendingFile = new File(['cup,file_origine\n'], 'estrazione.csv', { type: 'text/csv' });
-    const consumeTransferMock = vi.fn().mockImplementation((id) => id === 'testid123' ? pendingFile : null);
+    const consumeTransferMock = vi
+      .fn()
+      .mockImplementation((id) => (id === 'testid123' ? pendingFile : null));
 
     window.history.replaceState({}, '', '#/?transfer=testid123');
-    vi.doMock('../src/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
-    vi.doMock('../src/dataset-loader.js', () => ({
+    vi.doMock('../src/lib/data/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
+    vi.doMock('../src/lib/data/dataset-loader.js', () => ({
       loadLatestDataset: vi.fn().mockResolvedValue({
         manifest: { dataset_tag: 'test' },
         hasCup: () => false,
@@ -68,7 +70,7 @@ describe('validator-view', () => {
       selectedSheetName: '',
       sheetNames: null,
     });
-    vi.doMock('../src/parser.js', () => ({
+    vi.doMock('../src/lib/core/parser.js', () => ({
       parseFile: parseFileMock,
       buildParsedRows: vi.fn().mockReturnValue({ rows: [], rawRows: [], suggestedColumnIndex: 0 }),
     }));
@@ -82,20 +84,20 @@ describe('validator-view', () => {
     window.history.replaceState({}, '', '#/');
   });
 
-  it('gestisce l\'errore di parseFile quando il registry transfer ha un file', async () => {
+  it("gestisce l'errore di parseFile quando il registry transfer ha un file", async () => {
     const container = setupDom();
     const pendingFile = new File(['invalid'], 'estrazione.csv', { type: 'text/csv' });
     const consumeTransferMock = vi.fn().mockReturnValue(pendingFile);
 
     window.history.replaceState({}, '', '#/?transfer=testid123');
-    vi.doMock('../src/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
-    vi.doMock('../src/dataset-loader.js', () => ({
+    vi.doMock('../src/lib/data/transfer.js', () => ({ consumeTransfer: consumeTransferMock }));
+    vi.doMock('../src/lib/data/dataset-loader.js', () => ({
       loadLatestDataset: vi.fn().mockResolvedValue({
         manifest: { dataset_tag: 'test' },
         hasCup: () => false,
       }),
     }));
-    vi.doMock('../src/parser.js', () => ({
+    vi.doMock('../src/lib/core/parser.js', () => ({
       parseFile: vi.fn().mockRejectedValue(new Error('parse error')),
       buildParsedRows: vi.fn(),
     }));

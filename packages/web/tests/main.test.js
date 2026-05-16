@@ -39,16 +39,22 @@ async function loadMain({
   HTMLDialogElement.prototype.close = vi.fn();
   vi.stubGlobal('alert', vi.fn());
   vi.stubGlobal('performance', { now: vi.fn().mockReturnValueOnce(10).mockReturnValue(25) });
-  vi.stubGlobal('URL', class extends URL {
-    static createObjectURL = vi.fn(() => 'blob:report');
-    static revokeObjectURL = vi.fn();
-  });
-  vi.stubGlobal('Blob', class Blob {
-    constructor(parts, options) {
-      this.parts = parts;
-      this.options = options;
-    }
-  });
+  vi.stubGlobal(
+    'URL',
+    class extends URL {
+      static createObjectURL = vi.fn(() => 'blob:report');
+      static revokeObjectURL = vi.fn();
+    },
+  );
+  vi.stubGlobal(
+    'Blob',
+    class Blob {
+      constructor(parts, options) {
+        this.parts = parts;
+        this.options = options;
+      }
+    },
+  );
   vi.stubGlobal('navigator', serviceWorker ? { serviceWorker: { register: vi.fn() } } : {});
 
   const parseFile = vi.fn(async (_file, options = {}) => {
@@ -68,8 +74,8 @@ async function loadMain({
     };
   });
 
-  vi.doMock('../src/parser.js', () => ({ parseFile, buildParsedRows }));
-  vi.doMock('../src/dataset-loader.js', () => ({ loadLatestDataset }));
+  vi.doMock('../src/lib/core/parser.js', () => ({ parseFile, buildParsedRows }));
+  vi.doMock('../src/lib/data/dataset-loader.js', () => ({ loadLatestDataset }));
 
   await import('../src/main.js');
   await Promise.resolve();
@@ -142,7 +148,9 @@ describe('main', () => {
 
     document.querySelector('#text-check-button').click();
 
-    expect(alert).toHaveBeenCalledWith('Nessun CUP trovato. Incolla almeno un codice, uno per riga.');
+    expect(alert).toHaveBeenCalledWith(
+      'Nessun CUP trovato. Incolla almeno un codice, uno per riga.',
+    );
   });
 
   it('parses files, changes sheet/header/column and validates selected rows', async () => {
@@ -263,7 +271,9 @@ describe('main', () => {
     document.querySelector('#group-same-cups').dispatchEvent(new Event('change'));
     const rowsButton = document.querySelector('.multiple-rows-button');
     rowsButton.click();
-    expect(document.querySelector('#detail-dialog-label').textContent).toBe('Righe originali: 1, 2');
+    expect(document.querySelector('#detail-dialog-label').textContent).toBe(
+      'Righe originali: 1, 2',
+    );
 
     const detail = document.querySelector('.detail-cell');
     Object.defineProperties(detail, {

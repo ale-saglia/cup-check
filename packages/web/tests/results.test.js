@@ -4,8 +4,8 @@ import {
   displayResults,
   resultRowsLabel,
   uniqueResultsByCup,
-} from '../src/results.js';
-import { OUTCOMES, validateCup } from '../src/validator.js';
+} from '../src/lib/core/results.js';
+import { OUTCOMES, validateCup } from '../src/lib/core/validator.js';
 
 function makeResult(overrides = {}) {
   return {

@@ -1,4 +1,4 @@
-import { validateCup, isStructurallyPlausible, OUTCOMES } from '../validator.js';
+import { validateCup, isStructurallyPlausible, OUTCOMES } from '../core/validator.js';
 
 // OCR engines often confuse '1' (one) with 'I' (capital i). Positions 0 and 3
 // of a CUP must be letters, so we try the substitution there before giving up.

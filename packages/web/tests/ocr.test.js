@@ -33,7 +33,7 @@ function makeWorker(textPerPage = 'testo ocr') {
 
 async function loadOcr() {
   vi.resetModules();
-  return import('../src/pdf/ocr.js');
+  return import('../src/lib/pdf/ocr.js');
 }
 
 beforeEach(() => {
@@ -155,11 +155,12 @@ describe('ocrPdf', () => {
     expect(worker.recognize.mock.calls[0][0]).toBeInstanceOf(HTMLCanvasElement);
   });
 
-  it('restituisce le pagine nell\'ordine corretto per documenti multi-pagina', async () => {
+  it("restituisce le pagine nell'ordine corretto per documenti multi-pagina", async () => {
     const doc = makeDoc(3);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
     const worker = {
-      recognize: vi.fn()
+      recognize: vi
+        .fn()
         .mockResolvedValueOnce({ data: { text: 'pagina uno' } })
         .mockResolvedValueOnce({ data: { text: 'pagina due' } })
         .mockResolvedValueOnce({ data: { text: 'pagina tre' } }),
@@ -186,7 +187,7 @@ describe('ocrPdf', () => {
     expect(calls.map((c) => c.page)).toEqual([0, 1, 2, 3]);
   });
 
-  it('propaga l\'errore se getDocument rigetta', async () => {
+  it("propaga l'errore se getDocument rigetta", async () => {
     getDocument.mockImplementation(() => ({ promise: Promise.reject(new Error('PDF corrotto')) }));
     createWorker.mockResolvedValue(makeWorker());
 
@@ -194,7 +195,7 @@ describe('ocrPdf', () => {
     await expect(ocrPdf(fakeFile)).rejects.toThrow('PDF corrotto');
   });
 
-  it('propaga l\'errore se worker.recognize rigetta', async () => {
+  it("propaga l'errore se worker.recognize rigetta", async () => {
     const doc = makeDoc(1);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
     const worker = { recognize: vi.fn().mockRejectedValue(new Error('OCR fallito')) };

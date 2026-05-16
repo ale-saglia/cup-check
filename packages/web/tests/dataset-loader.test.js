@@ -1,6 +1,6 @@
 import initSqlJs from 'sql.js';
 import { describe, expect, it, vi } from 'vitest';
-import { discoverLatestDataset, loadDataset } from '../src/dataset-loader.js';
+import { discoverLatestDataset, loadDataset } from '../src/lib/data/dataset-loader.js';
 
 const wasmPath = new URL('../node_modules/sql.js/dist/sql-wasm.wasm', import.meta.url).pathname;
 const MANIFEST_URL = 'https://example.test/dataset-manifest.json';
@@ -158,7 +158,7 @@ describe('discoverLatestDataset', () => {
 describe('loadDataset', () => {
   it('returns the same in-flight promise through loadLatestDataset', async () => {
     vi.resetModules();
-    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
     const pendingFetch = vi.fn(() => new Promise(() => {}));
 
     const first = loadLatestDataset({ fetchFn: pendingFetch });
@@ -170,7 +170,7 @@ describe('loadDataset', () => {
 
   it('clears the cached promise after a failed loadLatestDataset call', async () => {
     vi.resetModules();
-    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
     const firstFetch = vi.fn(async () => {
       throw new Error('first dataset discovery failed');
     });
@@ -194,7 +194,7 @@ describe('loadDataset', () => {
 
   it('loads only once through loadLatestDataset', async () => {
     vi.resetModules();
-    const { loadLatestDataset } = await import('../src/dataset-loader.js');
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
     const sqliteBytes = await buildSqliteFixture();
     const sha256s = [await computeSha256Hex(sqliteBytes)];
     const fetchFn = vi.fn(
@@ -419,7 +419,11 @@ describe('loadDataset', () => {
       chunkAttempt++;
       if (chunkAttempt === 1) {
         let streamCtrl;
-        const stream = new ReadableStream({ start(c) { streamCtrl = c; } });
+        const stream = new ReadableStream({
+          start(c) {
+            streamCtrl = c;
+          },
+        });
         signal?.addEventListener('abort', () =>
           streamCtrl?.error(new DOMException('aborted', 'AbortError')),
         );
