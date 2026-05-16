@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
+  applyAllPolyfills,
   applyMapPolyfills,
   applyPromisePolyfills,
   applyReadableStreamPolyfills,
@@ -299,7 +300,9 @@ describe('Uint8Array polyfills', () => {
     it('omette il padding se richiesto', () => {
       delete Uint8Array.prototype.toBase64;
       applyUint8ArrayPolyfills();
-      expect(new Uint8Array([72, 101, 108, 108, 111]).toBase64({ omitPadding: true })).toBe('SGVsbG8');
+      expect(new Uint8Array([72, 101, 108, 108, 111]).toBase64({ omitPadding: true })).toBe(
+        'SGVsbG8',
+      );
     });
   });
 
@@ -344,5 +347,45 @@ describe('Uint8Array polyfills', () => {
       const original = new Uint8Array([1, 2, 3, 100, 200, 255]);
       expect(Uint8Array.fromBase64(original.toBase64())).toEqual(original);
     });
+  });
+});
+
+describe('applyAllPolyfills', () => {
+  let saved;
+
+  beforeEach(() => {
+    saved = {
+      withResolvers: Promise.withResolvers,
+      try: Promise.try,
+      getOrInsertComputed: Map.prototype.getOrInsertComputed,
+      toHex: Uint8Array.prototype.toHex,
+      toBase64: Uint8Array.prototype.toBase64,
+      fromBase64: Uint8Array.fromBase64,
+    };
+    delete Promise.withResolvers;
+    delete Promise.try;
+    delete Map.prototype.getOrInsertComputed;
+    delete Uint8Array.prototype.toHex;
+    delete Uint8Array.prototype.toBase64;
+    delete Uint8Array.fromBase64;
+  });
+
+  afterEach(() => {
+    Promise.withResolvers = saved.withResolvers;
+    Promise.try = saved.try;
+    Map.prototype.getOrInsertComputed = saved.getOrInsertComputed;
+    Uint8Array.prototype.toHex = saved.toHex;
+    Uint8Array.prototype.toBase64 = saved.toBase64;
+    Uint8Array.fromBase64 = saved.fromBase64;
+  });
+
+  it('applica tutti i polyfill in una sola chiamata', () => {
+    applyAllPolyfills();
+    expect(typeof Promise.withResolvers).toBe('function');
+    expect(typeof Promise.try).toBe('function');
+    expect(typeof Map.prototype.getOrInsertComputed).toBe('function');
+    expect(typeof Uint8Array.prototype.toHex).toBe('function');
+    expect(typeof Uint8Array.prototype.toBase64).toBe('function');
+    expect(typeof Uint8Array.fromBase64).toBe('function');
   });
 });

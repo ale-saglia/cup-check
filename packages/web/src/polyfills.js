@@ -49,6 +49,13 @@ export function applyReadableStreamPolyfills() {
   }
 }
 
+export function applyAllPolyfills() {
+  applyPromisePolyfills();
+  applyMapPolyfills();
+  applyReadableStreamPolyfills();
+  applyUint8ArrayPolyfills();
+}
+
 export function applyUint8ArrayPolyfills() {
   if (typeof Uint8Array.prototype.toHex === 'undefined') {
     Uint8Array.prototype.toHex = function () {
