@@ -20,7 +20,7 @@ setup: web-install python-install ## Installa le dipendenze di sviluppo
 check: web-lint web-test web-build web-audit python-lint python-test ## Esegue tutte le verifiche locali veloci
 
 .PHONY: release-check
-release-check: check web-acceptance web-lighthouse ## Esegue anche le prove browser/Lighthouse per il rilascio
+release-check: check web-acceptance web-acceptance-chrome-legacy web-lighthouse ## Esegue le prove browser/Lighthouse; acceptance sia con Chromium moderno che con quello legacy
 
 .PHONY: web-install
 web-install: ## Installa le dipendenze del package web
@@ -60,6 +60,64 @@ web-acceptance: web-build ## Verifica upload XLSX 10k e offline PWA con Chromium
 web-lighthouse: web-build ## Verifica soglie Lighthouse MVP sulla build statica
 	cd $(WEB_DIR) && npx playwright install chromium
 	cd $(WEB_DIR) && npm run test:lighthouse
+
+# Chromium 109 (revision 1069273 ≈ Chrome 109.0.5414) — installato via @puppeteer/browsers.
+# Chrome for Testing parte dalla versione 113, quindi si usa lo snapshot Chromium corrispondente.
+CHROMIUM_LEGACY_REVISION := 1069273
+CHROMIUM_LEGACY_INSTALL  := npx -y @puppeteer/browsers install chromium@$(CHROMIUM_LEGACY_REVISION) --path $(HOME)/.cache/puppeteer --format '{{path}}'
+# Flag necessari in ambienti container senza GPU reale né dbus:
+#   --disable-gpu            evita l'avvio del processo GPU (elimina gli errori viz/command-buffer/dri3)
+#   --disable-dev-shm-usage  usa /tmp invece di /dev/shm (evita crash con shm piccola in Docker)
+#   --disable-features=MediaRouter  disabilita il Media Router che tenta di connettersi a dbus
+CHROMIUM_LEGACY_FLAGS    := --no-sandbox --no-first-run --no-default-browser-check \
+                             --disable-gpu --disable-dev-shm-usage \
+                             --disable-features=MediaRouter
+
+.PHONY: web-acceptance-chrome-legacy
+web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chromium 109 (installa via npx)
+	cd $(WEB_DIR) && \
+	CHROME109=$$($(CHROMIUM_LEGACY_INSTALL)) && \
+	echo "Chromium 109: $$CHROME109" && \
+	CHROME_PATH="$$CHROME109" npm run test:acceptance
+
+
+VNC_DISPLAY := :99
+VNC_PORT    := 5900
+
+.PHONY: web-preview-chrome-legacy
+web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy in VNC su :5900 e serve la preview
+	@command -v Xvfb   >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v x11vnc >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
+	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
+	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
+	Xvfb $(VNC_DISPLAY) -screen 0 1280x800x24 2>/dev/null & \
+	sleep 0.3; \
+	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT) & \
+	until curl -sf http://127.0.0.1:$(WEB_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
+	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
+	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
+	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	printf '\033[36mChromium legacy visibile su VNC — porta %s\033[0m\n' $(VNC_PORT); \
+	wait
+
+.PHONY: web-preview-dataset-chrome-legacy
+web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chromium legacy in VNC su :5900 e serve la preview
+	@command -v Xvfb   >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	@command -v x11vnc >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+	node scripts/prepare_web_preview_dataset.mjs
+	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
+	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
+	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
+	Xvfb $(VNC_DISPLAY) -screen 0 1280x800x24 2>/dev/null & \
+	sleep 0.3; \
+	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT) & \
+	until curl -sf http://127.0.0.1:$(WEB_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
+	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
+	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
+	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	printf '\033[36mChromium legacy visibile su VNC — porta %s\033[0m\n' $(VNC_PORT); \
+	wait
 
 .PHONY: web-build
 web-build: ## Genera la build statica web

@@ -25,11 +25,15 @@
     }
   },
   "containerEnv": {},
-  "forwardPorts": [5173],
+  "forwardPorts": [5173, 5900],
   "portsAttributes": {
     "5173": {
       "label": "Vite dev server",
       "onAutoForward": "notify"
+    },
+    "5900": {
+      "label": "VNC (Chromium legacy)",
+      "onAutoForward": "ignore"
     }
   },
   "postCreateCommand": "make setup",
