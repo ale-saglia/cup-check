@@ -16,6 +16,7 @@ from cup_check.opencup_dataset import (
     _first_date,
     _joined_text,
     _mapped_value,
+    _source_value,
     _text_in_values,
     build_dataset_release,
     build_sqlite_from_projects_zip,
@@ -500,6 +501,10 @@ def test_project_records_accept_custom_schema_path(tmp_path: Path) -> None:
 
     assert n_records == 1
     assert rows == [("H11B22001230001", None)]
+
+
+def test_source_value_returns_none_for_non_str_non_list_source() -> None:
+    assert _source_value({"COL": "valore"}, None) is None
 
 
 def test_mapped_value_raises_for_unsupported_type() -> None:

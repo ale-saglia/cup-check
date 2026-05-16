@@ -230,6 +230,15 @@ def test_default_cache_root_uses_user_cache_directory() -> None:
     assert checker_module._cache_root(None) == Path.home() / ".cache" / "cup-check"
 
 
+def test_open_cup_checker_close_is_idempotent(tmp_path: Path) -> None:
+    sqlite_path = write_cup_index(tmp_path, [])
+    manifest = manifest_for_sqlite(sqlite_path)
+
+    checker = OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
+    checker.close()
+    checker.close()  # seconda chiamata con _connection già None — non deve sollevare
+
+
 def test_open_cup_checker_is_exported() -> None:
     assert OpenCupChecker.__name__ == "OpenCupChecker"
     assert Outcome.TROVATO_OPENCUP.value == "TROVATO_OPENCUP"

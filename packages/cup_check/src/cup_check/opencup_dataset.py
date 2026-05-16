@@ -124,7 +124,7 @@ def _download_url_to_path(
     if retry_backoff_seconds < 0:
         raise ValueError("retry_backoff_seconds must be non-negative")
 
-    for attempt in range(1, retries + 1):
+    for attempt in range(1, retries + 1):  # pragma: no branch
         try:
             _copy_download_to_path(
                 source_url,
