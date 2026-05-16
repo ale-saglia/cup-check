@@ -36,6 +36,8 @@ jobs:
         working-directory: .
         run: make web-audit
       - run: npm run build
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
 
   python-matrix:
     name: Prepare Python matrix

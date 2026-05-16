@@ -1,4 +1,5 @@
 import { defineConfig } from 'vite';
+import { codecovVitePlugin } from '@codecov/vite-plugin';
 import { execSync } from 'node:child_process';
 import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
@@ -12,7 +13,8 @@ const repoRoot = resolve(webDir, '../..');
 function traineddataPath(lang) {
   const dir = resolve(webDir, `node_modules/@tesseract.js-data/${lang}`);
   const subdir = readdirSync(dir).find((d) => d.includes('best_int') && d.endsWith('best_int'));
-  if (!subdir) throw new Error(`${lang} traineddata (best_int) not found in @tesseract.js-data/${lang}`);
+  if (!subdir)
+    throw new Error(`${lang} traineddata (best_int) not found in @tesseract.js-data/${lang}`);
   return `node_modules/@tesseract.js-data/${lang}/${subdir}/${lang}.traineddata.gz`;
 }
 
@@ -48,7 +50,16 @@ export default defineConfig({
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },
-  plugins: [serviceWorkerPlugin(appVersion), pdfjsWorkerPlugin(), tesseractAssetsPlugin()],
+  plugins: [
+    serviceWorkerPlugin(appVersion),
+    pdfjsWorkerPlugin(),
+    tesseractAssetsPlugin(),
+    codecovVitePlugin({
+      enableBundleAnalysis: !!process.env.CODECOV_TOKEN,
+      bundleName: 'cup-check-web',
+      uploadToken: process.env.CODECOV_TOKEN,
+    }),
+  ],
   build: {
     sourcemap: true,
   },
