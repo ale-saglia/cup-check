@@ -577,7 +577,12 @@ td.selected {
 }
 
 .cup-cell {
+  display: inline-block;
+  max-width: 20ch;
+  overflow: hidden;
+  text-overflow: ellipsis;
   white-space: nowrap;
+  vertical-align: top;
 }
 
 .detail-cell {
