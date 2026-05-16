@@ -8,7 +8,7 @@ Questo documento traccia le fasi di migrazione verso TypeScript + Svelte 5, come
 
 ## Fase A — Infrastruttura (prerequisito)
 
-### A1. Dipendenze
+### ✅ A1. Dipendenze
 
 ```bash
 npm install -D svelte @sveltejs/vite-plugin-svelte svelte-check
@@ -20,7 +20,7 @@ Nuove devDependencies:
 - `svelte-check` — type checking dei `.svelte` in CI
 - `typescript` — transpile TS; Vite lo gestisce nativamente senza passi extra
 
-### A2. Configurazione TypeScript
+### ✅ A2. Configurazione TypeScript
 
 Creare `packages/web/tsconfig.json`:
 
