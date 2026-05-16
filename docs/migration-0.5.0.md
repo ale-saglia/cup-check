@@ -75,7 +75,7 @@ src/
 
 Gate: `npm run build` e `npm test` devono passare dopo lo spostamento.
 
-### A6. Tipi condivisi (`lib/types.ts`)
+### ✅ A6. Tipi condivisi (`lib/types.ts`)
 
 Definire almeno:
 
