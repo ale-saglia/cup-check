@@ -55,7 +55,9 @@ async function activateCaches() {
   const keys = await caches.keys();
   await Promise.all(
     keys
-      .filter((key) => key !== CACHE_NAME && key !== DATASET_CACHE_NAME && key !== LAZY_ASSETS_CACHE_NAME)
+      .filter(
+        (key) => key !== CACHE_NAME && key !== DATASET_CACHE_NAME && key !== LAZY_ASSETS_CACHE_NAME,
+      )
       .map((key) => caches.delete(key)),
   );
 
@@ -84,19 +86,27 @@ function networkFirst(event, request, cacheName) {
       );
       return response;
     })
-    .catch(() => caches.open(cacheName).then((c) => c.match(request)).then((cached) => cached ?? Response.error()));
+    .catch(() =>
+      caches
+        .open(cacheName)
+        .then((c) => c.match(request))
+        .then((cached) => cached ?? Response.error()),
+    );
 }
 
 function cacheFirst(event, request, cacheName) {
-  return caches.open(cacheName).then((c) => c.match(request)).then((cached) => {
-    if (cached) return cached;
-    return fetch(request).then((response) => {
-      if (!response.ok) return response;
-      const copy = response.clone();
-      event.waitUntil(caches.open(cacheName).then((cache) => cache.put(request, copy)));
-      return response;
+  return caches
+    .open(cacheName)
+    .then((c) => c.match(request))
+    .then((cached) => {
+      if (cached) return cached;
+      return fetch(request).then((response) => {
+        if (!response.ok) return response;
+        const copy = response.clone();
+        event.waitUntil(caches.open(cacheName).then((cache) => cache.put(request, copy)));
+        return response;
+      });
     });
-  });
 }
 
 function datasetTagFromUrl(url) {

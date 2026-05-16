@@ -215,7 +215,7 @@ describe('ReadableStream polyfills', () => {
       },
     });
     try {
-      // eslint-disable-next-line no-unused-vars
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
       for await (const _ of stream) {
         throw new Error('stop');
       }

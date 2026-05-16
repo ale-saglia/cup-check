@@ -899,7 +899,6 @@ code {
     white-space: nowrap;
   }
 
-
   #results-panel .filters {
     grid-template-areas: none;
     grid-template-columns: 1fr;
@@ -938,14 +937,23 @@ code {
     white-space: nowrap;
   }
 
-  #pdf-export-btn { order: 1; }
-  #pdf-clear-btn  { order: 2; }
-  #pdf-send-btn   { order: 3; flex: 0 0 100%; }
+  #pdf-export-btn {
+    order: 1;
+  }
+  #pdf-clear-btn {
+    order: 2;
+  }
+  #pdf-send-btn {
+    order: 3;
+    flex: 0 0 100%;
+  }
 }
 
 /* ── PDF extract view ─────────────────────────────────────────────────────── */
 
-.pdf-cup-col { min-width: 140px; }
+.pdf-cup-col {
+  min-width: 140px;
+}
 
 .pdf-dropzone {
   display: grid;
@@ -958,7 +966,9 @@ code {
   color: var(--link);
   font-weight: 750;
   cursor: pointer;
-  transition: border-color 0.12s, background 0.12s;
+  transition:
+    border-color 0.12s,
+    background 0.12s;
 }
 
 .pdf-dropzone--drag {

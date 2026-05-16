@@ -47,7 +47,7 @@ Creare `packages/web/tsconfig.json`:
 - Aggiornare il blocco `test.coverage.include` per escludere `*.svelte` dalla coverage v8 (hanno pipeline separata).
 - Rinominare il file in `.ts` e aggiornare i tipi.
 
-### A4. Linting e formatting
+### ✅ A4. Linting e formatting
 
 - `eslint.config.js`: aggiungere `eslint-plugin-svelte` e il parser TS per i file `.svelte`.
 - `.prettierrc.json`: aggiungere il plugin `prettier-plugin-svelte`.

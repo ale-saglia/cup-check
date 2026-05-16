@@ -88,7 +88,11 @@ export function unmount() {
 function scheduleUpdate() {
   if (_renderPending) return;
   _renderPending = true;
-  _debounceTimer = setTimeout(() => { _renderPending = false; _debounceTimer = null; updateTable(); }, 150);
+  _debounceTimer = setTimeout(() => {
+    _renderPending = false;
+    _debounceTimer = null;
+    updateTable();
+  }, 150);
 }
 
 // ── Event binding ──────────────────────────────────────────────────────────────
@@ -260,7 +264,11 @@ function startEdit(entryId, cupId) {
   const cup = findCup(entryId, cupId);
   if (!cup) return;
   // Close any other active edit
-  _entries.forEach((e) => e.cups.forEach((c) => { c.editing = false; }));
+  _entries.forEach((e) =>
+    e.cups.forEach((c) => {
+      c.editing = false;
+    }),
+  );
   cup.editing = true;
   updateTable();
 }
@@ -282,7 +290,11 @@ function commitEdit(entryId, cupId, rawValue) {
   const cup = findCup(entryId, cupId);
   if (!cup || !cup.editing) return;
   const entry = findEntry(entryId);
-  const normalized = rawValue.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+  const normalized = rawValue
+    .trim()
+    .toUpperCase()
+    .replace(/[^A-Z0-9]/g, '')
+    .slice(0, 15);
   if (normalized === '' && cup.manual) {
     // discard empty new manual entry
     entry.cups = entry.cups.filter((c) => c.id !== cupId);
@@ -307,7 +319,11 @@ function removeCup(entryId, cupId) {
 function startAddManual(entryId) {
   const entry = findEntry(entryId);
   if (!entry) return;
-  _entries.forEach((e) => e.cups.forEach((c) => { c.editing = false; }));
+  _entries.forEach((e) =>
+    e.cups.forEach((c) => {
+      c.editing = false;
+    }),
+  );
   entry.cups.push({
     id: `${entryId}-m${_nextId++}`,
     value: '',
@@ -363,7 +379,13 @@ function buildExportCsv() {
   for (const entry of completedEntries()) {
     for (const cup of entry.cups) {
       rows.push(
-        [cup.value, entry.name, cup.formalValid ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
+        [
+          cup.value,
+          entry.name,
+          cup.formalValid ? 'SI' : 'NO',
+          cup.source ?? '',
+          cup.manual ? 'SI' : 'NO',
+        ]
           .map(csvSemi)
           .join(';'),
       );
