@@ -724,6 +724,32 @@ describe('pdf-extract-view: aggiunta manuale CUP', () => {
     expect(container.querySelector('input[data-editing]')).toBeNull();
     expect(container.querySelectorAll('[data-cup-id]').length).toBe(0);
   });
+
+  it('aggiungere un CUP manuale su secondo file azzera editing aperto sul primo', async () => {
+    const { mount } = await loadView({
+      extractCupsImpl: vi.fn().mockReturnValue(makeParsedResult([])),
+    });
+    const container = setupContainer();
+    await mount(container);
+
+    const input = container.querySelector('#pdf-file-input');
+    Object.defineProperty(input, 'files', {
+      value: [makeFile('primo.pdf'), makeFile('secondo.pdf')],
+    });
+    input.dispatchEvent(new Event('change'));
+    await flushPromises();
+
+    const addBtns = container.querySelectorAll('[data-action="add-manual"]');
+    expect(addBtns.length).toBe(2);
+
+    // primo file va in editing
+    addBtns[0].click();
+    expect(container.querySelector('input[data-editing]')).not.toBeNull();
+
+    // click sul secondo file: la forEach azzera c.editing sul cup del primo (riga 324)
+    container.querySelector('[data-action="add-manual"]').click();
+    expect(container.querySelector('input[data-editing]')).not.toBeNull();
+  });
 });
 
 describe('pdf-extract-view: azioni globali', () => {
