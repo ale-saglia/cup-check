@@ -57,7 +57,7 @@ indica la colonna sorgente OpenCUP e il tipo di normalizzazione (`cup`, `categor
 `money_cents`, `date`, `bool_equals`, ecc.). Il flag `destination` controlla se il campo entra
 nella tabella finale `cups`. Gli importi `*_cents` sono interi in centesimi:
 evitano arrotondamenti floating point e restano ampiamente dentro il limite `INTEGER` a 64 bit
-di SQLite.
+di SQLite. La documentazione completa del DSL è in [docs/dataset-schema.md](dataset-schema.md).
 
 Colonne candidate dal bulk OpenCUP:
 
