@@ -29,6 +29,17 @@ describe('dialogs', () => {
     expect(dom.limitsDialog.close).toHaveBeenCalledTimes(1);
   });
 
+  it('does not close the limits dialog when clicking inside it', () => {
+    const dom = dialogDom();
+    const child = document.createElement('span');
+    dom.limitsDialog.append(child);
+    initDialogs(dom);
+
+    child.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(dom.limitsDialog.close).not.toHaveBeenCalled();
+  });
+
   it('closes the detail dialog only when clicking the backdrop', () => {
     const dom = dialogDom();
     const child = document.createElement('span');

@@ -23,6 +23,10 @@ describe('hasHeader', () => {
   it('does not treat a CUP-only first row as header', () => {
     expect(hasHeader(['G17H03000130001'])).toBe(false);
   });
+
+  it('treats a null cell as non-header content', () => {
+    expect(hasHeader([null])).toBe(false);
+  });
 });
 
 describe('buildParsedRows', () => {
@@ -51,6 +55,13 @@ describe('buildParsedRows', () => {
 
     expect(parsed.headers).toEqual(['Colonna 1', 'Colonna 2']);
     expect(parsed.rows.map((row) => row.originalRowNumber)).toEqual([1, 2]);
+  });
+
+  it('handles empty rawRows gracefully', () => {
+    const parsed = buildParsedRows([], false);
+
+    expect(parsed.headers).toEqual([]);
+    expect(parsed.rows).toEqual([]);
   });
 
   it('lets users override an invalid first row detected as header', () => {
@@ -236,6 +247,15 @@ describe('parseFile', () => {
     await expect(parseFile(file)).rejects.toThrow(
       'Formato non supportato. Carica un file CSV o XLSX.',
     );
+  });
+
+  it('parses an empty CSV file without throwing', async () => {
+    const file = new File([''], 'empty.csv', { type: 'text/csv' });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.rows).toEqual([]);
+    expect(parsed.headers).toEqual([]);
   });
 });
 

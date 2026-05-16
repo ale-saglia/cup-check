@@ -117,7 +117,7 @@ describe('service worker', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it('activateCaches preserva la cache lazy-assets durante l\'attivazione', async () => {
+  it("activateCaches preserva la cache lazy-assets durante l'attivazione", async () => {
     await import('../src/sw.js');
     cachesMock.stores.set('old-app-cache', makeCache());
     cachesMock.stores.set('cup-check-lazy-v1', makeCache());
@@ -186,6 +186,38 @@ describe('service worker', () => {
 
     handlers.fetch(missingCacheEvent);
     expect((await missingCacheEvent.respondWith.mock.calls[0][0]).type).toBe('error');
+  });
+
+  it('caches successful app shell responses without evicting dataset releases', async () => {
+    await import('../src/sw.js');
+    const event = {
+      request: request('https://example.test/index.html'),
+      waitUntil: vi.fn((promise) => promise),
+      respondWith: vi.fn(),
+    };
+
+    handlers.fetch(event);
+    const response = await event.respondWith.mock.calls[0][0];
+
+    expect(response.ok).toBe(true);
+    await event.waitUntil.mock.calls[0][0];
+    expect(cachesMock.open).toHaveBeenCalledWith('cup-check-v__APP_VERSION__-__BUILD_ID__');
+  });
+
+  it('cacheFirst returns non-ok response without caching it', async () => {
+    await import('../src/sw.js');
+    fetchMock.mockResolvedValueOnce(new Response('error', { status: 503 }));
+    const event = {
+      request: request('https://example.test/pdfjs/pdf.worker.min.mjs'),
+      waitUntil: vi.fn(),
+      respondWith: vi.fn(),
+    };
+
+    handlers.fetch(event);
+    const response = await event.respondWith.mock.calls[0][0];
+
+    expect(response.status).toBe(503);
+    expect(event.waitUntil).not.toHaveBeenCalled();
   });
 
   it('keeps dataset cache untouched when a dataset URL has no release tag', async () => {

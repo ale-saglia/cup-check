@@ -73,7 +73,7 @@ export default defineConfig({
       reportsDirectory: 'coverage',
       thresholds: {
         lines: 100,
-        perFile: true,
+        branches: 90,
       },
     },
   },

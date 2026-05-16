@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildCsvReport, opencupUrlForResult, resultDetail } from '../src/report.js';
+import { buildCsvReport, formatRule, opencupUrlForResult, resultDetail } from '../src/report.js';
 import { displayResults, uniqueResultsByCup } from '../src/results.js';
 import { OUTCOMES, validateCup } from '../src/validator.js';
 
@@ -87,5 +87,24 @@ describe('resultDetail', () => {
 
     expect(csv).toContain("'=1+1;'+SUM(1,1);'-FORMULA;");
     expect(csv).toContain('Avvisi non bloccanti: @WARNING - avviso non documentato');
+  });
+
+  it('formatRule falls back to "regola non documentata" for unknown rule codes', () => {
+    expect(formatRule('R99')).toBe('R99 - regola non documentata');
+  });
+
+  it('csvCell renders null value as empty string in the CSV', () => {
+    const csv = buildCsvReport([
+      {
+        inputRow: null,
+        normalizedValue: 'A12B23000000001',
+        outcome: OUTCOMES.CHECK,
+        failedRules: [],
+        warnings: [],
+      },
+    ]);
+
+    expect(csv).toContain(';A12B23000000001;');
+    expect(csv.split('\n')[1]).toMatch(/^;/);
   });
 });
