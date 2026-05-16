@@ -109,11 +109,13 @@ Questi tipi sostituiscono le convenzioni implicite tra moduli.
 
 **Perché prima:** 254 righe, logica più semplice, nessuna coda asincrona.
 
-### B1. Creare `src/routes/Validator.svelte`
+### ✅ B1. Creare `src/routes/Validator.svelte`
 
 - `<script lang="ts">` con `$state` per: `dataset`, `selectedFile`, i campi che erano in `state.js` (results, parsed, filter, query, …).
 - I moduli helper DOM (`dom.js`, `render.js`, `dialogs.js`, `layout.js`) vengono riassorbiti nel template Svelte: binding dichiarativi rimpiazzano gli event listener manuali.
 - `loadLatestDataset` rimane in `lib/data/dataset-loader.ts`; viene chiamato in `onMount`.
+- I 6 moduli JS importati dal componente (`validator`, `results`, `report`, `dataset-loader`, `transfer`, `text-input`) sono stati convertiti in `.ts` via `git mv`.
+- `router.ts` tipizzato (implicit-any eliminati); `eslint.config.js` esteso con `globals.browser` per i file `.svelte`.
 
 ### B2. Aggiornare `router.ts`
 
