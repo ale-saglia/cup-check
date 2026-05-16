@@ -72,7 +72,9 @@ CHROMIUM_LEGACY_INSTALL  := npx -y @puppeteer/browsers install chromium@$(CHROMI
 #   --disable-features=MediaRouter  disabilita il Media Router che tenta di connettersi a dbus
 CHROMIUM_LEGACY_FLAGS    := --no-sandbox --no-first-run --no-default-browser-check \
                              --disable-gpu --disable-dev-shm-usage \
-                             --disable-features=MediaRouter
+                             --disable-features=MediaRouter \
+                             --test-type --disable-infobars \
+                             --window-size=1920,1080 --window-position=0,0
 
 .PHONY: web-acceptance-chrome-legacy
 web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chromium 109 (installa via npx)
@@ -82,9 +84,11 @@ web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chrom
 	CHROME_PATH="$$CHROME109" npm run test:acceptance
 
 
-VNC_DISPLAY := :99
-VNC_PORT    := 5900
-NOVNC_PORT  := 9000
+VNC_DISPLAY      := :99
+VNC_PORT         := 5900
+NOVNC_PORT       := 9000
+VNC_PREVIEW_PORT := 4174
+VNC_RESOLUTION   := 1920x1080x24
 
 .PHONY: web-preview-chrome-legacy
 web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy — noVNC browser su :9000, VNC raw su :5900
@@ -94,13 +98,14 @@ web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy — noVNC
 	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
 	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
 	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
-	Xvfb $(VNC_DISPLAY) -screen 0 1280x800x24 2>/dev/null & \
+	Xvfb $(VNC_DISPLAY) -screen 0 $(VNC_RESOLUTION) 2>/dev/null & \
 	sleep 0.3; \
-	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT) & \
-	until curl -sf http://127.0.0.1:$(WEB_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
+	cd $(WEB_DIR) && npm run preview -- --port $(VNC_PREVIEW_PORT) & \
+	until curl -sf http://127.0.0.1:$(VNC_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
 	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
-	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
-	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	  "http://127.0.0.1:$(VNC_PREVIEW_PORT)" 2>/dev/null & \
+	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
 	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
 	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
 	wait
@@ -114,13 +119,14 @@ web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chrom
 	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
 	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
 	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
-	Xvfb $(VNC_DISPLAY) -screen 0 1280x800x24 2>/dev/null & \
+	Xvfb $(VNC_DISPLAY) -screen 0 $(VNC_RESOLUTION) 2>/dev/null & \
 	sleep 0.3; \
-	cd $(WEB_DIR) && npm run preview -- --port $(WEB_PREVIEW_PORT) & \
-	until curl -sf http://127.0.0.1:$(WEB_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
+	cd $(WEB_DIR) && npm run preview -- --port $(VNC_PREVIEW_PORT) & \
+	until curl -sf http://127.0.0.1:$(VNC_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
 	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
-	  "http://127.0.0.1:$(WEB_PREVIEW_PORT)" 2>/dev/null & \
-	x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	  "http://127.0.0.1:$(VNC_PREVIEW_PORT)" 2>/dev/null & \
+	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
 	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
 	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
 	wait

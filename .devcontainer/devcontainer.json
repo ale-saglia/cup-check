@@ -31,13 +31,17 @@
       "label": "Vite dev server",
       "onAutoForward": "notify"
     },
+    "4174": {
+      "label": "Vite preview (legacy target)",
+      "onAutoForward": "ignore"
+    },
     "5900": {
       "label": "VNC raw (Chromium legacy)",
       "onAutoForward": "ignore"
     },
     "9000": {
       "label": "noVNC (Chromium legacy)",
-      "onAutoForward": "openBrowser"
+      "onAutoForward": "ignore"
     }
   },
   "postCreateCommand": "make setup",
