@@ -1,5 +1,5 @@
 import Papa from 'papaparse';
-import readXlsxFile, { readSheetNames } from 'read-excel-file';
+import readXlsxFile, { readSheet } from 'read-excel-file/browser';
 
 const SUPPORTED_CSV_TYPES = ['text/csv', 'application/vnd.ms-excel'];
 
@@ -61,9 +61,10 @@ async function parseCsv(file) {
 }
 
 async function parseXlsx(file, sheetName) {
-  const sheetNames = await readSheetNames(file);
+  const sheets = await readXlsxFile(file);
+  const sheetNames = sheets.map((s) => s.sheet);
   const selectedSheetName = sheetName ?? sheetNames[0];
-  const rows = await readXlsxFile(file, { sheet: selectedSheetName });
+  const rows = await readSheet(file, selectedSheetName);
   return normalizeRows(rows, { sheetNames, selectedSheetName });
 }
 
