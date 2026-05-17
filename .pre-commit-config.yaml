@@ -30,3 +30,10 @@ repos:
         language: system
         files: ^packages/web/.*\.(ts|svelte)$
         pass_filenames: false
+
+      - id: web-coverage
+        name: web coverage
+        entry: bash -c 'cd packages/web && npm run test:coverage'
+        language: system
+        pass_filenames: false
+        stages: [pre-push]

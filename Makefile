@@ -16,6 +16,7 @@ help: ## Mostra i comandi disponibili
 .PHONY: setup
 setup: web-install python-install ## Installa le dipendenze di sviluppo
 	cd $(PYTHON_DIR) && uv run pre-commit install
+	cd $(PYTHON_DIR) && uv run pre-commit install --hook-type pre-push
 
 .PHONY: check
 check: web-lint web-check web-test web-build web-audit python-lint python-test ## Esegue tutte le verifiche locali veloci
