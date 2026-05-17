@@ -136,7 +136,7 @@ Montare `Validator.svelte` su `#/` con `mount()` di Svelte 5 invece di chiamare 
 
 **Perché dopo:** 597 righe, coda asincrona, debounce manuale, stato complesso. La migrazione risolve il TODO #5 (separazione responsabilità) come effetto collaterale.
 
-### C1. Identificare i sottocomponenti
+### ✅ C1. Identificare i sottocomponenti
 
 | Componente | Responsabilità |
 |---|---|
@@ -144,7 +144,7 @@ Montare `Validator.svelte` su `#/` con `mount()` di Svelte 5 invece di chiamare 
 | `EntryList.svelte` | tabella voci: rendering, modifica manuale, rimozione |
 | `QueueControls.svelte` | pulsanti coda: avvia, pausa, annulla |
 
-### C2. Stato con Runes
+### ✅ C2. Stato con Runes
 
 ```typescript
 // In PdfExtract.svelte

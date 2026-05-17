@@ -15,7 +15,7 @@
   let entries = $state<Entry[]>([]);
   let nextId = $state(0);
   let processing = $state(false);
-  let queue = $state<Entry[]>([]);
+  let queue: Entry[] = [];
   let generation = $state(0);
 
   // ── Derived ────────────────────────────────────────────────────────────────
@@ -38,18 +38,21 @@
   // ── File processing ────────────────────────────────────────────────────────
 
   function addFiles(files: File[]) {
-    const newEntries: Entry[] = files.map((file) => ({
-      id: nextId++,
-      file,
-      name: file.name,
-      status: 'queued',
-      source: null,
-      cups: [],
-      ocrProgress: null,
-      error: null,
-    }));
-    entries.push(...newEntries);
-    queue.push(...newEntries);
+    const startIdx = entries.length;
+    files.forEach((file) => {
+      entries.push({
+        id: nextId++,
+        file,
+        name: file.name,
+        status: 'queued',
+        source: null,
+        cups: [],
+        ocrProgress: null,
+        error: null,
+      });
+    });
+    // entries.slice() returns the reactive proxies; mutations via these proxies update the template
+    queue.push(...entries.slice(startIdx));
     drainQueue();
   }
 
@@ -197,7 +200,7 @@
   function handleClear() {
     generation++;
     entries = [];
-    queue = [];
+    queue.length = 0;
     processing = false;
   }
 
@@ -289,6 +292,7 @@
 </p>
 
 <div
+  id="pdf-dropzone"
   class="dropzone pdf-dropzone"
   class:pdf-dropzone--drag={dropzoneActive}
   role="region"
@@ -299,6 +303,7 @@
 >
   <label>
     <input
+      id="pdf-file-input"
       type="file"
       multiple
       accept="application/pdf"

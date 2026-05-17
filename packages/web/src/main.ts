@@ -2,10 +2,7 @@ import { mountLayout } from './layout.js';
 import { register, start } from './router.js';
 import { mount, unmount } from 'svelte';
 import Validator from './routes/Validator.svelte';
-import {
-  mount as mountPdfExtract,
-  unmount as unmountPdfExtract,
-} from './views/pdf-extract-view.js';
+import PdfExtract from './routes/PdfExtract.svelte';
 import './styles.css';
 
 const mainSlot = mountLayout(document.querySelector('#app'));
@@ -22,7 +19,18 @@ register(
     validatorUnmount = null;
   },
 );
-register('#/pdf-extract', () => mountPdfExtract(mainSlot), unmountPdfExtract);
+let pdfExtractUnmount: (() => void) | null = null;
+register(
+  '#/pdf-extract',
+  () => {
+    const instance = mount(PdfExtract, { target: mainSlot! });
+    pdfExtractUnmount = () => unmount(instance);
+  },
+  () => {
+    pdfExtractUnmount?.();
+    pdfExtractUnmount = null;
+  },
+);
 start();
 
 if ('serviceWorker' in navigator) {

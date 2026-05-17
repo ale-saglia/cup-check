@@ -324,19 +324,14 @@ describe('main', () => {
   });
 
   it("smonta il componente Validator quando si naviga verso un'altra rotta", async () => {
-    vi.doMock('../src/views/pdf-extract-view.js', () => ({
-      mount: vi.fn(),
-      unmount: vi.fn(),
-    }));
-
     await loadMain();
-    expect(document.querySelector('.project-note')).toBeTruthy();
+    expect(document.querySelector('#cup-textarea')).toBeTruthy();
 
     window.history.replaceState({}, '', '#/pdf-extract');
     window.dispatchEvent(new Event('hashchange'));
     await flush();
 
-    expect(document.querySelector('.project-note')).toBeNull();
+    expect(document.querySelector('#cup-textarea')).toBeNull();
   });
 
   it('toggles all panels', async () => {

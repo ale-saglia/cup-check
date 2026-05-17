@@ -13,11 +13,11 @@
 </script>
 
 <div class="button-row">
-  <button class="primary" type="button" disabled={actionsDisabled} onclick={onSend}>
+  <button id="pdf-send-btn" class="primary" type="button" disabled={actionsDisabled} onclick={onSend}>
     Apri nel verificatore
   </button>
-  <button class="secondary" type="button" disabled={actionsDisabled} onclick={onExport}>
+  <button id="pdf-export-btn" class="secondary" type="button" disabled={actionsDisabled} onclick={onExport}>
     Esporta CSV (file ↔ CUP)
   </button>
-  <button class="secondary" type="button" onclick={onClear}>Pulisci</button>
+  <button id="pdf-clear-btn" class="secondary" type="button" onclick={onClear}>Pulisci</button>
 </div>
