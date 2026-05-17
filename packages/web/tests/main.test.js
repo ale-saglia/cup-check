@@ -109,6 +109,7 @@ describe('main', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
     vi.unstubAllGlobals();
+    window.history.replaceState({}, '', '#/');
   });
 
   it('registers the service worker and shows dataset readiness', async () => {
@@ -320,6 +321,22 @@ describe('main', () => {
 
     expect(document.querySelector('#cup-textarea').value).toBe('');
     expect(sessionStorage.getItem('cup-check:last-results')).toBeNull();
+  });
+
+  it("smonta il componente Validator quando si naviga verso un'altra rotta", async () => {
+    vi.doMock('../src/views/pdf-extract-view.js', () => ({
+      mount: vi.fn(),
+      unmount: vi.fn(),
+    }));
+
+    await loadMain();
+    expect(document.querySelector('.project-note')).toBeTruthy();
+
+    window.history.replaceState({}, '', '#/pdf-extract');
+    window.dispatchEvent(new Event('hashchange'));
+    await flush();
+
+    expect(document.querySelector('.project-note')).toBeNull();
   });
 
   it('toggles all panels', async () => {
