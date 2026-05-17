@@ -1,6 +1,7 @@
 import { mountLayout } from './layout.js';
 import { register, start } from './router.js';
-import { mount as mountValidator, unmount as unmountValidator } from './views/validator-view.js';
+import { mount, unmount } from 'svelte';
+import Validator from './routes/Validator.svelte';
 import {
   mount as mountPdfExtract,
   unmount as unmountPdfExtract,
@@ -9,7 +10,18 @@ import './styles.css';
 
 const mainSlot = mountLayout(document.querySelector('#app'));
 
-register('#/', () => mountValidator(mainSlot), unmountValidator);
+let validatorUnmount: (() => void) | null = null;
+register(
+  '#/',
+  () => {
+    const instance = mount(Validator, { target: mainSlot! });
+    validatorUnmount = () => unmount(instance);
+  },
+  () => {
+    validatorUnmount?.();
+    validatorUnmount = null;
+  },
+);
 register('#/pdf-extract', () => mountPdfExtract(mainSlot), unmountPdfExtract);
 start();
 

@@ -2,6 +2,15 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
+// Svelte 5 defers DOM updates to microtasks; flush() drains the queue.
+const flush = async () => {
+  for (let i = 0; i < 4; i++) await Promise.resolve();
+};
+
+// vi.mock is hoisted so the factory survives vi.resetModules() across tests.
+vi.mock('../src/lib/core/parser.js', () => ({ parseFile: vi.fn(), buildParsedRows: vi.fn() }));
+vi.mock('../src/lib/data/dataset-loader.js', () => ({ loadLatestDataset: vi.fn() }));
+
 const validCup = 'G17H03000130001';
 const missingCup = 'H11B22001230001';
 
@@ -57,29 +66,36 @@ async function loadMain({
   );
   vi.stubGlobal('navigator', serviceWorker ? { serviceWorker: { register: vi.fn() } } : {});
 
-  const parseFile = vi.fn(async (_file, options = {}) => {
-    if (parseFails || (parseFailsOnSheet && options.sheetName)) throw new Error('parse failed');
-    return parsed({
-      selectedSheetName: options.sheetName ?? '',
-      sheetNames: ['Foglio 1', 'Foglio 2'],
-    });
-  });
-  const buildParsedRows = vi.fn((rawRows, headerPresent) => parsed({ rawRows, headerPresent }));
-  const loadLatestDataset = vi.fn(async ({ onProgress } = {}) => {
-    onProgress?.({ datasetTag: 'dataset-2026-05', percent: 50 });
-    if (!datasetSucceeds) throw new Error('offline');
-    return {
-      manifest: { dataset_tag: 'dataset-2026-05' },
-      hasCup: (cup) => cup === validCup,
-    };
-  });
+  // Import the mocked modules to obtain the shared vi.fn() references,
+  // then configure their implementations for this test scenario.
+  const { parseFile, buildParsedRows } = await import('../src/lib/core/parser.js');
+  const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
 
-  vi.doMock('../src/lib/core/parser.js', () => ({ parseFile, buildParsedRows }));
-  vi.doMock('../src/lib/data/dataset-loader.js', () => ({ loadLatestDataset }));
+  vi.mocked(parseFile)
+    .mockReset()
+    .mockImplementation(async (_file, options = {}) => {
+      if (parseFails || (parseFailsOnSheet && options.sheetName)) throw new Error('parse failed');
+      return parsed({
+        selectedSheetName: options.sheetName ?? '',
+        sheetNames: ['Foglio 1', 'Foglio 2'],
+      });
+    });
+  vi.mocked(buildParsedRows)
+    .mockReset()
+    .mockImplementation((rawRows, headerPresent) => parsed({ rawRows, headerPresent }));
+  vi.mocked(loadLatestDataset)
+    .mockReset()
+    .mockImplementation(async ({ onProgress } = {}) => {
+      onProgress?.({ datasetTag: 'dataset-2026-05', percent: 50 });
+      if (!datasetSucceeds) throw new Error('offline');
+      return {
+        manifest: { dataset_tag: 'dataset-2026-05' },
+        hasCup: (cup) => cup === validCup,
+      };
+    });
 
   await import('../src/main.js');
-  await Promise.resolve();
-  await Promise.resolve();
+  await flush();
 
   return {
     parseFile,
@@ -119,8 +135,7 @@ describe('main', () => {
     document.querySelector('#cup-textarea').value = `${validCup}\n${missingCup}`;
 
     document.querySelector('#text-check-button').click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(document.querySelector('#text-toggle-meta').textContent).toBe('2 CUP');
     expect(document.querySelector('#summary').textContent).toContain('1 trovati OpenCUP');
@@ -158,33 +173,35 @@ describe('main', () => {
     const file = new File(['cup'], 'input.csv', { type: 'text/csv' });
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [file] });
 
-    document.querySelector('#file-input').dispatchEvent(new Event('change'));
-    await Promise.resolve();
-    await Promise.resolve();
+    document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
 
-    expect(parseFile).toHaveBeenCalledWith(file);
+    expect(parseFile).toHaveBeenCalledWith(file, {});
     expect(document.querySelector('#preview-panel').classList.contains('hidden')).toBe(false);
 
     document.querySelector('#sheet-select').value = 'Foglio 2';
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     expect(parseFile).toHaveBeenCalledWith(file, { sheetName: 'Foglio 2' });
 
     document.querySelector('#column-select').value = '1';
-    document.querySelector('#column-select').dispatchEvent(new Event('change'));
+    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     expect(document.querySelector('#preview-table .selected')?.textContent).toBe('Trovato');
 
     document.querySelector('#header-toggle').checked = false;
-    document.querySelector('#header-toggle').dispatchEvent(new Event('change'));
+    document.querySelector('#header-toggle').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     expect(buildParsedRows).toHaveBeenCalled();
 
     document.querySelector('#column-select').value = '0';
-    document.querySelector('#column-select').dispatchEvent(new Event('change'));
+    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector('#skip-missing-cup').checked = false;
-    document.querySelector('#skip-missing-cup').dispatchEvent(new Event('change'));
+    document
+      .querySelector('#skip-missing-cup')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector('#check-button').click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     expect(document.querySelector('#summary').textContent).toContain('3 CUP unici da 3 righe');
   });
@@ -193,22 +210,22 @@ describe('main', () => {
     await loadMain();
     const file = new File(['cup'], 'input.csv', { type: 'text/csv' });
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [file] });
-    document.querySelector('#file-input').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     document.querySelector('#column-select').append(new Option('Assente', '99'));
     document.querySelector('#column-select').value = '99';
-    document.querySelector('#column-select').dispatchEvent(new Event('change'));
+    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
 
     document.querySelector('#check-button').click();
-    await Promise.resolve();
+    await flush();
 
-    expect(document.querySelector('#summary').textContent).toContain('0 CUP unici da 0 righe');
+    expect(document.querySelector('#results-toggle-meta').textContent).toBe('Nessun risultato');
   });
 
   it('ignores sheet changes before a file is selected', async () => {
     const { parseFile } = await loadMain();
 
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change'));
+    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
     await Promise.resolve();
 
     expect(parseFile).not.toHaveBeenCalled();
@@ -218,16 +235,16 @@ describe('main', () => {
     await loadMain();
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [] });
 
-    document.querySelector('#file-input').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     expect(alert).not.toHaveBeenCalled();
 
     await loadMain({ parseFails: true });
     const file = new File(['bad'], 'bad.csv', { type: 'text/csv' });
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [file] });
 
-    document.querySelector('#file-input').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
 
     expect(alert).toHaveBeenCalledWith('parse failed');
   });
@@ -236,12 +253,12 @@ describe('main', () => {
     await loadMain({ parseFailsOnSheet: true });
     const file = new File(['cup'], 'input.csv', { type: 'text/csv' });
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [file] });
-    document.querySelector('#file-input').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
 
     document.querySelector('#sheet-select').value = 'Foglio 2';
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change'));
-    await Promise.resolve();
+    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
 
     expect(alert).toHaveBeenCalledWith('parse failed');
   });
@@ -250,27 +267,34 @@ describe('main', () => {
     await loadMain();
     document.querySelector('#cup-textarea').value = `${validCup}\n${validCup}\nerrato`;
     document.querySelector('#text-check-button').click();
-    await Promise.resolve();
-    await Promise.resolve();
+    await flush();
 
     document.querySelector('#group-same-cups').checked = false;
-    document.querySelector('#group-same-cups').dispatchEvent(new Event('change'));
+    document
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     expect(document.querySelector('#results-toggle-meta').textContent).toBe('3 righe');
 
     document.querySelector('#filter-select').value = 'INVALIDO_FORMATO';
-    document.querySelector('#filter-select').dispatchEvent(new Event('change'));
+    document.querySelector('#filter-select').dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector('#search-input').value = 'r1';
-    document.querySelector('#search-input').dispatchEvent(new Event('input'));
+    document.querySelector('#search-input').dispatchEvent(new Event('input', { bubbles: true }));
+    await flush();
     expect(document.querySelectorAll('#results-table tbody tr')).toHaveLength(1);
 
     document.querySelector('#filter-select').value = 'ALL';
-    document.querySelector('#filter-select').dispatchEvent(new Event('change'));
+    document.querySelector('#filter-select').dispatchEvent(new Event('change', { bubbles: true }));
     document.querySelector('#search-input').value = '';
-    document.querySelector('#search-input').dispatchEvent(new Event('input'));
+    document.querySelector('#search-input').dispatchEvent(new Event('input', { bubbles: true }));
     document.querySelector('#group-same-cups').checked = true;
-    document.querySelector('#group-same-cups').dispatchEvent(new Event('change'));
+    document
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
     const rowsButton = document.querySelector('.multiple-rows-button');
     rowsButton.click();
+    await flush();
     expect(document.querySelector('#detail-dialog-label').textContent).toBe(
       'Righe originali: 1, 2',
     );
@@ -281,6 +305,7 @@ describe('main', () => {
       clientWidth: { configurable: true, value: 10 },
     });
     detail.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    await flush();
     expect(document.querySelector('#detail-dialog-label').textContent).toContain('TROVATO_OPENCUP');
   });
 
@@ -289,7 +314,7 @@ describe('main', () => {
     sessionStorage.setItem('cup-check:last-results', 'old');
     document.querySelector('#cup-textarea').value = validCup;
     document.querySelector('#text-check-button').click();
-    await Promise.resolve();
+    await flush();
 
     document.querySelector('#clear-button').click();
 
@@ -303,6 +328,7 @@ describe('main', () => {
     for (const selector of ['#file-toggle', '#text-toggle', '#preview-toggle', '#results-toggle']) {
       document.querySelector(selector).click();
     }
+    await flush();
 
     expect(document.querySelector('#file').classList.contains('collapsed')).toBe(true);
     expect(document.querySelector('#text').classList.contains('collapsed')).toBe(true);

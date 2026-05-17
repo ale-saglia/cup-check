@@ -586,6 +586,12 @@ td.selected {
 }
 
 .detail-cell {
+  display: block;
+  border: 0;
+  padding: 0;
+  background: transparent;
+  font: inherit;
+  text-align: left;
   max-width: 32ch;
   overflow: hidden;
   text-overflow: ellipsis;

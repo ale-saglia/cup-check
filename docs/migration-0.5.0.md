@@ -117,7 +117,7 @@ Questi tipi sostituiscono le convenzioni implicite tra moduli.
 - I 6 moduli JS importati dal componente (`validator`, `results`, `report`, `dataset-loader`, `transfer`, `text-input`) sono stati convertiti in `.ts` via `git mv`.
 - `router.ts` tipizzato (implicit-any eliminati); `eslint.config.js` esteso con `globals.browser` per i file `.svelte`.
 
-### B2. Aggiornare `router.ts`
+### ✅ B2. Aggiornare `router.ts`
 
 Montare `Validator.svelte` su `#/` con `mount()` di Svelte 5 invece di chiamare `validatorView.mount(container)`. L'`unmount` diventa `component.$destroy()`.
 

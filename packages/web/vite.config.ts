@@ -48,6 +48,9 @@ const appVersion = readAppVersion();
 
 export default defineConfig({
   base: './',
+  resolve: {
+    conditions: ['browser'],
+  },
   define: {
     'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
   },

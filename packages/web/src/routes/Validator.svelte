@@ -139,7 +139,13 @@
     if (transferMatch) {
       history.replaceState(null, '', '#/');
       const file = consumeTransfer(transferMatch[1]);
-      if (file) await loadFileParsed(file);
+      if (file) {
+        await loadFileParsed(file);
+        filePanelCollapsed = true;
+        textPanelCollapsed = true;
+        previewPanelVisible = true;
+        previewPanelCollapsed = false;
+      }
     }
   });
 
@@ -312,16 +318,15 @@
     URL.revokeObjectURL(url);
   }
 
-  function handleResultsTableClick(event: MouseEvent) {
-    const rowsButton = (event.target as Element).closest('.multiple-rows-button');
-    if (rowsButton) {
-      detailDialogContent = `Righe originali: ${(rowsButton as HTMLElement).dataset.rows}`;
-      detailDialogEl.showModal();
-      return;
-    }
-    const cell = (event.target as Element).closest('.detail-cell');
-    if (!cell || (cell as HTMLElement).scrollWidth <= (cell as HTMLElement).clientWidth) return;
-    detailDialogContent = (cell.closest('td') as HTMLElement).title;
+  function openRowsDialog(rowsLabel: string) {
+    detailDialogContent = `Righe originali: ${rowsLabel}`;
+    detailDialogEl.showModal();
+  }
+
+  function openDetailCellDialog(event: MouseEvent, cellDetail: string) {
+    const el = (event.target as Element).closest('.detail-cell') as HTMLElement | null;
+    if (!el || el.scrollWidth <= el.clientWidth) return;
+    detailDialogContent = cellDetail;
     detailDialogEl.showModal();
   }
 
@@ -556,9 +561,7 @@
         </label>
       </div>
       <div class="table-wrap">
-        <!-- svelte-ignore a11y_click_events_have_key_events a11y_no_noninteractive_element_interactions -->
-        <table id="results-table" bind:this={resultsTableEl}
-          onclick={handleResultsTableClick}>
+        <table id="results-table" bind:this={resultsTableEl}>
           {#if filteredResults.length > renderedResults.length}
             <caption>Mostrate {renderedResults.length} di {filteredResults.length} righe filtrate</caption>
           {/if}
@@ -573,7 +576,7 @@
               </tr>
             </thead>
             <tbody>
-              {#each renderedResults as result (result.normalizedValue)}
+              {#each renderedResults as result (result.inputRow ?? result.normalizedValue)}
                 {@const rows = result.inputRows ?? [result.inputRow]}
                 {@const detail = resultDetail(result)}
                 {@const opencupUrl = opencupUrlForResult(result)}
@@ -583,8 +586,8 @@
                       {rows[0] ?? ''}
                     {:else}
                       <button class="link-button multiple-rows-button" type="button"
-                        data-rows={resultRowsLabel(result)}
-                        aria-label="Mostra tutte le righe per il CUP">
+                        aria-label="Mostra tutte le righe per il CUP"
+                        onclick={() => openRowsDialog(resultRowsLabel(result))}>
                         {rows[0] ?? ''}++
                       </button>
                     {/if}
@@ -595,8 +598,11 @@
                   <td>
                     <span class="badge {badgeClass(result.outcome)}">{result.outcome}</span>
                   </td>
-                  <td title={detail}>
-                    <div class="detail-cell">{detail}</div>
+                  <td>
+                    <button type="button" class="detail-cell" title={detail}
+                      onclick={(e) => openDetailCellDialog(e, detail)}>
+                      {detail}
+                    </button>
                   </td>
                   <td>
                     {#if opencupUrl}
