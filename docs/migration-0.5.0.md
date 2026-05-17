@@ -121,7 +121,7 @@ Questi tipi sostituiscono le convenzioni implicite tra moduli.
 
 Montare `Validator.svelte` su `#/` con `mount()` di Svelte 5 invece di chiamare `validatorView.mount(container)`. L'`unmount` diventa `component.$destroy()`.
 
-### B3. Rimuovere `validator-view.js` e `state.js`
+### ✅ B3. Rimuovere `validator-view.js` e `state.js`
 
 `state.js` era un oggetto mutabile globale; con Runes lo stato è locale al componente. Verificare che nessun altro modulo importi `state.js` prima di rimuoverlo.
 
