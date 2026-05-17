@@ -12,7 +12,8 @@
         "esbenp.prettier-vscode",
         "alexcvzz.vscode-sqlite",
         "ms-python.python",
-        "vitest.explorer"
+        "vitest.explorer",
+        "svelte.svelte-vscode"
       ],
       "settings": {
         "editor.formatOnSave": true,
