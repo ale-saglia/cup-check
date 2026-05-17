@@ -83,3 +83,34 @@ export interface DownloadProgress {
   percent: number;
   datasetTag: string;
 }
+
+// ── PdfExtract types ──────────────────────────────────────────────────────────
+
+export type EntryStatus = 'queued' | 'parsing' | 'ocr' | 'done' | 'error';
+export type CupSource = 'text' | 'ocr' | 'manuale';
+
+export interface OcrProgress {
+  ocrLoading: boolean;
+  page: number;
+  totalPages: number;
+}
+
+export interface Cup {
+  id: string;
+  value: string;
+  formalValid: boolean;
+  source: CupSource;
+  manual: boolean;
+  editing: boolean;
+}
+
+export interface Entry {
+  id: number;
+  file: File | null;
+  name: string;
+  status: EntryStatus;
+  source: 'text' | 'ocr' | null;
+  cups: Cup[];
+  ocrProgress: OcrProgress | null;
+  error: string | null;
+}
