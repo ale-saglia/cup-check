@@ -4,6 +4,18 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
+  "features": {
+    "ghcr.io/coder/devcontainer-features/code-server:2": {
+      "auth": "none",
+      "disableTelemetry": true,
+      "disableUpdateCheck": true,
+      "disableWorkspaceTrust": true,
+      "workspace": "/workspaces/cup-check",
+      "appName": "cup-check",
+      "appGroup": "Web Editors",
+      "appShare": "owner"
+    }
+  },
   "customizations": {
     "vscode": {
       "extensions": [
@@ -12,6 +24,7 @@
         "esbenp.prettier-vscode",
         "alexcvzz.vscode-sqlite",
         "ms-python.python",
+        "tamasfe.even-better-toml",
         "vitest.explorer",
         "svelte.svelte-vscode"
       ],
