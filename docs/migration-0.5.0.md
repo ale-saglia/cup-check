@@ -125,7 +125,7 @@ Montare `Validator.svelte` su `#/` con `mount()` di Svelte 5 invece di chiamare 
 
 `state.js` era un oggetto mutabile globale; con Runes lo stato è locale al componente. Verificare che nessun altro modulo importi `state.js` prima di rimuoverlo.
 
-### B4. Test
+### ✅ B4. Test
 
 - Aggiornare i test unitari della vista con `@testing-library/svelte`.
 - Acceptance Playwright: il flusso verificatore deve passare invariato (upload CSV, validazione, export).

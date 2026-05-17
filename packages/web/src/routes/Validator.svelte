@@ -140,11 +140,15 @@
       history.replaceState(null, '', '#/');
       const file = consumeTransfer(transferMatch[1]);
       if (file) {
-        await loadFileParsed(file);
-        filePanelCollapsed = true;
-        textPanelCollapsed = true;
-        previewPanelVisible = true;
-        previewPanelCollapsed = false;
+        try {
+          await loadFileParsed(file);
+          filePanelCollapsed = true;
+          textPanelCollapsed = true;
+          previewPanelVisible = true;
+          previewPanelCollapsed = false;
+        } catch (error) {
+          alert((error as Error).message);
+        }
       }
     }
   });
@@ -488,7 +492,7 @@
           {#if parsed}
             <thead>
               <tr>
-                {#each parsed.headers as header (header)}
+                {#each parsed.headers as header, i (i)}
                   <th>{header}</th>
                 {/each}
               </tr>
