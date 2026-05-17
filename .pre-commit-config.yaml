@@ -23,3 +23,10 @@ repos:
         language: system
         files: ^(packages/web/|tests/fixtures/)
         types_or: [css, html, javascript, json, markdown, yaml]
+
+      - id: svelte-check
+        name: svelte-check
+        entry: bash -c 'cd packages/web && npm run check'
+        language: system
+        files: ^packages/web/.*\.(ts|svelte)$
+        pass_filenames: false

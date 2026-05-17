@@ -18,7 +18,7 @@ setup: web-install python-install ## Installa le dipendenze di sviluppo
 	cd $(PYTHON_DIR) && uv run pre-commit install
 
 .PHONY: check
-check: web-lint web-test web-build web-audit python-lint python-test ## Esegue tutte le verifiche locali veloci
+check: web-lint web-check web-test web-build web-audit python-lint python-test ## Esegue tutte le verifiche locali veloci
 
 .PHONY: release-check
 release-check: check web-acceptance web-acceptance-chrome-legacy web-lighthouse ## Esegue le prove browser/Lighthouse; acceptance sia con Chromium moderno che con quello legacy
@@ -43,6 +43,10 @@ web-preview-dataset: web-build ## Builda e serve la preview includendo il datase
 .PHONY: web-lint
 web-lint: ## Esegue ESLint sul package web
 	cd $(WEB_DIR) && npm run lint
+
+.PHONY: web-check
+web-check: ## Esegue svelte-check (type-check file .svelte e .ts)
+	cd $(WEB_DIR) && npm run check
 
 .PHONY: web-test
 web-test: ## Esegue i test Vitest una volta
