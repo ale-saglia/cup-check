@@ -26,11 +26,13 @@ Il mini-DSL in `opencup_dataset_schema.yaml` (tipi `cup_year_suffix`, `joined_te
 
 ## Media priorità
 
-### 4. Aggiungere cancellazione al dataset loader web
+### ~~4. Aggiungere cancellazione al dataset loader web~~ ✅
 
 Se l'utente naviga via dalla vista verificatore durante il download dei chunk, il download continua in background senza possibilità di annullamento. Esporre un `AbortController` da `loadLatestDataset` e invocarne l'abort nell'`unmount` della validator-view. Diventa un problema reale con la milestone `0.5.0` (batch >100k con Web Worker).
 
-- File: `packages/web/src/dataset-loader.js`, `packages/web/src/views/validator-view.js`
+- File: `packages/web/src/lib/data/dataset-loader.ts`, `packages/web/src/routes/Validator.svelte`
+
+Risolto 2026-05-18: `AbortSignal` propagato su tutta la catena di fetch in `dataset-loader.ts` (`discoverLatestDataset`, `downloadCupIndex`, `fetchAndVerifyChunk`, `fetchJson`); `Validator.svelte` crea un `AbortController` su `onMount` e lo annulla su `onDestroy`. Aggiunta contestualmente la cache `CacheStorage` con invalidazione per hash SHA-256: il manifest viene sempre fetchato dalla rete, il suo `cup_index.sha256` viene confrontato con l'hash in cache — download solo se diverso, con fallback offline se la rete non è disponibile.
 
 ### 5. Ridurre la complessità di pdf-extract-view.js
 
@@ -59,6 +61,8 @@ Decisione in [ADR 0009](docs/adr/0009-svelte-frontend-migration.md). Piano detta
 Nota 2026-05-18: C6 ha potato `render.js`, `dom.js` e `dialogs.js` con i relativi test morti e ha incluso i componenti Svelte nella coverage V8 sul codice vivo. Restano da assorbire in Fase D `src/layout.js` e il router artigianale (`router.ts`), ancora usati dall'app.
 
 Nota 2026-05-18 (D1): Web Worker per batch >100k implementato — `validation-worker.ts`, `validator.worker.ts`, `ProgressBar.svelte`, integrazione in `Validator.svelte` con `AbortController` e pulsante Annulla. Mancano D2–D5.
+
+Nota 2026-05-18 (TODO #4 chiuso): `AbortSignal` per il dataset loader e cache `CacheStorage` con invalidazione SHA-256 implementati e testati in `dataset-loader.ts`; `Validator.svelte` annulla il caricamento su `onDestroy`.
 
 ## Bassa priorità
 

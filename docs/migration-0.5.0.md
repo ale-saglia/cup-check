@@ -193,7 +193,7 @@ Tutte e quattro le feature vengono sviluppate sui componenti Svelte della Fase B
 - `src/components/ProgressBar.svelte`: progress bar percentuale.
 - `Validator.svelte`: integra `validateRows`, mostra progresso e pulsante Annulla, disabilita i trigger durante la corsa; `onDestroy` interrompe batch in corso.
 - Test: `validation-worker.test.js` (409 righe), `Validator.batch.test.js` (95 righe), `ProgressBar.svelte.test.js`.
-- TODO #4 (cancellazione `loadLatestDataset`) non incluso in questa fase; rimane aperto in TODO.md.
+- TODO #4 (cancellazione `loadLatestDataset`) risolto contestualmente: `AbortSignal` propagato su tutta la catena di fetch in `dataset-loader.ts`; `Validator.svelte` crea un `AbortController` su `onMount` e lo annulla su `onDestroy`. Aggiunta anche la cache `CacheStorage` con invalidazione per hash SHA-256 e fallback offline.
 
 ### D2. Drag-drop multi-file
 
