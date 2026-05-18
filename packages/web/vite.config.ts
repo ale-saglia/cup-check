@@ -74,7 +74,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       all: true,
-      include: ['src/**/*.{js,ts}'],
+      include: ['src/**/*.{js,ts,svelte}'],
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',
       thresholds: {

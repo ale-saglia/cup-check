@@ -201,6 +201,58 @@ describe('PdfExtract: elaborazione file', () => {
     expect(container.innerHTML).toContain('&lt;script&gt;');
   });
 
+  it('completa il percorso OCR e marca la fonte come ocr', async () => {
+    vi.mocked(extractPdfText).mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true });
+    vi.mocked(ocrPdf).mockResolvedValue({ pages: [CUP1] });
+    const { container } = render(PdfExtract);
+    uploadFiles(container, [makeFile()]);
+    await waitDone();
+    expect(container.querySelector('.cup-cell')?.textContent).toBe(CUP1);
+    expect(container.textContent).toContain('ocr');
+  });
+
+  it('usa il messaggio fallback per errori non Error', async () => {
+    vi.mocked(extractPdfText).mockRejectedValue({});
+    const { container } = render(PdfExtract);
+    uploadFiles(container, [makeFile()]);
+    await waitError();
+    expect(container.textContent).toContain('Errore sconosciuto');
+  });
+
+  it('accoda nuovi file mentre una elaborazione è già in corso', async () => {
+    let resolveFirst;
+    vi.mocked(extractPdfText)
+      .mockReturnValueOnce(
+        new Promise((resolve) => {
+          resolveFirst = resolve;
+        }),
+      )
+      .mockResolvedValue({ pages: [CUP2], totalChars: 100, needsOcr: false });
+
+    const { container } = render(PdfExtract);
+    uploadFiles(container, [makeFile('primo.pdf')]);
+    await waitFor(() => expect(container.querySelector('#pdf-results-area')).not.toBeNull());
+
+    uploadFiles(container, [makeFile('secondo.pdf')]);
+    flushSync();
+    expect(vi.mocked(extractPdfText)).toHaveBeenCalledTimes(1);
+    expect(container.textContent).toContain('secondo.pdf');
+
+    resolveFirst({ pages: [CUP1], totalChars: 100, needsOcr: false });
+    await waitFor(() => expect(vi.mocked(extractPdfText)).toHaveBeenCalledTimes(2));
+    await waitFor(() => expect(vi.mocked(extractCupsFromPages)).toHaveBeenCalledTimes(2));
+    flushSync();
+    expect(container.querySelectorAll('.cup-cell')).toHaveLength(2);
+  });
+
+  it('drop senza dataTransfer non aggiunge entry', () => {
+    const { container } = render(PdfExtract);
+    const dropzone = container.querySelector('#pdf-dropzone');
+    dropzone.dispatchEvent(makeDragEvent('drop'));
+    flushSync();
+    expect(container.querySelector('#pdf-results-area')).toBeNull();
+  });
+
   it('mostra "Nessun CUP rilevato" se il PDF non contiene CUP', async () => {
     vi.mocked(extractCupsFromPages).mockReturnValue(makeExtractResult([]));
     const { container } = render(PdfExtract);

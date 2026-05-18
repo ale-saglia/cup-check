@@ -56,6 +56,8 @@ Decisione in [ADR 0009](docs/adr/0009-svelte-frontend-migration.md). Piano detta
 
 - File: `packages/web/src/`, `packages/web/vite.config.js`, `packages/web/package.json`
 
+Nota 2026-05-18: C6 ha potato `render.js`, `dom.js` e `dialogs.js` con i relativi test morti e ha incluso i componenti Svelte nella coverage V8 sul codice vivo. Restano da assorbire in Fase D `src/layout.js` e il router artigianale (`router.ts`), ancora usati dall'app.
+
 ## Bassa priorità
 
 ### 8. Rafforzare la robustezza di drainQueue nel PDF view

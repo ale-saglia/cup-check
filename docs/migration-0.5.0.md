@@ -167,9 +167,18 @@ $effect(() => {
 
 Stessi passi di B2–B5 per la vista PDF.
 
-### C6. Coverage `.svelte`
+### ✅ C6. Coverage `.svelte`
 
-Ricalibrate le soglie in `vite.config.ts`: i file `.svelte` non hanno branch coverage misurabile via v8. Aggiornare `include` e considerare `exclude` per i template.
+Ricalibrate le soglie in `vite.config.ts`: la coverage V8 include anche i file `.svelte` con `include: ['src/**/*.{js,ts,svelte}']`; `svelte-check` resta il gate separato per il type checking dei componenti.
+
+La potatura C6 ha rimosso anche il codice morto rimasto dopo la migrazione Svelte:
+
+- `src/render.js`, `src/dom.js`, `src/dialogs.js`;
+- i relativi test `tests/render.test.js`, `tests/dom.test.js`, `tests/dialogs.test.js`, che tenevano verdi moduli non importati dall'app.
+
+Baseline prima della rimozione: `lines 99.58%`, `branches 95.56%` con denominatore ancora inquinato da `render.js`. Dopo la rimozione e l'inclusione dei componenti Svelte nella coverage V8: `lines 99.71%`, `branches 90.11%` sul codice vivo misurato; le soglie target restano `lines: 95` e `branches: 90`.
+
+Debito residuo per Fase D: `src/layout.js` resta vivo perché importato da `main.ts`; anche il router artigianale resta temporaneamente in `router.ts`. Entrambi vanno assorbiti nel layer Svelte durante le feature `0.5.0`, senza anticipare refactor in C6.
 
 ---
 
