@@ -8,6 +8,9 @@ const DATASET_TAG_PATTERN = /^dataset-\d{4}-\d{2}$/;
 const MIN_SCHEMA_VERSION = 1;
 const MAX_CHUNK_RETRIES = 2;
 const CHUNK_INACTIVITY_TIMEOUT_MS = 30_000;
+const CACHE_NAME = 'cup-check-dataset-v1';
+const CACHE_KEY_SQLITE = 'cup-check://dataset/sqlite';
+const CACHE_KEY_META = 'cup-check://dataset/meta';
 
 type FetchFn = typeof fetch;
 interface LoadDatasetOptions {
@@ -15,6 +18,7 @@ interface LoadDatasetOptions {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   initSql?: (options?: Record<string, unknown>) => Promise<any>;
   onProgress?: (progress: DownloadProgress) => void;
+  signal?: AbortSignal;
 }
 
 let datasetPromise: Promise<Dataset> | null = null;
@@ -32,14 +36,14 @@ export function loadLatestDataset(options: LoadDatasetOptions = {}): Promise<Dat
   return datasetPromise;
 }
 
-export async function discoverLatestDataset(fetchFn: FetchFn = fetch): Promise<DatasetLatestPointer> {
-  const latest = await fetchJson(fetchFn, LATEST_DATASET_URL).catch(() => null);
+export async function discoverLatestDataset(fetchFn: FetchFn = fetch, signal?: AbortSignal): Promise<DatasetLatestPointer> {
+  const latest = await fetchJson(fetchFn, LATEST_DATASET_URL, signal).catch(() => null);
   if (isLatestPointer(latest)) return latest;
-  return discoverLatestFromGitHub(fetchFn);
+  return discoverLatestFromGitHub(fetchFn, signal);
 }
 
-async function discoverLatestFromGitHub(fetchFn: FetchFn): Promise<DatasetLatestPointer> {
-  const releases = await fetchJson(fetchFn, GITHUB_RELEASES_URL);
+async function discoverLatestFromGitHub(fetchFn: FetchFn, signal?: AbortSignal): Promise<DatasetLatestPointer> {
+  const releases = await fetchJson(fetchFn, GITHUB_RELEASES_URL, signal);
   if (!Array.isArray(releases)) {
     throw new Error('dataset releases response is not an array');
   }
@@ -63,19 +67,54 @@ export async function loadDataset({
   fetchFn = fetch,
   initSql = initDefaultSql,
   onProgress = () => {},
+  signal,
 }: LoadDatasetOptions = {}): Promise<Dataset> {
-  const latest = await discoverLatestDataset(fetchFn);
-  const manifest = await fetchJson(fetchFn, latest.manifest_url) as DatasetManifest;
-  validateManifest(manifest);
-  const sqliteBytes = await downloadCupIndex(fetchFn, manifest.cup_index, (progress) =>
-    onProgress({ ...progress, datasetTag: manifest.dataset_tag }),
-  );
+  let latest: DatasetLatestPointer;
+  let manifest: DatasetManifest;
+  let sqliteBytes: Uint8Array;
+
+  try {
+    latest = await discoverLatestDataset(fetchFn, signal);
+    manifest = await fetchJson(fetchFn, latest.manifest_url, signal) as DatasetManifest;
+    validateManifest(manifest);
+
+    const cached = await getCachedSqliteBytes(manifest.cup_index.sha256);
+    if (cached) {
+      sqliteBytes = cached;
+      onProgress({
+        loadedBytes: manifest.cup_index.total_size_bytes,
+        totalBytes: manifest.cup_index.total_size_bytes,
+        percent: 100,
+        datasetTag: manifest.dataset_tag,
+      });
+    } else {
+      sqliteBytes = await downloadCupIndex(
+        fetchFn,
+        manifest.cup_index,
+        (progress) => onProgress({ ...progress, datasetTag: manifest.dataset_tag }),
+        signal,
+      );
+      await saveSqliteToCache(sqliteBytes, manifest.cup_index.sha256, latest, manifest);
+    }
+  } catch (err) {
+    if (signal?.aborted) throw err;
+    const offline = await getCachedDatasetOffline();
+    if (!offline) throw err;
+    ({ bytes: sqliteBytes, latest, manifest } = offline);
+    onProgress({
+      loadedBytes: offline.bytes.byteLength,
+      totalBytes: offline.bytes.byteLength,
+      percent: 100,
+      datasetTag: manifest.dataset_tag,
+    });
+  }
+
   const SQL = await initSql();
-  const db = new SQL.Database(sqliteBytes);
+  const db = new SQL.Database(sqliteBytes!);
 
   return {
-    latest,
-    manifest,
+    latest: latest!,
+    manifest: manifest!,
     hasCup(cup: string): boolean {
       const statement = db.prepare('SELECT 1 FROM cup_index WHERE cup = ? LIMIT 1');
       try {
@@ -91,6 +130,60 @@ export async function loadDataset({
   };
 }
 
+async function getCachedSqliteBytes(expectedSha256: string): Promise<Uint8Array | null> {
+  if (typeof caches === 'undefined') return null;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const response = await cache.match(CACHE_KEY_SQLITE);
+    if (!response) return null;
+    if (response.headers.get('X-SHA256') !== expectedSha256) return null;
+    return new Uint8Array(await response.arrayBuffer());
+  } catch {
+    return null;
+  }
+}
+
+async function saveSqliteToCache(
+  bytes: Uint8Array,
+  sha256: string,
+  latest: DatasetLatestPointer,
+  manifest: DatasetManifest,
+): Promise<void> {
+  if (typeof caches === 'undefined') return;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    await Promise.all([
+      cache.put(CACHE_KEY_SQLITE, new Response(bytes.buffer as ArrayBuffer, { headers: { 'X-SHA256': sha256 } })),
+      cache.put(CACHE_KEY_META, Response.json({ latest, manifest })),
+    ]);
+  } catch {
+    // Quota exceeded or Cache API unavailable — ignore
+  }
+}
+
+async function getCachedDatasetOffline(): Promise<{
+  bytes: Uint8Array;
+  latest: DatasetLatestPointer;
+  manifest: DatasetManifest;
+} | null> {
+  if (typeof caches === 'undefined') return null;
+  try {
+    const cache = await caches.open(CACHE_NAME);
+    const [sqliteResponse, metaResponse] = await Promise.all([
+      cache.match(CACHE_KEY_SQLITE),
+      cache.match(CACHE_KEY_META),
+    ]);
+    if (!sqliteResponse || !metaResponse) return null;
+    const [bytes, meta] = await Promise.all([
+      sqliteResponse.arrayBuffer().then((b) => new Uint8Array(b)),
+      metaResponse.json() as Promise<{ latest: DatasetLatestPointer; manifest: DatasetManifest }>,
+    ]);
+    return { bytes, ...meta };
+  } catch {
+    return null;
+  }
+}
+
 async function initDefaultSql(options?: Record<string, unknown>) {
   const [{ default: initSqlJs }, { default: sqlWasmUrl }] = await Promise.all([
     import('sql.js'),
@@ -100,7 +193,7 @@ async function initDefaultSql(options?: Record<string, unknown>) {
   return initSqlJs({ locateFile: () => sqlWasmUrl, ...options });
 }
 
-async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onProgress: (p: Omit<DownloadProgress, 'datasetTag'>) => void): Promise<Uint8Array> {
+async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onProgress: (p: Omit<DownloadProgress, 'datasetTag'>) => void, signal?: AbortSignal): Promise<Uint8Array> {
   const chunkHashes = cupIndex.files_sha256;
   let loadedBytes = 0;
   onProgress({ loadedBytes: 0, totalBytes: cupIndex.total_size_bytes, percent: 0 });
@@ -122,6 +215,7 @@ async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onP
         chunkHashes[index],
         MAX_CHUNK_RETRIES,
         reportProgress,
+        signal,
       ),
     ),
   );
@@ -140,14 +234,17 @@ async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onP
   return out;
 }
 
-async function fetchAndVerifyChunk(fetchFn: FetchFn, url: string, expectedSha256: string, retries: number, onBytes: (n: number) => void): Promise<Uint8Array> {
+async function fetchAndVerifyChunk(fetchFn: FetchFn, url: string, expectedSha256: string, retries: number, onBytes: (n: number) => void, signal?: AbortSignal): Promise<Uint8Array> {
   let receivedThisAttempt = 0;
   for (let attempt = 0; attempt <= retries; attempt++) {
+    signal?.throwIfAborted();
     if (attempt > 0) {
       onBytes(-receivedThisAttempt);
       receivedThisAttempt = 0;
     }
     const controller = new AbortController();
+    const onExternalAbort = () => controller.abort(signal?.reason);
+    signal?.addEventListener('abort', onExternalAbort, { once: true });
     let timeoutId = setTimeout(() => controller.abort(), CHUNK_INACTIVITY_TIMEOUT_MS);
     try {
       const response = await fetchFn(url, { signal: controller.signal });
@@ -161,8 +258,9 @@ async function fetchAndVerifyChunk(fetchFn: FetchFn, url: string, expectedSha256
       await verifySha256(bytes, expectedSha256);
       return bytes;
     } catch (err) {
-      if (attempt === retries) throw err;
+      if (signal?.aborted || attempt === retries) throw err;
     } finally {
+      signal?.removeEventListener('abort', onExternalAbort);
       clearTimeout(timeoutId);
     }
   }
@@ -208,8 +306,8 @@ async function readResponseBytes(response: Response, onBytes: (n: number) => voi
   return out;
 }
 
-async function fetchJson(fetchFn: FetchFn, url: string): Promise<unknown> {
-  const response = await fetchFn(url);
+async function fetchJson(fetchFn: FetchFn, url: string, signal?: AbortSignal): Promise<unknown> {
+  const response = await fetchFn(url, { signal });
   if (!response.ok) throw new Error(`${url}: HTTP ${response.status}`);
   const ct = response.headers.get('content-type') ?? '';
   if (!ct.includes('application/json')) {

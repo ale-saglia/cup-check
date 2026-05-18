@@ -1,5 +1,5 @@
 import initSqlJs from 'sql.js';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { discoverLatestDataset, loadDataset } from '../src/lib/data/dataset-loader.js';
 
 const wasmPath = new URL('../node_modules/sql.js/dist/sql-wasm.wasm', import.meta.url).pathname;
@@ -448,6 +448,33 @@ describe('loadDataset', () => {
     }
   });
 
+  it('rejects with AbortError when signal is aborted during chunk download', async () => {
+    const controller = new AbortController();
+    const fetchFn = async (url) => {
+      if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+      if (String(url) === MANIFEST_URL) {
+        const sqliteBytes = await buildSqliteFixture();
+        const sha256s = [await computeSha256Hex(sqliteBytes)];
+        return Response.json(
+          makeManifest(sqliteBytes.byteLength, sha256s, { files: ['cup-index.sqlite.000'] }),
+        );
+      }
+      // Chunk fetch — stall until aborted
+      return new Promise((_resolve, reject) => {
+        controller.signal.addEventListener('abort', () =>
+          reject(new DOMException('aborted', 'AbortError')),
+        );
+      });
+    };
+
+    const loadPromise = loadDataset({ fetchFn, signal: controller.signal });
+    // Abort after the chunk fetch has started
+    await Promise.resolve();
+    controller.abort();
+
+    await expect(loadPromise).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('rejects after exhausting chunk retries', async () => {
     const sqliteBytes = await buildSqliteFixture();
     const firstChunk = sqliteBytes.slice(0, 128);
@@ -465,6 +492,139 @@ describe('loadDataset', () => {
 
     await expect(loadDataset({ fetchFn })).rejects.toThrow('dataset integrity check failed');
     expect(fetchFn.counts[CHUNK_URL_0]).toBe(3);
+  });
+
+  describe('cache invalidation', () => {
+    const CACHE_NAME = 'cup-check-dataset-v1';
+    const CACHE_KEY_SQLITE = 'cup-check://dataset/sqlite';
+    const CACHE_KEY_META = 'cup-check://dataset/meta';
+
+    let mockCaches;
+
+    function makeMockCacheStorage() {
+      const stores = new Map();
+      return {
+        async open(name) {
+          if (!stores.has(name)) stores.set(name, new Map());
+          const store = stores.get(name);
+          return {
+            async match(key) {
+              return store.get(String(key));
+            },
+            async put(key, response) {
+              store.set(String(key), response);
+            },
+          };
+        },
+      };
+    }
+
+    beforeEach(() => {
+      mockCaches = makeMockCacheStorage();
+      vi.stubGlobal('caches', mockCaches);
+    });
+
+    afterEach(() => {
+      vi.unstubAllGlobals();
+    });
+
+    it('skips chunk download when cached sha256 matches manifest', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const sha256 = await computeSha256Hex(sqliteBytes);
+      const manifest = makeManifest(sqliteBytes.byteLength, [sha256], {
+        sha256,
+        files: ['cup-index.sqlite.000'],
+      });
+
+      const cache = await mockCaches.open(CACHE_NAME);
+      await cache.put(
+        CACHE_KEY_SQLITE,
+        new Response(sqliteBytes, { headers: { 'X-SHA256': sha256 } }),
+      );
+      await cache.put(CACHE_KEY_META, Response.json({ latest: latestPointer(), manifest }));
+
+      let chunkRequested = false;
+      const fetchFn = async (url) => {
+        if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+        if (String(url) === MANIFEST_URL) return Response.json(manifest);
+        chunkRequested = true;
+        return notFound();
+      };
+
+      const dataset = await loadDataset({
+        fetchFn,
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+      expect(chunkRequested).toBe(false);
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    });
+
+    it('re-downloads when manifest sha256 differs from cached sha256 (dataset rigenerato o bitrot)', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const realSha256 = await computeSha256Hex(sqliteBytes);
+      const staleSha256 = 'a'.repeat(64);
+
+      const cache = await mockCaches.open(CACHE_NAME);
+      await cache.put(
+        CACHE_KEY_SQLITE,
+        new Response(sqliteBytes, { headers: { 'X-SHA256': staleSha256 } }),
+      );
+
+      let chunkRequested = false;
+      const fetchFn = async (url) => {
+        if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+        if (String(url) === MANIFEST_URL) {
+          return Response.json(
+            makeManifest(sqliteBytes.byteLength, [realSha256], {
+              sha256: realSha256,
+              files: ['cup-index.sqlite.000'],
+            }),
+          );
+        }
+        chunkRequested = true;
+        return new Response(sqliteBytes);
+      };
+
+      const dataset = await loadDataset({
+        fetchFn,
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+      expect(chunkRequested).toBe(true);
+
+      const cached = await (await mockCaches.open(CACHE_NAME)).match(CACHE_KEY_SQLITE);
+      expect(cached?.headers.get('X-SHA256')).toBe(realSha256);
+
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    });
+
+    it('falls back to offline cache when network is unavailable', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const sha256 = await computeSha256Hex(sqliteBytes);
+      const manifest = makeManifest(sqliteBytes.byteLength, [sha256], {
+        sha256,
+        files: ['cup-index.sqlite.000'],
+      });
+
+      const cache = await mockCaches.open(CACHE_NAME);
+      await cache.put(
+        CACHE_KEY_SQLITE,
+        new Response(sqliteBytes, { headers: { 'X-SHA256': sha256 } }),
+      );
+      await cache.put(CACHE_KEY_META, Response.json({ latest: latestPointer(), manifest }));
+
+      const fetchFn = async () => {
+        throw new TypeError('network error');
+      };
+
+      const dataset = await loadDataset({
+        fetchFn,
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    });
   });
 });
 

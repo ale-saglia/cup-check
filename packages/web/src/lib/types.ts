@@ -60,6 +60,7 @@ export interface DatasetCupIndex {
   base_url: string;
   files: string[];
   files_sha256: string[];
+  sha256: string;
   total_size_bytes: number;
 }
 

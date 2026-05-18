@@ -44,6 +44,7 @@
   let batchProgress = $state<BatchProgress | null>(null);
   let batchUsedWorker = $state(false);
   let batchController: AbortController | null = null;
+  let datasetController: AbortController | null = null;
 
   // Element refs (bind:this — not reactive, just pointers to DOM nodes)
   let fileInputEl: HTMLInputElement;
@@ -140,7 +141,8 @@
   let datasetPromise: Promise<Dataset | null>;
 
   onMount(async () => {
-    datasetPromise = initializeDataset();
+    datasetController = new AbortController();
+    datasetPromise = initializeDataset(datasetController.signal);
     sessionStorage.removeItem('cup-check:last-results');
 
     const transferMatch = /^#\/\?transfer=([A-Za-z0-9]+)$/.exec(location.hash);
@@ -163,14 +165,16 @@
 
   onDestroy(() => {
     batchController?.abort();
+    datasetController?.abort();
   });
 
   // --- Dataset ---
 
-  async function initializeDataset(): Promise<Dataset | null> {
+  async function initializeDataset(signal?: AbortSignal): Promise<Dataset | null> {
     setDatasetBar('');
     try {
       const loaded = await loadLatestDataset({
+        signal,
         onProgress: (progress: DownloadProgress) => {
           if (progress.datasetTag) {
             setDatasetBarLoading(progress.datasetTag, progress.percent);
@@ -184,8 +188,10 @@
         loaded.manifest ? loaded.manifest.dataset_tag : 'non caricato - solo verifica formato',
       );
       return loaded;
-    } catch {
-      setDatasetBarError();
+    } catch (err) {
+      if ((err as Error).name !== 'AbortError') {
+        setDatasetBarError();
+      }
       return null;
     }
   }
