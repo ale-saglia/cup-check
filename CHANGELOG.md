@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- Sposta la validazione batch in un Web Worker dedicato per batch >100 k righe: il thread principale resta reattivo durante l'elaborazione. Per batch minori la validazione avviene in-thread senza overhead. Il lookup OpenCUP avviene sempre sul main thread tramite protocollo `lookup-request`/`lookup-result`, evitando di trasferire il dataset al worker.
+- Aggiunge `ProgressBar.svelte` e un pannello di progresso in `Validator.svelte` con pulsante Annulla; i trigger di validazione ed export sono disabilitati durante una corsa in corso.
+- Espone `AbortController` per annullare validazioni in corso; `onDestroy` interrompe automaticamente eventuali batch all'uscita dalla vista.
+
 - Aggiunge test acceptance e anteprima con Chromium legacy (v109) tramite VNC per verificare la compatibilità con browser meno recenti.
 - Elimina il falso errore Tesseract `failed to load ita.special-words` che compariva alla prima esecuzione OCR.
 - Tronca le celle CUP troppo lunghe nella tabella risultati per evitare overflow visivo.

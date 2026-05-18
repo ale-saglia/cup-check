@@ -1,16 +1,13 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
+  import ProgressBar from '../components/ProgressBar.svelte';
   import { loadLatestDataset } from '../lib/data/dataset-loader.js';
   import { buildParsedRows, parseFile } from '../lib/core/parser.js';
   import { buildCsvReport, opencupUrlForResult, resultDetail } from '../lib/core/report.js';
-  import {
-    applyDatasetLookup,
-    displayResults,
-    resultRowsLabel,
-    uniqueResultsByCup,
-  } from '../lib/core/results.js';
+  import { displayResults, resultRowsLabel } from '../lib/core/results.js';
   import { textInputLines } from '../text-input.js';
-  import { OUTCOMES, validateCup, summarizeResults } from '../lib/core/validator.js';
+  import { OUTCOMES, summarizeResults } from '../lib/core/validator.js';
+  import { validateRows, type BatchInputRow, type BatchProgress } from '../lib/core/validation-worker.js';
   import { consumeTransfer } from '../lib/data/transfer.js';
   import type { Dataset, ParsedFile, UniqueResult, Outcome, DownloadProgress } from '../lib/types.js';
 
@@ -43,6 +40,10 @@
   // UI state
   let textCupCount = $state<number | null>(null);
   let detailDialogContent = $state('');
+  let batchRunning = $state(false);
+  let batchProgress = $state<BatchProgress | null>(null);
+  let batchUsedWorker = $state(false);
+  let batchController: AbortController | null = null;
 
   // Element refs (bind:this — not reactive, just pointers to DOM nodes)
   let fileInputEl: HTMLInputElement;
@@ -106,6 +107,13 @@
 
   let renderedResults = $derived(filteredResults.slice(0, MAX_RENDERED_RESULT_ROWS));
 
+  let batchProgressLabel = $derived.by(() => {
+    if (!batchProgress) return '';
+    if (batchProgress.phase === 'lookup') return 'Verifica OpenCUP';
+    if (batchProgress.phase === 'complete') return 'Completamento';
+    return batchUsedWorker ? 'Validazione nel worker' : 'Validazione';
+  });
+
   let headerDetectionMeta = $derived.by(() => {
     if (!parsed) return '';
     if (parsed.headerDetectedAutomatically === parsed.headerPresent) {
@@ -153,6 +161,10 @@
     }
   });
 
+  onDestroy(() => {
+    batchController?.abort();
+  });
+
   // --- Dataset ---
 
   async function initializeDataset(): Promise<Dataset | null> {
@@ -176,14 +188,6 @@
       setDatasetBarError();
       return null;
     }
-  }
-
-  async function applyLookup(raw: UniqueResult[]): Promise<UniqueResult[]> {
-    const loadedDataset = dataset ?? (await datasetPromise);
-    if (!loadedDataset) return raw;
-    const hasCheckable = raw.some((r) => r.outcome === OUTCOMES.CHECK);
-    if (!hasCheckable) return raw;
-    return applyDatasetLookup(raw, (cup: string) => loadedDataset.hasCup(cup)) as UniqueResult[];
   }
 
   // --- File helpers ---
@@ -215,15 +219,18 @@
       alert('Nessun CUP trovato. Incolla almeno un codice, uno per riga.');
       return;
     }
-    const startedAt = performance.now();
-    const raw = (lines as string[]).map((line: string, i: number) => validateCup(line, i + 1));
-    const unique = uniqueResultsByCup(raw);
-    results = await applyLookup(unique);
-    sourceRowCount = raw.length;
+    const batchRows = (lines as string[]).map((line: string, i: number) => ({
+      value: line,
+      row: i + 1,
+    }));
+    const batch = await runValidationRows(batchRows);
+    if (!batch) return;
+    results = batch.results;
+    sourceRowCount = batch.sourceRowCount;
     fileName = 'cup-testo';
     filter = 'ALL';
     query = '';
-    durationMs = performance.now() - startedAt;
+    durationMs = batch.durationMs;
     textCupCount = lines.length;
     textPanelCollapsed = true;
     previewPanelVisible = false;
@@ -268,23 +275,64 @@
   }
 
   async function handleCheck() {
-    const startedAt = performance.now();
     const rowsToValidate = skipMissingCup
       ? parsed!.rows.filter((row) => !isMissingCup(row))
       : parsed!.rows;
-    const raw = rowsToValidate.map((row) =>
-      validateCup(row.cells[selectedColumnIndex], row.originalRowNumber),
-    );
-    const unique = uniqueResultsByCup(raw);
-    results = await applyLookup(unique);
-    sourceRowCount = raw.length;
-    durationMs = performance.now() - startedAt;
+    const batchRows = rowsToValidate.map((row) => ({
+      value: row.cells[selectedColumnIndex] ?? '',
+      row: row.originalRowNumber,
+    }));
+    const batch = await runValidationRows(batchRows);
+    if (!batch) return;
+    results = batch.results;
+    sourceRowCount = batch.sourceRowCount;
+    durationMs = batch.durationMs;
     previewPanelCollapsed = true;
     resultsPanelVisible = true;
     resultsPanelCollapsed = false;
   }
 
+  async function runValidationRows(rows: BatchInputRow[]) {
+    batchController?.abort();
+    batchController = new AbortController();
+    batchRunning = true;
+    batchUsedWorker = rows.length > 100_000;
+    batchProgress = {
+      phase: 'validate',
+      processed: 0,
+      total: rows.length,
+      percent: rows.length === 0 ? 100 : 0,
+    };
+
+    try {
+      const loadedDataset = dataset ?? (await datasetPromise.catch(() => null));
+      const batch = await validateRows(rows, {
+        dataset: loadedDataset,
+        signal: batchController.signal,
+        onProgress: (progress) => {
+          batchProgress = progress;
+        },
+      });
+      batchUsedWorker = batch.usedWorker;
+      batchProgress = { phase: 'complete', processed: rows.length, total: rows.length, percent: 100 };
+      return batch;
+    } catch (error) {
+      if ((error as Error).name !== 'AbortError') {
+        alert((error as Error).message);
+      }
+      return null;
+    } finally {
+      batchRunning = false;
+      batchController = null;
+    }
+  }
+
+  function handleCancelBatch() {
+    batchController?.abort();
+  }
+
   function handleClear() {
+    batchController?.abort();
     selectedFile = null;
     parsed = null;
     selectedColumnIndex = 0;
@@ -305,6 +353,9 @@
     previewPanelCollapsed = false;
     resultsPanelVisible = false;
     resultsPanelCollapsed = false;
+    batchRunning = false;
+    batchProgress = null;
+    batchUsedWorker = false;
     fileInputEl.value = '';
     cupTextareaEl.value = '';
     sessionStorage.removeItem('cup-check:last-results');
@@ -431,12 +482,21 @@
       bind:this={cupTextareaEl}></textarea>
     <div class="actions-row text-actions-row">
       <button id="text-check-button" class="primary" type="button"
+        disabled={batchRunning}
         onclick={handleTextCheck}>Verifica</button>
     </div>
   </div>
 </section>
 
 <section class="workspace" aria-label="Area operativa verifica CUP">
+  {#if batchProgress}
+    <div id="batch-progress" class:batch-progress--running={batchRunning}>
+      <ProgressBar label={batchProgressLabel} percent={batchProgress.percent} />
+      {#if batchRunning}
+        <button id="cancel-batch-button" class="secondary" type="button" onclick={handleCancelBatch}>Annulla</button>
+      {/if}
+    </div>
+  {/if}
   <section id="preview-panel" class="control-panel"
     class:hidden={!previewPanelVisible}
     class:collapsed={previewPanelCollapsed}
@@ -516,6 +576,7 @@
           <span>Ignora celle CUP assenti</span>
         </label>
         <button id="check-button" class="primary" type="button"
+          disabled={batchRunning}
           onclick={handleCheck}>Verifica</button>
       </div>
     </div>
@@ -537,6 +598,7 @@
         <p id="summary">{summaryText}</p>
         <div class="button-row">
           <button id="export-button" class="primary" type="button"
+            disabled={batchRunning}
             onclick={handleExport}>Esporta CSV</button>
           <button id="clear-button" class="secondary" type="button"
             onclick={handleClear}>Pulisci</button>

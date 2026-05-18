@@ -58,6 +58,8 @@ Decisione in [ADR 0009](docs/adr/0009-svelte-frontend-migration.md). Piano detta
 
 Nota 2026-05-18: C6 ha potato `render.js`, `dom.js` e `dialogs.js` con i relativi test morti e ha incluso i componenti Svelte nella coverage V8 sul codice vivo. Restano da assorbire in Fase D `src/layout.js` e il router artigianale (`router.ts`), ancora usati dall'app.
 
+Nota 2026-05-18 (D1): Web Worker per batch >100k implementato — `validation-worker.ts`, `validator.worker.ts`, `ProgressBar.svelte`, integrazione in `Validator.svelte` con `AbortController` e pulsante Annulla. Mancano D2–D5.
+
 ## Bassa priorità
 
 ### 8. Rafforzare la robustezza di drainQueue nel PDF view

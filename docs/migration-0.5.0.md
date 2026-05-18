@@ -186,11 +186,14 @@ Debito residuo per Fase D: `src/layout.js` resta vivo perché importato da `main
 
 Tutte e quattro le feature vengono sviluppate sui componenti Svelte della Fase B/C.
 
-### D1. Web Worker per batch >100k
+### ✅ D1. Web Worker per batch >100k
 
-- Creare `src/workers/validator.worker.ts`: esegue `validateBatch` + lookup OpenCUP; streaming risultati via `postMessage`.
-- In `Validator.svelte`: progress bar percentuale con `ProgressBar.svelte`; cancellazione con `AbortController`; parity test worker attivo/disattivo.
-- Risolve anche il TODO #4 (cancellazione `loadLatestDataset`).
+- `src/workers/validator.worker.ts`: validazione a chunk + lookup OpenCUP delegato al main thread via `lookup-request`; streaming risultati via `postMessage`.
+- `src/lib/core/validation-worker.ts`: orchestratore che sceglie inline vs worker in base alla soglia (100 k righe); espone `validateRows` con `AbortController` e callback `onProgress`.
+- `src/components/ProgressBar.svelte`: progress bar percentuale.
+- `Validator.svelte`: integra `validateRows`, mostra progresso e pulsante Annulla, disabilita i trigger durante la corsa; `onDestroy` interrompe batch in corso.
+- Test: `validation-worker.test.js` (409 righe), `Validator.batch.test.js` (95 righe), `ProgressBar.svelte.test.js`.
+- TODO #4 (cancellazione `loadLatestDataset`) non incluso in questa fase; rimane aperto in TODO.md.
 
 ### D2. Drag-drop multi-file
 

@@ -4,7 +4,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 // Svelte 5 defers DOM updates to microtasks; flush() drains the queue.
 const flush = async () => {
-  for (let i = 0; i < 4; i++) await Promise.resolve();
+  for (let i = 0; i < 12; i++) await Promise.resolve();
 };
 
 // vi.mock is hoisted so the factory survives vi.resetModules() across tests.

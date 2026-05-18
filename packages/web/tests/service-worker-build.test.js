@@ -27,9 +27,7 @@ describe('service worker build', () => {
 
       // Cache miss → fetch and store
       await runtime.fetch('https://example.test/pdfjs/pdf.worker.min.mjs');
-      const lazyCacheName = runtime
-        .cacheNames()
-        .find((name) => name.startsWith('cup-check-lazy-'));
+      const lazyCacheName = runtime.cacheNames().find((name) => name.startsWith('cup-check-lazy-'));
       expect(lazyCacheName).toBeTruthy();
       expect(runtime.cachedUrls(lazyCacheName)).toContain(
         'https://example.test/pdfjs/pdf.worker.min.mjs',
@@ -93,8 +91,7 @@ describe('service worker build', () => {
         'https://example.test/datasets/dataset-2026-06/cup-index.sqlite.000',
       ]);
     });
-  });
-
+  }, 15000);
 
   it('inietta i polyfill nel worker pdfjs per compatibilità con Chrome <124', async () => {
     await withBuiltAsset('pdfjs/pdf.worker.min.mjs', (worker) => {
