@@ -9,6 +9,7 @@ Questo progetto è distribuito come pacchetto Python e web app statica. Le versi
 Per segnalare una vulnerabilità, non aprire una issue pubblica. Contatta il maintainer tramite GitHub Security Advisories.
 
 Includi:
+
 - descrizione del problema;
 - passi per riprodurlo;
 - impatto atteso;
@@ -17,12 +18,14 @@ Includi:
 ## Scope
 
 Sono in scope:
+
 - problemi nel validatore formale;
 - esposizione accidentale di dati;
 - supply chain o dependency issues;
 - problemi nel packaging o nella web app statica.
 
 Non sono vulnerabilità:
+
 - CUP formalmente valido ma inesistente;
 - dati mancanti o incompleti nei dataset pubblici;
 - limiti noti del lookup OpenCUP.

@@ -16,6 +16,7 @@ npm install -D typescript
 ```
 
 Nuove devDependencies:
+
 - `svelte`, `@sveltejs/vite-plugin-svelte` — compilatore e plugin Vite
 - `svelte-check` — type checking dei `.svelte` in CI
 - `typescript` — transpile TS; Vite lo gestisce nativamente senza passi extra
@@ -57,7 +58,7 @@ Creare `packages/web/tsconfig.json`:
 
 Spostare i file esistenti (senza modificarli) nella struttura target. Aggiornare i path di import:
 
-```
+```text
 src/
   lib/
     types.ts               (nuovo — tipi condivisi, vedi §A6)

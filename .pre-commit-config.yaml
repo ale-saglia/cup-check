@@ -15,6 +15,11 @@ repos:
         args: [--fix]
         files: ^packages/cup_check/
 
+  - repo: https://github.com/DavidAnson/markdownlint-cli2
+    rev: v0.18.1
+    hooks:
+      - id: markdownlint-cli2
+
   - repo: local
     hooks:
       - id: prettier

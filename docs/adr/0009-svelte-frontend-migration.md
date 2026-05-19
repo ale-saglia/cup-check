@@ -54,7 +54,7 @@ La migrazione è **incrementale e vincolata**: prima l'infrastruttura (TS + plug
 
 ### Struttura target
 
-```
+```text
 src/
   lib/
     types.ts               Outcome, ValidationResult, ParsedFile, DatasetManifest, …
