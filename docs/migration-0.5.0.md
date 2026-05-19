@@ -247,7 +247,7 @@ Per il primo rilascio D2, supportare una colonna CUP per scheda inclusa. Il tipo
 - XLSX: inizialmente genera una `ImportSource` sulla prima scheda, esponendo `sheetNames`; la UI permette di cambiare scheda o aggiungerne altre dallo stesso file.
 - Se due file hanno intestazioni diverse non si tenta alcun merge per nome colonna: ogni sorgente mantiene la propria anteprima e la propria colonna CUP selezionata.
 
-#### D2.3 UI di importazione guidata
+#### ✅ D2.3 UI di importazione guidata
 
 Al caricamento di uno o più file si apre un pannello/dialog interno di importazione, non un popup browser. Il pannello sostituisce temporaneamente l'anteprima singolo-file e guida l'utente nella scelta delle colonne.
 
@@ -267,6 +267,8 @@ Flusso previsto:
 7. Il pannello anteprima del verificatore mostra il riepilogo del batch importato e abilita "Verifica".
 
 La UI base deve restare semplice: una colonna CUP per sorgente. La selezione di più colonne nello stesso foglio può essere aggiunta come controllo avanzato solo dopo che il flusso base è stabile.
+
+Implementazione: `DropZone.svelte` accetta input e drag-and-drop multi-file; `ImportWizard.svelte` orchestra il pannello interno con navigazione tra sorgenti; `ImportSourcePreview.svelte` gestisce inclusione, scheda Excel, intestazione, colonna CUP e anteprima. La conferma costruisce `ImportedCupRow[]` con metadati origine e abilita il batch normalizzato nel verificatore. Per gli XLSX viene caricata una scheda per sorgente; eventuali altre schede dello stesso file vengono aggiunte solo con l'azione esplicita "Carica colonna da altra scheda".
 
 #### D2.4 Componenti Svelte
 

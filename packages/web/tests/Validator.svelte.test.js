@@ -70,10 +70,16 @@ describe('Validator', () => {
     flushSync();
 
     expect(consumeTransfer).toHaveBeenCalledWith('testid123');
-    expect(parseFile).toHaveBeenCalledWith(pendingFile, {});
+    expect(parseFile).toHaveBeenCalledWith(pendingFile);
 
-    const previewPanel = container.querySelector('#preview-panel');
-    expect(previewPanel?.classList.contains('hidden')).toBe(false);
+    expect(container.querySelector('#import-wizard')).toBeTruthy();
+    expect(container.querySelector('.import-source-nav')).toBeNull();
+    expect(container.textContent).not.toContain('Includi sorgente');
+    expect(container.textContent).not.toContain('Configura ogni sorgente');
+    expect(container.querySelector('.import-wizard-count')?.textContent?.trim()).toBe(
+      '0 righe CUP',
+    );
+    expect(container.querySelector('#preview-panel')?.classList.contains('hidden')).toBe(true);
   });
 
   it('renderizza la tabella anteprima senza errori con intestazioni duplicate (regressione each_key_duplicate)', async () => {
@@ -95,9 +101,286 @@ describe('Validator', () => {
     await new Promise((r) => setTimeout(r, 50));
     flushSync();
 
-    const headers = container.querySelectorAll('#preview-table thead th');
-    expect(headers).toHaveLength(3);
-    expect(Array.from(headers).map((th) => th.textContent)).toEqual(['CUP', 'CUP', 'Data']);
+    const headers = container.querySelectorAll('#import-wizard table thead th');
+    expect(headers).toHaveLength(4);
+    expect(Array.from(headers).map((th) => th.textContent)).toEqual(['Riga', 'CUP', 'CUP', 'Data']);
+  });
+
+  it('conferma il wizard di importazione e abilita la verifica del batch normalizzato', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    const pendingFile = new File(['CUP\nG17H03000130001'], 'cups.csv', { type: 'text/csv' });
+    vi.mocked(loadLatestDataset).mockResolvedValue({
+      manifest: { dataset_tag: 'test' },
+      hasCup: (cup) => cup === 'G17H03000130001',
+    });
+    vi.mocked(consumeTransfer).mockImplementation((id) => (id === 'batch' ? pendingFile : null));
+    vi.mocked(parseFile).mockResolvedValue({
+      ...makeParsed(),
+      headers: ['CUP'],
+      rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+      rawRows: [['CUP'], ['G17H03000130001']],
+      headerPresent: true,
+      headerDetectedAutomatically: true,
+    });
+
+    window.history.replaceState({}, '', '#/?transfer=batch');
+    const { container } = render(Validator);
+
+    await waitFor(() => {
+      expect(container.querySelector('#import-wizard')).toBeTruthy();
+    });
+
+    const confirmButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Conferma importazione'),
+    );
+    confirmButton?.click();
+    flushSync();
+
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+    expect(container.querySelector('#preview-panel')?.classList.contains('hidden')).toBe(false);
+    expect(container.querySelector('#preview-panel')?.classList.contains('collapsed')).toBe(true);
+    expect(container.querySelector('#summary')?.textContent).toContain('1 CUP unici da 1 righe');
+    const cells = Array.from(container.querySelectorAll('#results-table tbody td')).map((cell) =>
+      cell.textContent?.trim(),
+    );
+    expect(cells[0]).toBe('2');
+    container.querySelector('.source-button')?.click();
+    flushSync();
+    const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
+      (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
+    );
+    expect(sourceRows).toEqual([
+      ['Fonte', 'cups.csv'],
+      ['Scheda', '-'],
+      ['Colonna', 'CUP'],
+      ['Riga', '2'],
+    ]);
+  });
+
+  it('mostra una colonna fonte per ogni file quando il CUP appare in piu file', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const first = new File(['CUP\nG17H03000130001'], 'primo.csv', { type: 'text/csv' });
+    const second = new File(['Codice CUP\nG17H03000130001'], 'secondo.csv', { type: 'text/csv' });
+    vi.mocked(parseFile)
+      .mockResolvedValueOnce({
+        ...makeParsed(),
+        headers: ['CUP'],
+        rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+        rawRows: [['CUP'], ['G17H03000130001']],
+        headerPresent: true,
+        headerDetectedAutomatically: true,
+      })
+      .mockResolvedValueOnce({
+        ...makeParsed(),
+        headers: ['Codice CUP'],
+        rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+        rawRows: [['Codice CUP'], ['G17H03000130001']],
+        headerPresent: true,
+        headerDetectedAutomatically: true,
+      });
+
+    const { container } = render(Validator);
+    Object.defineProperty(container.querySelector('#file-input'), 'files', {
+      value: [first, second],
+    });
+    container.querySelector('#file-input')?.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeTruthy());
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    flushSync();
+
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+    expect(container.querySelector('.source-button')?.textContent).toBe('2++');
+    container.querySelector('.source-button')?.click();
+    flushSync();
+
+    const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
+      (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
+    );
+    expect(sourceRows).toEqual([
+      ['Fonte', 'primo.csv', 'secondo.csv'],
+      ['Scheda', '-', '-'],
+      ['Colonna', 'CUP', 'Codice CUP'],
+      ['Righe', '2', '2'],
+    ]);
+  });
+
+  it('separa le fonti dello stesso file quando il CUP appare in schede diverse', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const file = new File(['xlsx'], 'cartella.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    vi.mocked(parseFile)
+      .mockResolvedValueOnce({
+        ...makeParsed(),
+        headers: ['CUP A'],
+        rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+        rawRows: [['CUP A'], ['G17H03000130001']],
+        headerPresent: true,
+        headerDetectedAutomatically: true,
+        selectedSheetName: 'Scheda A',
+        sheetNames: ['Scheda A', 'Scheda B'],
+      })
+      .mockResolvedValueOnce({
+        ...makeParsed(),
+        headers: ['CUP B'],
+        rows: [{ cells: ['G17H03000130001'], originalRowNumber: 4 }],
+        rawRows: [['CUP B'], [''], [''], ['G17H03000130001']],
+        headerPresent: true,
+        headerDetectedAutomatically: true,
+        selectedSheetName: 'Scheda B',
+        sheetNames: ['Scheda A', 'Scheda B'],
+      });
+
+    const { container } = render(Validator);
+    Object.defineProperty(container.querySelector('#file-input'), 'files', { value: [file] });
+    container.querySelector('#file-input')?.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeTruthy());
+    const sheetSelect = container.querySelector('.additional-sheet-controls select');
+    sheetSelect.value = 'Scheda B';
+    sheetSelect.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Carica colonna da scheda'))
+      ?.click();
+    await waitFor(() => expect(parseFile).toHaveBeenCalledWith(file, { sheetName: 'Scheda B' }));
+    await waitFor(() =>
+      expect(container.querySelector('.import-wizard-count')?.textContent).toContain('2 righe CUP'),
+    );
+
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    flushSync();
+
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+    expect(container.querySelector('.source-button')?.textContent).toBe('2++');
+    container.querySelector('.source-button')?.click();
+    flushSync();
+
+    const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
+      (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
+    );
+    expect(sourceRows).toEqual([
+      ['Fonte', 'cartella.xlsx', 'cartella.xlsx'],
+      ['Scheda', 'Scheda A', 'Scheda B'],
+      ['Colonna', 'CUP A', 'CUP B'],
+      ['Righe', '2', '4'],
+    ]);
+  });
+
+  it('non duplica la fonte quando si carica due volte la stessa colonna della stessa scheda', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const file = new File(['xlsx'], 'cartella.xlsx', {
+      type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+    });
+    const parsedSheet = {
+      ...makeParsed(),
+      headers: ['CUP'],
+      rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+      rawRows: [['CUP'], ['G17H03000130001']],
+      headerPresent: true,
+      headerDetectedAutomatically: true,
+      selectedSheetName: 'CUP',
+      sheetNames: ['CUP'],
+    };
+    vi.mocked(parseFile).mockResolvedValue(parsedSheet);
+
+    const { container } = render(Validator);
+    Object.defineProperty(container.querySelector('#file-input'), 'files', { value: [file] });
+    container.querySelector('#file-input')?.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeTruthy());
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Carica colonna da scheda'))
+      ?.click();
+    await waitFor(() =>
+      expect(container.querySelectorAll('.import-source-preview')).toHaveLength(2),
+    );
+
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    flushSync();
+
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+    expect(container.querySelector('#summary')?.textContent).toContain('1 CUP unici da 1 righe');
+    expect(container.querySelector('.source-button')?.textContent).toBe('2');
+  });
+
+  it('raggruppa righe duplicate della stessa colonna nel popup fonte e permette rilancio manuale', async () => {
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = vi.fn();
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const file = new File(['CUP\nG17H03000130001\nG17H03000130001'], 'duplicati.csv', {
+      type: 'text/csv',
+    });
+    vi.mocked(parseFile).mockResolvedValue({
+      ...makeParsed(),
+      headers: ['CUP'],
+      rows: [
+        { cells: ['G17H03000130001'], originalRowNumber: 2 },
+        { cells: ['G17H03000130001'], originalRowNumber: 3 },
+      ],
+      rawRows: [['CUP'], ['G17H03000130001'], ['G17H03000130001']],
+      headerPresent: true,
+      headerDetectedAutomatically: true,
+    });
+
+    const { container } = render(Validator);
+    Object.defineProperty(container.querySelector('#file-input'), 'files', { value: [file] });
+    container.querySelector('#file-input')?.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeTruthy());
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+
+    container.querySelector('#preview-toggle')?.click();
+    flushSync();
+    container.querySelector('#check-button')?.click();
+    await waitFor(() => expect(container.querySelector('.source-button')?.textContent).toBe('2++'));
+    container.querySelector('.source-button')?.click();
+    flushSync();
+
+    const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
+      (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
+    );
+    expect(sourceRows).toEqual([
+      ['Fonte', 'duplicati.csv'],
+      ['Scheda', '-'],
+      ['Colonna', 'CUP'],
+      ['Righe', '2, 3'],
+    ]);
   });
 
   it("gestisce l'errore di parseFile durante il flusso transfer", async () => {
@@ -140,17 +423,26 @@ describe('Validator', () => {
     });
     flushSync();
 
+    expect(container.querySelector('#batch-progress')).toBeNull();
     expect(container.querySelector('#summary')?.textContent).toContain('2 CUP unici da 3 righe');
     expect(container.querySelector('#summary')?.textContent).toContain('1 trovati OpenCUP');
     expect(container.querySelector('#summary')?.textContent).toContain('1 invalidi');
     expect(container.querySelectorAll('#results-table tbody tr')).toHaveLength(2);
-
-    container.querySelector('.multiple-rows-button')?.click();
+    expect(container.querySelector('#results-table thead')?.textContent).toContain('Fonte');
+    expect(container.querySelector('#results-table thead')?.textContent).not.toContain('Dettaglio');
+    expect(container.querySelector('.source-button')?.textContent).toBe('1++');
+    container.querySelector('.source-button')?.click();
     flushSync();
     expect(showModal).toHaveBeenCalledOnce();
-    expect(container.querySelector('#detail-dialog-label')?.textContent).toBe(
-      'Righe originali: 1, 2',
+    const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
+      (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
     );
+    expect(sourceRows).toEqual([
+      ['Fonte', '-'],
+      ['Scheda', '-'],
+      ['Colonna', '-'],
+      ['Righe', '1, 2'],
+    ]);
 
     const filter = container.querySelector('#filter-select');
     filter.value = 'INVALIDO_FORMATO';

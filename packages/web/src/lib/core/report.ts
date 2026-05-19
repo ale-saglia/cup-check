@@ -12,14 +12,14 @@ export function resultDetail(result: Pick<UniqueResult, 'warnings' | 'failedRule
   }
 
   if (result.outcome === OUTCOMES.FOUND_OPENCUP) {
-    return `TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.${warnings}`;
+    return `CUP presente nel mirror OpenCUP disponibile.${warnings}`;
   }
 
   if (result.outcome === OUTCOMES.NOT_FOUND_OPENCUP) {
-    return `NON_TROVATO_OPENCUP_DA_VERIFICARE: CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.${warnings}`;
+    return `CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.${warnings}`;
   }
 
-  return `FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata.${warnings}`;
+  return `Formato formalmente valido; esistenza non verificata.${warnings}`;
 }
 
 export function formatRule(rule: Rule): string {

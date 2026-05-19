@@ -46,7 +46,7 @@ describe('Validator batch controls', () => {
       expect(validateRows).toHaveBeenCalled();
       expect(container.querySelector('#cancel-batch-button')).toBeTruthy();
       expect(container.querySelector('.progress-block')?.getAttribute('aria-label')).toBe(
-        'Verifica OpenCUP',
+        'Verifica presenza nel dataset OpenCUP',
       );
     });
     container.querySelector('#cancel-batch-button').click();

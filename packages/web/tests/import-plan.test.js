@@ -5,6 +5,10 @@ import {
   buildBatchRows,
   buildImportedCupRows,
   createImportSources,
+  createSourceFromSheet,
+  updateSourceColumn,
+  updateSourceHeader,
+  updateSourceIncluded,
   updateSourceSheet,
 } from '../src/lib/core/import-plan.js';
 
@@ -89,6 +93,94 @@ describe('import-plan', () => {
     expect(buildImportedCupRows(sources).map((row) => row.fileOrigine)).toEqual(['incluso.csv']);
   });
 
+  it('aggiunge una sorgente XLSX solo quando si carica esplicitamente un altra scheda', async () => {
+    const file = await workbookFileWithSheets([
+      {
+        name: 'Prima',
+        rows: [['CUP'], ['G17H03000130001']],
+      },
+      {
+        name: 'Seconda',
+        rows: [['Codice CUP'], ['A58C15000390001']],
+      },
+    ]);
+
+    const [source] = await createImportSources([file]);
+    expect(source.sheetName).toBe('Prima');
+
+    const extra = await createSourceFromSheet(source, 'Seconda', 1);
+    const importedRows = buildImportedCupRows([source, extra]);
+
+    expect(extra).toMatchObject({
+      fileName: 'cups.xlsx',
+      sheetName: 'Seconda',
+      selectedColumnIndexes: [0],
+    });
+    expect(importedRows.map((row) => row.schedaOrigine)).toEqual(['Prima', 'Seconda']);
+  });
+
+  it('permette di aggiungere la stessa scheda XLSX per selezionare una seconda colonna CUP', async () => {
+    const file = await workbookFileWithSheets([
+      {
+        name: 'CUP',
+        rows: [
+          ['CUP primario', 'CUP secondario'],
+          ['G17H03000130001', 'A58C15000390001'],
+        ],
+      },
+    ]);
+
+    const [source] = await createImportSources([file]);
+    const extra = await createSourceFromSheet(source, 'CUP', 1);
+    source.selectedColumnIndexes = [0];
+    extra.selectedColumnIndexes = [1];
+
+    expect([source.sheetName, extra.sheetName]).toEqual(['CUP', 'CUP']);
+    expect(buildImportedCupRows([source, extra])).toEqual([
+      {
+        value: 'G17H03000130001',
+        row: 1,
+        fileOrigine: 'cups.xlsx',
+        schedaOrigine: 'CUP',
+        colonnaOrigine: 'CUP primario',
+        sourceRowNumber: 2,
+      },
+      {
+        value: 'A58C15000390001',
+        row: 2,
+        fileOrigine: 'cups.xlsx',
+        schedaOrigine: 'CUP',
+        colonnaOrigine: 'CUP secondario',
+        sourceRowNumber: 2,
+      },
+    ]);
+  });
+
+  it('ignora la stessa colonna della stessa scheda caricata due volte', async () => {
+    const file = await workbookFileWithSheets([
+      {
+        name: 'CUP',
+        rows: [['CUP'], ['G17H03000130001']],
+      },
+    ]);
+
+    const [source] = await createImportSources([file]);
+    const duplicate = await createSourceFromSheet(source, 'CUP', 1);
+    source.selectedColumnIndexes = [0];
+    duplicate.selectedColumnIndexes = [0];
+
+    expect(buildImportedCupRows([source, duplicate])).toEqual([
+      {
+        value: 'G17H03000130001',
+        row: 1,
+        fileOrigine: 'cups.xlsx',
+        schedaOrigine: 'CUP',
+        colonnaOrigine: 'CUP',
+        sourceRowNumber: 2,
+      },
+    ]);
+  });
+
   it('crea una sorgente XLSX sulla prima scheda e permette di cambiarla', async () => {
     const file = await workbookFileWithSheets([
       {
@@ -134,6 +226,91 @@ describe('import-plan', () => {
     const [source] = await createImportSources([file]);
 
     await expect(updateSourceSheet(source, 'Qualsiasi')).resolves.toBe(source);
+  });
+
+  it('non aggiunge scheda se il nome non e presente nella sorgente CSV', async () => {
+    const file = new File(['CUP\nG17H03000130001'], 'cups.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+
+    await expect(createSourceFromSheet(source, 'Inesistente', 1)).resolves.toBe(source);
+  });
+
+  it('aggiorna intestazione CSV preservando la struttura senza schede', async () => {
+    const file = new File(['CUP,Note\nG17H03000130001,ok'], 'test.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+    expect(source.headerPresent).toBe(true);
+
+    const updated = updateSourceHeader(source, false);
+    expect(updated.headerPresent).toBe(false);
+    expect(updated.parsed.sheetNames).toBeFalsy();
+    expect(updated).not.toHaveProperty('sheetName');
+
+    const rows = buildImportedCupRows([updated]);
+    expect(rows).toHaveLength(2);
+    expect(rows[0].colonnaOrigine).toBeDefined();
+  });
+
+  it('aggiorna intestazione XLSX mantenendo nome scheda e lista schede', async () => {
+    const file = await workbookFileWithSheets([
+      {
+        name: 'Dati',
+        rows: [
+          ['CUP', 'Note'],
+          ['G17H03000130001', 'ok'],
+        ],
+      },
+    ]);
+    const [source] = await createImportSources([file]);
+
+    const updated = updateSourceHeader(source, false);
+    expect(updated.headerPresent).toBe(false);
+    expect(updated.parsed.sheetNames).toEqual(['Dati']);
+    expect(updated.parsed.selectedSheetName).toBe('Dati');
+  });
+
+  it('usa Colonna N come etichetta quando la intestazione della colonna e vuota', async () => {
+    const file = new File([',Note\nG17H03000130001,ok'], 'no-header.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+    source.selectedColumnIndexes = [0];
+
+    const rows = buildImportedCupRows([source]);
+    expect(rows[0].colonnaOrigine).toBe('Colonna 1');
+  });
+
+  it('esclude e include una sorgente tramite updateSourceIncluded', async () => {
+    const file = new File(['CUP\nG17H03000130001'], 'cups.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+
+    const excluded = updateSourceIncluded(source, false);
+    expect(excluded.included).toBe(false);
+    expect(buildImportedCupRows([excluded])).toHaveLength(0);
+
+    const reincluded = updateSourceIncluded(excluded, true);
+    expect(reincluded.included).toBe(true);
+    expect(buildImportedCupRows([reincluded])).toHaveLength(1);
+  });
+
+  it('usa stringa vuota per celle null o undefined nella costruzione delle righe CUP', async () => {
+    const file = new File(['CUP\nG17H03000130001'], 'test.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+    const sourceWithNullCell = {
+      ...source,
+      parsed: { ...source.parsed, rows: [{ originalRowNumber: 2, cells: [null] }] },
+    };
+
+    const rows = buildImportedCupRows([sourceWithNullCell], { skipMissingCup: false });
+    expect(rows[0].value).toBe('');
+  });
+
+  it('aggiorna la colonna selezionata e la limita ai valori validi', async () => {
+    const file = new File(['A,CUP,C\n1,G17H03000130001,3'], 'multi.csv', { type: 'text/csv' });
+    const [source] = await createImportSources([file]);
+
+    const updated = updateSourceColumn(source, 1);
+    expect(updated.selectedColumnIndexes).toEqual([1]);
+
+    const clamped = updateSourceColumn(source, 99);
+    expect(clamped.selectedColumnIndexes).toEqual([2]);
   });
 });
 

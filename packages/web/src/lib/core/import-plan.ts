@@ -1,6 +1,6 @@
 import type { ParsedFile } from '../types.js';
 import type { BatchInputRow } from './validation-worker.js';
-import { parseFile } from './parser.js';
+import { buildParsedRows, parseFile } from './parser.js';
 
 export interface ImportSource {
   id: string;
@@ -54,17 +54,63 @@ export async function updateSourceSheet(
   };
 }
 
+export async function createSourceFromSheet(
+  source: ImportSource,
+  sheetName: string,
+  index: number,
+): Promise<ImportSource> {
+  if (!source.parsed.sheetNames?.includes(sheetName)) return source;
+
+  const parsed = await parseFile(source.file, { sheetName });
+  return createImportSource(source.file, parsed, index);
+}
+
+export function updateSourceHeader(source: ImportSource, headerPresent: boolean): ImportSource {
+  const parsed = buildParsedRows(source.parsed.rawRows, headerPresent) as ParsedFile;
+  return {
+    ...source,
+    parsed: {
+      ...parsed,
+      ...(source.parsed.sheetNames ? { sheetNames: source.parsed.sheetNames } : {}),
+      ...(source.sheetName ? { selectedSheetName: source.sheetName } : {}),
+    },
+    headerPresent,
+    selectedColumnIndexes: [parsed.suggestedColumnIndex],
+  };
+}
+
+export function updateSourceColumn(source: ImportSource, columnIndex: number): ImportSource {
+  const safeIndex = Math.max(0, Math.min(columnIndex, source.parsed.headers.length - 1));
+  return {
+    ...source,
+    selectedColumnIndexes: [safeIndex],
+  };
+}
+
+export function updateSourceIncluded(source: ImportSource, included: boolean): ImportSource {
+  return {
+    ...source,
+    included,
+  };
+}
+
 export function buildImportedCupRows(
   sources: ImportSource[],
   { skipMissingCup = true }: BuildImportedCupRowsOptions = {},
 ): ImportedCupRow[] {
   const importedRows: ImportedCupRow[] = [];
+  const importedSourceColumns = new Set<string>();
+  const fileIds = new Map<File, number>();
 
   for (const source of sources) {
     if (!source.included) continue;
 
-    for (const row of source.parsed.rows) {
-      for (const columnIndex of source.selectedColumnIndexes) {
+    for (const columnIndex of source.selectedColumnIndexes) {
+      const sourceColumnKey = importSourceColumnKey(source, columnIndex, fileIds);
+      if (importedSourceColumns.has(sourceColumnKey)) continue;
+      importedSourceColumns.add(sourceColumnKey);
+
+      for (const row of source.parsed.rows) {
         const value = String(row.cells[columnIndex] ?? '');
         if (skipMissingCup && value.trim() === '') continue;
 
@@ -88,6 +134,20 @@ export function buildBatchRows(importedRows: ImportedCupRow[]): BatchInputRow[] 
     value: row.value,
     row: row.row,
   }));
+}
+
+function importSourceColumnKey(
+  source: ImportSource,
+  columnIndex: number,
+  fileIds: Map<File, number>,
+): string {
+  let fileId = fileIds.get(source.file);
+  if (fileId === undefined) {
+    fileId = fileIds.size;
+    fileIds.set(source.file, fileId);
+  }
+
+  return [fileId, source.sheetName ?? '', source.headerPresent ? 'header' : 'data', columnIndex].join('\0');
 }
 
 function createImportSource(file: File, parsed: ParsedFile, index: number): ImportSource {

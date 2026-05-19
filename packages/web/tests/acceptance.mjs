@@ -180,22 +180,27 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
 
     const started = Date.now();
     await page.setInputFiles('#file-input', xlsxPath);
-    await page.waitForSelector('#preview-panel:not(.hidden)');
-    out.previewImageCount = await page.locator('#preview-table img').count();
+    await page.waitForSelector('#import-wizard');
     out.textPanelCollapsedAfterUpload =
       (await page
         .locator('#text')
         .evaluate((element) => element.classList.contains('collapsed'))) &&
       (await page.locator('#text-toggle').getAttribute('aria-expanded')) === 'false';
     await page.locator('#skip-missing-cup').uncheck();
-    await page.click('#check-button');
-    await page.waitForSelector('#results-panel:not(.hidden)');
-    out.totalUploadToResultsMs = Date.now() - started;
-    out.meta = await page.locator('#file-meta').textContent();
     out.selectedColumn = await page.locator('#column-select').inputValue();
+    await page.locator('button', { hasText: 'Conferma importazione' }).click();
+    await page.waitForSelector('#results-panel:not(.hidden)');
+    await page.waitForSelector('#preview-panel:not(.hidden)');
+    out.totalUploadToResultsMs = Date.now() - started;
+    await page.click('#preview-toggle');
+    out.previewImageCount = await page.locator('#preview-table img').count();
+    out.meta = await page.locator('#file-meta').textContent();
     out.summary = await page.locator('#summary').textContent();
     out.groupToggleDefault = await page.locator('#group-same-cups').isChecked();
-    await page.locator('#group-same-cups').uncheck();
+    await page.locator('#group-same-cups').evaluate((input) => {
+      input.checked = false;
+      input.dispatchEvent(new Event('change', { bubbles: true }));
+    });
     out.ungroupedSummary = await page.locator('#summary').textContent();
 
     // ── PDF-extract flow ───────────────────────────────────────────────────────
@@ -213,18 +218,20 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       join(samplesDir, 'native-multipage.pdf'),
     ]);
     // Wait for both files to finish processing (status "done" → cup cells appear)
-    await page.waitForFunction(
-      () => document.querySelectorAll('.cup-cell').length >= 3,
-      { timeout: 20000 },
-    );
+    await page.waitForFunction(() => document.querySelectorAll('.cup-cell').length >= 3, {
+      timeout: 20000,
+    });
     out.pdfExtractedCupCount = await page.locator('.cup-cell').count();
 
     // Click "Apri nel verificatore"
     await page.locator('#pdf-send-btn').click();
-    // Validator view should load with CSV auto-parsed
+    // Validator view should load with CSV auto-parsed into the import wizard
+    await page.waitForSelector('#import-wizard', { timeout: 10000 });
+    out.pdfColumnSelected = await page.locator('#column-select').inputValue();
+    await page.locator('button', { hasText: 'Conferma importazione' }).click();
+    await page.waitForSelector('#results-panel:not(.hidden)', { timeout: 10000 });
     await page.waitForSelector('#preview-panel:not(.hidden)', { timeout: 10000 });
     out.pdfPreviewShown = true;
-    out.pdfColumnSelected = await page.locator('#column-select').inputValue();
     // ── end PDF-extract flow ───────────────────────────────────────────────────
 
     await context.setOffline(true);

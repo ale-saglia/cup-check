@@ -177,8 +177,8 @@ describe('main', () => {
     document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
-    expect(parseFile).toHaveBeenCalledWith(file, {});
-    expect(document.querySelector('#preview-panel').classList.contains('hidden')).toBe(false);
+    expect(parseFile).toHaveBeenCalledWith(file);
+    expect(document.querySelector('#import-wizard')).toBeTruthy();
 
     document.querySelector('#sheet-select').value = 'Foglio 2';
     document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
@@ -188,7 +188,7 @@ describe('main', () => {
     document.querySelector('#column-select').value = '1';
     document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
-    expect(document.querySelector('#preview-table .selected')?.textContent).toBe('Trovato');
+    expect(document.querySelector('.import-preview-table .selected')?.textContent).toBe('Trovato');
 
     document.querySelector('#header-toggle').checked = false;
     document.querySelector('#header-toggle').dispatchEvent(new Event('change', { bubbles: true }));
@@ -201,7 +201,9 @@ describe('main', () => {
     document
       .querySelector('#skip-missing-cup')
       .dispatchEvent(new Event('change', { bubbles: true }));
-    document.querySelector('#check-button').click();
+    Array.from(document.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
     await flush();
 
     expect(document.querySelector('#summary').textContent).toContain('3 CUP unici da 3 righe');
@@ -213,22 +215,19 @@ describe('main', () => {
     Object.defineProperty(document.querySelector('#file-input'), 'files', { value: [file] });
     document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
-    document.querySelector('#column-select').append(new Option('Assente', '99'));
-    document.querySelector('#column-select').value = '99';
-    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
 
-    document.querySelector('#check-button').click();
+    Array.from(document.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
     await flush();
 
-    expect(document.querySelector('#results-toggle-meta').textContent).toBe('Nessun risultato');
+    expect(document.querySelector('#summary').textContent).toContain('2 CUP unici da 2 righe');
   });
 
-  it('ignores sheet changes before a file is selected', async () => {
+  it('does not show the import wizard before a file is selected', async () => {
     const { parseFile } = await loadMain();
 
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
-    await Promise.resolve();
-
+    expect(document.querySelector('#import-wizard')).toBeNull();
     expect(parseFile).not.toHaveBeenCalled();
   });
 
@@ -261,7 +260,7 @@ describe('main', () => {
     document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
-    expect(alert).toHaveBeenCalledWith('parse failed');
+    expect(document.querySelector('.live-message').textContent).toContain('parse failed');
   });
 
   it('updates filters, search, grouping and detail dialogs', async () => {
@@ -293,21 +292,28 @@ describe('main', () => {
       .querySelector('#group-same-cups')
       .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
-    const rowsButton = document.querySelector('.multiple-rows-button');
-    rowsButton.click();
+    const sourceButton = document.querySelector('.source-button');
+    expect(sourceButton.textContent).toBe('1++');
+    sourceButton.click();
     await flush();
-    expect(document.querySelector('#detail-dialog-label').textContent).toBe(
-      'Righe originali: 1, 2',
+    const sourceRows = Array.from(document.querySelectorAll('.detail-source-table tr')).map((row) =>
+      Array.from(row.children).map((cell) => cell.textContent?.trim()),
     );
+    expect(sourceRows).toEqual([
+      ['Fonte', '-'],
+      ['Scheda', '-'],
+      ['Colonna', '-'],
+      ['Righe', '1, 2'],
+    ]);
 
-    const detail = document.querySelector('.detail-cell');
-    Object.defineProperties(detail, {
-      scrollWidth: { configurable: true, value: 100 },
-      clientWidth: { configurable: true, value: 10 },
-    });
-    detail.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    document.querySelector('.outcome-detail-button').click();
     await flush();
-    expect(document.querySelector('#detail-dialog-label').textContent).toContain('TROVATO_OPENCUP');
+    expect(document.querySelector('#detail-dialog-label').textContent).toContain(
+      'CUP presente nel mirror OpenCUP disponibile.',
+    );
+    expect(document.querySelector('#detail-dialog-label').textContent).not.toContain(
+      'TROVATO_OPENCUP:',
+    );
   });
 
   it('clears the app and session state', async () => {

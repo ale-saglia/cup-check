@@ -14,7 +14,7 @@ describe('resultDetail', () => {
 
     expect(result.outcome).toBe('FORMATO_VALIDO_DA_VERIFICARE');
     expect(resultDetail(result)).toBe(
-      'FORMATO_VALIDO_DA_VERIFICARE: formato formalmente valido; esistenza non verificata. Avvisi non bloccanti: N1 - spazi bianchi rimossi dal CUP; N2 - lettere convertite in maiuscolo',
+      'Formato formalmente valido; esistenza non verificata. Avvisi non bloccanti: N1 - spazi bianchi rimossi dal CUP; N2 - lettere convertite in maiuscolo',
     );
   });
 
@@ -71,11 +71,9 @@ describe('resultDetail', () => {
       outcome: OUTCOMES.NOT_FOUND_OPENCUP,
     };
 
-    expect(resultDetail(found)).toBe(
-      'TROVATO_OPENCUP: CUP presente nel mirror OpenCUP disponibile.',
-    );
+    expect(resultDetail(found)).toBe('CUP presente nel mirror OpenCUP disponibile.');
     expect(resultDetail(notFound)).toBe(
-      'NON_TROVATO_OPENCUP_DA_VERIFICARE: CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.',
+      'CUP non presente nel mirror OpenCUP disponibile; verificare su fonte autoritativa.',
     );
   });
 
