@@ -9,6 +9,9 @@ const PRECACHE_URLS = [...new Set([...APP_SHELL, ...PRECACHE_ASSETS])];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE_NAME).then((cache) => cache.addAll(PRECACHE_URLS)));
+  // Attivazione immediata sicura finché tutte le risorse remote sono immutabili o versionate per URL
+  // e non esiste un backend stateful. Da rivalutare alla milestone 0.9.0 (Cloudflare Workers).
+  // Vedi docs/adr/0010-service-worker-skip-waiting.md
   self.skipWaiting();
 });
 

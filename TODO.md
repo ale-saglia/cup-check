@@ -48,11 +48,13 @@ Non richiede un framework; è un refactor di separazione responsabilità.
 
 Risolto 2026-05-19 tramite Fase C della migrazione Svelte: `pdf-extract-view.js` (597 righe) è stato sostituito da `PdfExtract.svelte` + `EntryList.svelte` + `QueueControls.svelte`. Lo stato usa Svelte Runes, il debounce manuale è sparito, i CSV builder sono stati estratti in `src/lib/pdf/pdf-csv.ts`.
 
-### 6. Documentare la scelta di skipWaiting incondizionato nel service worker
+### ~~6. Documentare la scelta di skipWaiting incondizionato nel service worker~~ ✅
 
 `self.skipWaiting()` è appropriato per l'architettura attuale (tutto locale, nessun backend), ma la milestone `0.9.0` (Worker Cloudflare) cambierà il contesto. Un aggiornamento del SW che modifica il comportamento di rete durante una sessione attiva potrebbe creare inconsistenze. Documentare la scelta in un ADR o in una nota nel codice, prima di arrivarci.
 
 - File: `packages/web/src/sw.js`, eventuale `docs/adr/`
+
+Risolto 2026-05-19: creato `docs/adr/0010-service-worker-skip-waiting.md` con contesto, precondizioni di sicurezza, opzioni da valutare alla 0.9.0 e alternative scartate. Aggiunto commento in `sw.js` che rimanda all'ADR.
 
 ### 7. Migrazione TypeScript + Svelte 5 (milestone 0.5.0)
 
