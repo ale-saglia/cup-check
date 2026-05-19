@@ -199,7 +199,7 @@ Tutte e quattro le feature vengono sviluppate sui componenti Svelte della Fase B
 
 Obiettivo: il verificatore principale accetta più file CSV/XLSX contemporaneamente, anche con colonne diverse e, per gli XLSX, con più schede. La concatenazione non deve tentare di fondere tabelle eterogenee per intestazione: deve invece normalizzare le selezioni dell'utente in un unico batch di CUP con metadati di origine.
 
-#### D2.1 Modello dati di importazione
+#### ✅ D2.1 Modello dati di importazione
 
 Introdurre tipi dedicati in `src/lib/types.ts` o in un modulo tematico `src/lib/core/import-plan.ts`:
 
