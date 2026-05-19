@@ -74,11 +74,13 @@ Risolto 2026-05-19: tutte le fasi A–D5 completate (D2–D5 implementate nella 
 
 ## Bassa priorità
 
-### 8. Rafforzare la robustezza di drainQueue nel PDF view
+### ~~8. Rafforzare la robustezza di drainQueue nel PDF view~~ ✅
 
 Il pattern try/catch-per-entry con stato mutabile a livello modulo funziona e il caso critico (clearAll durante elaborazione) è coperto da test, ma il design resta fragile se due file falliscono in rapida successione. Considerare un approccio a coda immutabile o un generatore asincrono che semplifichi il ragionamento sul flusso.
 
 - File: `packages/web/src/views/pdf-extract-view.js`
+
+Risolto 2026-05-19: il file è già stato migrato a `PdfExtract.svelte` (TODO #5). `drainQueue` avvolgeva il loop senza `try/finally`: se `processEntry` avesse lanciato inaspettatamente, `processing` sarebbe rimasto `true` per sempre bloccando la coda. Aggiunto `try/finally` che garantisce il reset di `processing` in ogni caso. Aggiunto test "due file che falliscono in successione non bloccano la coda" che copriva il caso mancante.
 
 ### 9. Aggiungere test di regressione per il drift polyfill
 

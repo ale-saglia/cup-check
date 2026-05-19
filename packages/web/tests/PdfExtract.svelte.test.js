@@ -647,6 +647,30 @@ describe('PdfExtract: CSV builders', () => {
   });
 });
 
+// ── Robustezza drainQueue ─────────────────────────────────────────────────────
+
+describe('PdfExtract: robustezza drainQueue', () => {
+  it('due file che falliscono in successione non bloccano la coda', async () => {
+    vi.mocked(extractPdfText).mockRejectedValue(new Error('corrotto'));
+    const { container } = render(PdfExtract);
+    uploadFiles(container, [makeFile('primo.pdf'), makeFile('secondo.pdf')]);
+    await waitFor(() => expect(vi.mocked(extractPdfText)).toHaveBeenCalledTimes(2));
+    flushSync();
+    expect(container.querySelectorAll('.badge.bad')).toHaveLength(2);
+
+    // la coda non deve essere bloccata: un terzo file deve essere elaborato correttamente
+    vi.mocked(extractPdfText).mockResolvedValue({
+      pages: [CUP1],
+      totalChars: 100,
+      needsOcr: false,
+    });
+    uploadFiles(container, [makeFile('terzo.pdf')]);
+    await waitFor(() => expect(vi.mocked(extractCupsFromPages)).toHaveBeenCalled());
+    flushSync();
+    expect(container.querySelector('.cup-cell')).not.toBeNull();
+  });
+});
+
 // ── clearAll durante elaborazione ─────────────────────────────────────────────
 
 describe('PdfExtract: clearAll durante elaborazione', () => {

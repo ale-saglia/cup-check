@@ -87,11 +87,14 @@
     if (processing) return;
     processing = true;
     const gen = generation;
-    while (queue.length > 0 && gen === generation) {
-      const entry = queue.shift()!;
-      await processEntry(entry);
+    try {
+      while (queue.length > 0 && gen === generation) {
+        const entry = queue.shift()!;
+        await processEntry(entry);
+      }
+    } finally {
+      if (gen === generation) processing = false;
     }
-    if (gen === generation) processing = false;
   }
 
   async function processEntry(entry: Entry) {
