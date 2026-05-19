@@ -5,6 +5,7 @@
     "moduleResolution": "bundler",
     "strict": true,
     "verbatimModuleSyntax": true,
+    "resolveJsonModule": true,
     "allowJs": true,
     "rootDir": "./src",
     "outDir": "dist",

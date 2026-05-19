@@ -1,0 +1,73 @@
+import itMessages from './it.json';
+
+export type Locale = 'it' | 'en';
+
+type Messages = Record<string, string>;
+
+const STORAGE_KEY = 'cup-check:language';
+const FALLBACK_LOCALE: Locale = 'it';
+const fallbackMessages = itMessages as Messages;
+
+const initial = initialLocale();
+let locale = $state<Locale>(FALLBACK_LOCALE);
+let messages = $state<Messages>(fallbackMessages);
+let loadingLocale: Locale | null = null;
+
+void setLocale(initial);
+
+export const languageOptions: Array<{ code: Locale; labelKey: string }> = [
+  { code: 'it', labelKey: 'language.it' },
+  { code: 'en', labelKey: 'language.en' },
+];
+
+export const i18n = {
+  get locale() {
+    return locale;
+  },
+  get messages() {
+    return messages;
+  },
+  t,
+  setLocale,
+};
+
+export function t(key: string, values: Record<string, string | number> = {}): string {
+  const template = messages[key] ?? fallbackMessages[key] ?? key;
+  return template.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name] ?? ''));
+}
+
+export async function setLocale(nextLocale: Locale): Promise<void> {
+  if (!isLocale(nextLocale)) return;
+  locale = nextLocale;
+  persistLocale(nextLocale);
+  loadingLocale = nextLocale;
+  const nextMessages = await loadMessages(nextLocale);
+  if (loadingLocale === nextLocale) {
+    messages = nextMessages;
+    if (typeof document !== 'undefined') {
+      document.documentElement.lang = nextLocale;
+      window.dispatchEvent(new CustomEvent('cup-check:languagechange', { detail: { locale: nextLocale } }));
+    }
+  }
+}
+
+function initialLocale(): Locale {
+  if (typeof localStorage === 'undefined') return FALLBACK_LOCALE;
+  const stored = localStorage.getItem(STORAGE_KEY);
+  return isLocale(stored) ? stored : FALLBACK_LOCALE;
+}
+
+function persistLocale(nextLocale: Locale): void {
+  if (typeof localStorage === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, nextLocale);
+}
+
+function isLocale(value: unknown): value is Locale {
+  return value === 'it' || value === 'en';
+}
+
+async function loadMessages(nextLocale: Locale): Promise<Messages> {
+  if (nextLocale === 'it') return fallbackMessages;
+  const module = await import('./en.json');
+  return module.default as Messages;
+}

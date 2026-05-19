@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onDestroy, onMount, tick } from 'svelte';
+  import { i18n } from '../i18n/i18n.svelte.js';
   import DropZone from '../components/DropZone.svelte';
   import ImportWizard from '../components/ImportWizard.svelte';
   import ProgressBar from '../components/ProgressBar.svelte';
@@ -67,12 +68,12 @@
 
   // --- Derived values ---
 
-  let fileToggleMeta = $derived(displayFileName ?? 'Nessun file caricato');
+  let fileToggleMeta = $derived(displayFileName ?? i18n.t('validator.noFile'));
   let textToggleMeta = $derived(
-    textCupCount !== null ? `${textCupCount} CUP` : 'Nessun testo inserito',
+    textCupCount !== null ? i18n.t('validator.textCount', { count: textCupCount }) : i18n.t('validator.noText'),
   );
   let previewToggleMeta = $derived(
-    importedRows.length > 0 ? `${importedRows.length} righe CUP` : 'Nessun batch',
+    importedRows.length > 0 ? i18n.t('validator.cupRows', { count: importedRows.length }) : i18n.t('validator.noBatch'),
   );
 
   let visibleResults = $derived(displayResults(results, groupSameCups) as UniqueResult[]);
@@ -92,22 +93,22 @@
     } = summaryData.counts;
     const parts = [
       groupSameCups
-        ? `${summaryData.total} CUP unici da ${sourceRowCount} righe`
-        : `${summaryData.total} righe verificate`,
+        ? i18n.t('validator.summaryUnique', { total: summaryData.total, rows: sourceRowCount })
+        : i18n.t('validator.summaryRowsChecked', { total: summaryData.total }),
     ];
-    if (found > 0) parts.push(`${found} trovati OpenCUP`);
-    if (notFound > 0) parts.push(`${notFound} non trovati OpenCUP`);
-    if (check > 0) parts.push(`${check} da verificare`);
-    parts.push(`${invalid} invalidi`, `${Math.round(durationMs)} ms`);
+    if (found > 0) parts.push(i18n.t('validator.summaryFound', { count: found }));
+    if (notFound > 0) parts.push(i18n.t('validator.summaryNotFound', { count: notFound }));
+    if (check > 0) parts.push(i18n.t('validator.summaryCheck', { count: check }));
+    parts.push(i18n.t('validator.summaryInvalid', { count: invalid }), `${Math.round(durationMs)} ms`);
     return parts.join(' · ');
   });
 
   let resultsToggleMeta = $derived(
     !summaryData
-      ? 'Nessun risultato'
+      ? i18n.t('validator.noResults')
       : groupSameCups
-        ? `${summaryData.total} CUP unici`
-        : `${summaryData.total} righe`,
+        ? i18n.t('validator.uniqueCups', { count: summaryData.total })
+        : i18n.t('validator.rows', { count: summaryData.total }),
   );
 
   let filteredResults = $derived.by(() =>
@@ -123,9 +124,9 @@
 
   let batchProgressLabel = $derived.by(() => {
     if (!batchProgress) return '';
-    if (batchProgress.phase === 'lookup') return 'Verifica presenza nel dataset OpenCUP';
+    if (batchProgress.phase === 'lookup') return i18n.t('validator.progressLookup');
     if (batchProgress.phase === 'complete') return '';
-    return batchUsedWorker ? 'Validazione formato CUP in background' : 'Validazione formato CUP';
+    return batchUsedWorker ? i18n.t('validator.progressWorker') : i18n.t('validator.progressInline');
   });
 
   $effect(() => {
@@ -178,7 +179,7 @@
       });
       dataset = loaded;
       setDatasetBar(
-        loaded.manifest ? loaded.manifest.dataset_tag : 'non caricato - solo verifica formato',
+        loaded.manifest ? loaded.manifest.dataset_tag : i18n.t('validator.datasetFormatOnly'),
       );
       return loaded;
     } catch (err) {
@@ -241,7 +242,7 @@
   async function handleTextCheck() {
     const lines = textInputLines(cupTextareaEl.value);
     if (lines.length === 0) {
-      alert('Nessun CUP trovato. Incolla almeno un codice, uno per riga.');
+      alert(i18n.t('validator.alertNoCup'));
       return;
     }
     const batchRows = (lines as string[]).map((line: string, i: number) => ({
@@ -306,7 +307,7 @@
       });
       batchUsedWorker = batch.usedWorker;
       batchProgress = null;
-      liveAnnouncement = `Verifica completata: ${batch.results.length} risultati`;
+      liveAnnouncement = i18n.t('validator.completed', { count: batch.results.length });
       return batch;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -321,7 +322,7 @@
 
   function handleCancelBatch() {
     batchController?.abort();
-    liveAnnouncement = 'Verifica annullata';
+    liveAnnouncement = i18n.t('validator.cancelled');
   }
 
   function handleClear() {
@@ -396,8 +397,10 @@
 
     return originRows
       .map((row) => {
-        const sheet = row.schedaOrigine ? ` scheda ${row.schedaOrigine}` : '';
-        return `riga ${row.sourceRowNumber} ${row.fileOrigine}${sheet} ${row.colonnaOrigine}`;
+        if (row.schedaOrigine) {
+          return i18n.t('validator.sourceSummarySheet', { row: row.sourceRowNumber, file: row.fileOrigine, sheet: row.schedaOrigine, column: row.colonnaOrigine });
+        }
+        return i18n.t('validator.sourceSummaryNoSheet', { row: row.sourceRowNumber, file: row.fileOrigine, column: row.colonnaOrigine });
       })
       .join(' ');
   }
@@ -411,9 +414,9 @@
       return {
         columns: ['-'],
         rows: [
-          { label: 'Scheda', values: ['-'] },
-          { label: 'Colonna', values: ['-'] },
-          { label: sourceRowsForResult(result).length === 1 ? 'Riga' : 'Righe', values: [sourceRowsForResult(result).join(', ')] },
+          { label: i18n.t('validator.sheet'), values: ['-'] },
+          { label: i18n.t('validator.column'), values: ['-'] },
+          { label: sourceRowsForResult(result).length === 1 ? i18n.t('validator.row') : i18n.t('validator.rowPlural'), values: [sourceRowsForResult(result).join(', ')] },
         ],
       };
     }
@@ -423,15 +426,15 @@
     return {
       columns: groups.map((group) => group.fileName),
       rows: [
-        { label: 'Scheda', values: groups.map((group) => group.sheetName ?? '-') },
+        { label: i18n.t('validator.sheet'), values: groups.map((group) => group.sheetName ?? '-') },
         {
-          label: 'Colonna',
+          label: i18n.t('validator.column'),
           values: groups.map((group) =>
             uniqueSourceValues(group.rows.map((row) => row.colonnaOrigine)),
           ),
         },
         {
-          label: sourceRowsForResult(result).length === 1 ? 'Riga' : 'Righe',
+          label: sourceRowsForResult(result).length === 1 ? i18n.t('validator.row') : i18n.t('validator.rowPlural'),
           values: groups.map((group) =>
             uniqueSourceValues(group.rows.map((row) => String(row.sourceRowNumber))),
           ),
@@ -514,13 +517,13 @@
       }),
       Object.assign(document.createElement('strong'), {
         className: 'dataset-loading-label',
-        textContent: `Loading ${percent}%`,
+        textContent: i18n.t('validator.loading', { percent }),
       }),
     );
   }
 
   function setDatasetBarError() {
-    setDatasetBar('non disponibile - solo verifica formato', { emphasis: true });
+    setDatasetBar(i18n.t('validator.datasetUnavailable'), { emphasis: true });
   }
 
   function badgeClass(outcome: string): string {
@@ -531,13 +534,12 @@
 </script>
 
 <section class="project-note" aria-labelledby="title">
-  <h1 id="title" class="visually-hidden">Verifica CUP</h1>
-  <p>cup-check è uno strumento statico per controllare il formato di liste di Codici Unici di Progetto direttamente nel browser, senza caricare dati su server esterni.
-  Il servizio verifica il formato dei Codici Unici di Progetto e produce un report esportabile per revisione, audit o rendicontazione.</p>
-  <p>Il controllo non sostituisce le fonti autoritative: consulta i
+  <h1 id="title" class="visually-hidden">{i18n.t('validator.title')}</h1>
+  <p>{i18n.t('validator.intro')}</p>
+  <p>{i18n.t('validator.limitsLead')}
     <button id="open-limits-desc" class="link-button" type="button"
-      onclick={() => limitsDialogEl.showModal()}>Limiti del controllo</button>
-    per capire cosa viene verificato e cosa resta escluso.</p>
+      onclick={() => limitsDialogEl.showModal()}>{i18n.t('validator.limitsLink')}</button>
+    {i18n.t('validator.limitsTail')}</p>
 </section>
 
 <section id="file" class="control-panel" class:collapsed={filePanelCollapsed} aria-labelledby="upload-title">
@@ -545,11 +547,11 @@
     aria-expanded={filePanelCollapsed ? 'false' : 'true'}
     aria-controls="file-controls"
     onclick={() => (filePanelCollapsed = !filePanelCollapsed)}>
-    <span id="upload-title">File</span>
+    <span id="upload-title">{i18n.t('validator.file')}</span>
     <span id="file-toggle-meta" title={displayFileName ?? ''}>{fileToggleMeta}</span>
   </button>
   <div id="file-controls" class="panel-body file-controls">
-    <p>Carica uno o più CSV/XLSX, configura le colonne CUP per ogni sorgente e ottieni un batch unico. Fino a 25 MB consigliati per file.</p>
+    <p>{i18n.t('validator.fileHelp')}</p>
     <DropZone disabled={batchRunning} onFiles={handleFiles} />
   </div>
 </section>
@@ -559,28 +561,28 @@
     aria-expanded={textPanelCollapsed ? 'false' : 'true'}
     aria-controls="text-controls"
     onclick={() => (textPanelCollapsed = !textPanelCollapsed)}>
-    <span id="text-title">Testo</span>
+    <span id="text-title">{i18n.t('validator.text')}</span>
     <span id="text-toggle-meta">{textToggleMeta}</span>
   </button>
   <div id="text-controls" class="panel-body text-controls">
-    <p>Incolla i CUP da verificare, uno per riga. Le righe vuote vengono ignorate.</p>
+    <p>{i18n.t('validator.textHelp')}</p>
     <textarea id="cup-textarea" rows="8"
-      placeholder="Incolla qui i CUP, uno per riga&#x0a;Es: A58C15000390001&#x0a;    B11B15001360001"
+      placeholder={i18n.t('validator.textPlaceholder')}
       bind:this={cupTextareaEl}></textarea>
     <div class="actions-row text-actions-row">
       <button id="text-check-button" class="primary" type="button"
         disabled={batchRunning}
-        onclick={handleTextCheck}>Verifica</button>
+        onclick={handleTextCheck}>{i18n.t('validator.verify')}</button>
     </div>
   </div>
 </section>
 
-<section class="workspace" aria-label="Area operativa verifica CUP">
+<section class="workspace" aria-label={i18n.t('validator.workspace')}>
   {#if batchProgress && batchProgress.percent < 100}
     <div id="batch-progress" class:batch-progress--running={batchRunning}>
       <ProgressBar label={batchProgressLabel} percent={batchProgress.percent} />
       {#if batchRunning}
-        <button id="cancel-batch-button" class="secondary" type="button" onclick={handleCancelBatch}>Annulla</button>
+        <button id="cancel-batch-button" class="secondary" type="button" onclick={handleCancelBatch}>{i18n.t('validator.cancel')}</button>
       {/if}
     </div>
   {/if}
@@ -603,7 +605,7 @@
       aria-controls="preview-controls"
       bind:this={previewToggleEl}
       onclick={() => (previewPanelCollapsed = !previewPanelCollapsed)}>
-      <span id="preview-title">Anteprima</span>
+      <span id="preview-title">{i18n.t('validator.preview')}</span>
       <span id="preview-toggle-meta">{previewToggleMeta}</span>
     </button>
     <div id="preview-controls" class="panel-body">
@@ -611,12 +613,12 @@
         <div>
           <p id="file-meta">
             <span class="file-meta-name" title={displayFileName ?? ''}>{displayFileName ?? ''}</span>
-            <span class="file-meta-detail"> - {importSources.filter((source) => source.included).length} sorgenti incluse</span>
+            <span class="file-meta-detail"> - {i18n.t('validator.sourcesIncluded', { count: importSources.filter((source) => source.included).length })}</span>
           </p>
-          <p>Batch normalizzato con origine file, scheda, riga e colonna conservate per ogni CUP.</p>
+          <p>{i18n.t('validator.previewHelp')}</p>
         </div>
         <button class="secondary" type="button" disabled={batchRunning} onclick={() => { lastFocusedBeforeWizard = document.activeElement as HTMLElement; importWizardVisible = true; }}>
-          Modifica importazione
+          {i18n.t('validator.editImport')}
         </button>
       </div>
       <div class="table-wrap">
@@ -624,12 +626,12 @@
           {#if importedRows.length > 0}
             <thead>
               <tr>
-                <th>Riga batch</th>
-                <th>CUP</th>
-                <th>File origine</th>
-                <th>Scheda</th>
-                <th>Riga origine</th>
-                <th>Colonna origine</th>
+                <th>{i18n.t('validator.batchRow')}</th>
+                <th>{i18n.t('validator.cup')}</th>
+                <th>{i18n.t('validator.fileOrigine')}</th>
+                <th>{i18n.t('validator.sheet')}</th>
+                <th>{i18n.t('validator.sourceRow')}</th>
+                <th>{i18n.t('validator.sourceColumn')}</th>
               </tr>
             </thead>
             <tbody>
@@ -648,10 +650,10 @@
         </table>
       </div>
       <div class="actions-row">
-        <p>{importedRows.length > 10 ? `Mostrate 10 di ${importedRows.length} righe importate.` : `${importedRows.length} righe importate.`}</p>
+        <p>{importedRows.length > 10 ? i18n.t('validator.importedRowsShown', { count: importedRows.length }) : i18n.t('validator.importedRows', { count: importedRows.length })}</p>
         <button id="check-button" class="primary" type="button"
           disabled={batchRunning || importedRows.length === 0}
-          onclick={handleCheck}>Verifica</button>
+          onclick={handleCheck}>{i18n.t('validator.verify')}</button>
       </div>
     </div>
   </section>
@@ -664,7 +666,7 @@
       aria-expanded={resultsPanelCollapsed ? 'false' : 'true'}
       aria-controls="results-controls"
       onclick={() => (resultsPanelCollapsed = !resultsPanelCollapsed)}>
-      <span id="results-title">Risultati</span>
+      <span id="results-title">{i18n.t('validator.results')}</span>
       <span id="results-toggle-meta">{resultsToggleMeta}</span>
     </button>
     <div id="results-controls" class="panel-body">
@@ -673,45 +675,45 @@
         <div class="button-row">
           <button id="export-button" class="primary" type="button"
             disabled={batchRunning}
-            onclick={handleExport}>Esporta CSV</button>
+            onclick={handleExport}>{i18n.t('validator.exportCsv')}</button>
           <button id="clear-button" class="secondary" type="button"
-            onclick={handleClear}>Pulisci</button>
+            onclick={handleClear}>{i18n.t('validator.clear')}</button>
         </div>
       </div>
       <div class="filters">
         <label class="toggle result-group-toggle">
           <input id="group-same-cups" type="checkbox"
             bind:checked={groupSameCups} />
-          <span>Raggruppa CUP uguali</span>
+          <span>{i18n.t('validator.groupSameCups')}</span>
         </label>
         <label class="result-outcome-filter">
-          Esito
+          {i18n.t('validator.outcome')}
           <select id="filter-select" bind:value={filter}>
-            <option value="ALL">Tutti</option>
-            <option value={OUTCOMES.FOUND_OPENCUP}>Trovati OpenCUP</option>
-            <option value={OUTCOMES.NOT_FOUND_OPENCUP}>Non trovati OpenCUP</option>
-            <option value={OUTCOMES.CHECK}>Da verificare</option>
-            <option value={OUTCOMES.INVALID}>Invalidi</option>
+            <option value="ALL">{i18n.t('validator.all')}</option>
+            <option value={OUTCOMES.FOUND_OPENCUP}>{i18n.t('validator.foundOpenCup')}</option>
+            <option value={OUTCOMES.NOT_FOUND_OPENCUP}>{i18n.t('validator.notFoundOpenCup')}</option>
+            <option value={OUTCOMES.CHECK}>{i18n.t('validator.toCheck')}</option>
+            <option value={OUTCOMES.INVALID}>{i18n.t('validator.invalid')}</option>
           </select>
         </label>
         <label class="result-search-filter">
-          Cerca
-          <input id="search-input" type="search" placeholder="CUP o dettaglio"
+          {i18n.t('validator.search')}
+          <input id="search-input" type="search" placeholder={i18n.t('validator.searchPlaceholder')}
             bind:value={query} />
         </label>
       </div>
       <div class="table-wrap">
         <table id="results-table" bind:this={resultsTableEl}>
           {#if filteredResults.length > renderedResults.length}
-            <caption>Mostrate {renderedResults.length} di {filteredResults.length} righe filtrate</caption>
+            <caption>{i18n.t('validator.filteredRowsShown', { shown: renderedResults.length, total: filteredResults.length })}</caption>
           {/if}
           {#if renderedResults.length > 0}
             <thead>
               <tr>
-                <th>Fonte</th>
+                <th>{i18n.t('validator.source')}</th>
                 <th>CUP</th>
-                <th>Esito</th>
-                <th>OpenCUP</th>
+                <th>{i18n.t('validator.outcome')}</th>
+                <th>{i18n.t('validator.openCup')}</th>
               </tr>
             </thead>
             <tbody>
@@ -721,7 +723,7 @@
                 <tr>
                   <td>
                     <button class="link-button source-button" type="button"
-                      aria-label="Mostra fonte del CUP"
+                      aria-label={i18n.t('validator.showCupSource')}
                       onclick={() => openSourceDialog(result)}>
                       {sourceButtonLabel(result)}
                     </button>
@@ -731,16 +733,16 @@
                   </td>
                   <td>
                     <button type="button" class="outcome-detail-button" title={detail}
-                      aria-label={`Mostra dettaglio esito ${result.outcome}`}
+                      aria-label={i18n.t('validator.showOutcomeDetail', { outcome: result.outcome })}
                       onclick={() => openResultDetailDialog(detail)}>
                       <span class="badge {badgeClass(result.outcome)}">{result.outcome}</span>
                     </button>
                   </td>
                   <td>
                     {#if opencupUrl}
-                      <a href={opencupUrl} target="_blank" rel="noopener noreferrer">Apri</a>
+                      <a href={opencupUrl} target="_blank" rel="noopener noreferrer">{i18n.t('validator.open')}</a>
                     {:else}
-                      <span aria-label="Link OpenCUP non disponibile">-</span>
+                      <span aria-label={i18n.t('validator.openCupUnavailable')}>-</span>
                     {/if}
                   </td>
                 </tr>
@@ -760,10 +762,10 @@
   onclick={(e) => { if (e.target === detailDialogEl) detailDialogEl.close(); }}>
   {#if detailDialogTable}
     <div class="detail-source-scroll">
-      <table id="detail-dialog-label" class="detail-source-table" aria-label="Fonte del CUP">
+      <table id="detail-dialog-label" class="detail-source-table" aria-label={i18n.t('validator.detailSourceTable')}>
         <thead>
           <tr>
-            <th scope="col">Fonte</th>
+            <th scope="col">{i18n.t('validator.source')}</th>
             {#each detailDialogTable.columns as column, index (`${column}-${index}`)}
               <th scope="col" class="detail-source-file" title={column}>{column}</th>
             {/each}
@@ -785,7 +787,7 @@
     <p id="detail-dialog-label" class="detail-dialog-text">{detailDialogContent}</p>
   {/if}
   <form method="dialog">
-    <button class="secondary" type="submit">Chiudi</button>
+    <button class="secondary" type="submit">{i18n.t('validator.close')}</button>
   </form>
 </dialog>
 
@@ -793,14 +795,14 @@
   bind:this={limitsDialogEl}
   onclick={(e) => { if (e.target === limitsDialogEl) limitsDialogEl.close(); }}>
   <div>
-    <h2 id="limits-title">Limiti del controllo</h2>
-    <p>Questa versione controlla il formato dei CUP e, quando il dataset OpenCUP statico è disponibile, verifica la presenza nel mirror pubblicato.</p>
-    <p>Lo strumento è in fase di sviluppo: può contenere errori, bug o interpretazioni incomplete delle regole. I risultati sono un supporto operativo, non una certificazione.</p>
-    <p>La verifica OpenCUP usa una banca dati generata mensilmente: potrebbe non includere gli ultimi CUP emessi, CUP non ancora pubblicati o record aggiornati dopo l'ultimo snapshot.</p>
-    <p>Un CUP marcato <code>NON_TROVATO_OPENCUP_DA_VERIFICARE</code> potrebbe comunque esistere in progetti non pubblicati o non ancora presenti nel dataset mensile.</p>
-    <p>Per attestare l'esistenza del progetto resta necessaria una fonte autoritativa, come il Sistema CUP o il portale OpenCUP.</p>
+    <h2 id="limits-title">{i18n.t('validator.limitsTitle')}</h2>
+    <p>{i18n.t('validator.limitsP1')}</p>
+    <p>{i18n.t('validator.limitsP2')}</p>
+    <p>{i18n.t('validator.limitsP3')}</p>
+    <p>{i18n.t('validator.limitsP4')}</p>
+    <p>{i18n.t('validator.limitsP5')}</p>
   </div>
   <form method="dialog">
-    <button class="secondary" type="submit">Chiudi</button>
+    <button class="secondary" type="submit">{i18n.t('validator.close')}</button>
   </form>
 </dialog>

@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { i18n } from '../i18n/i18n.svelte.js';
   import type { ImportSource } from '../lib/core/import-plan.js';
   import {
     buildImportedCupRows,
@@ -41,8 +42,8 @@
   let hasMultipleFiles = $derived(fileGroups.length > 1);
   let importCountLabel = $derived(
     hasMultipleFiles
-      ? `${includedCount} di ${sources.length} sorgenti incluse - ${importedCount} righe CUP`
-      : `${importedCount} righe CUP`,
+      ? i18n.t('import.includedSources', { included: includedCount, total: sources.length, rows: importedCount })
+      : i18n.t('import.rowsCup', { count: importedCount }),
   );
   let availableAdditionalSheets = $derived(baseSource?.parsed.sheetNames ?? []);
   let additionalSheetName = $state('');
@@ -114,7 +115,7 @@
 
   function handleConfirm() {
     if (includedCount === 0) {
-      message = 'Includi almeno una sorgente.';
+      message = i18n.t('import.messageIncludeOne');
       return;
     }
     if (importedCount === 0) {
@@ -123,11 +124,11 @@
       ).length;
       message =
         rowsWithoutSkip > 0
-          ? 'Nessuna cella CUP valorizzata nelle sorgenti incluse.'
-          : 'Nessuna riga disponibile nelle sorgenti incluse.';
+          ? i18n.t('import.messageNoValuedCup')
+          : i18n.t('import.messageNoRows');
       return;
     }
-    onAnnounce?.(`Importazione confermata: ${importedCount} righe CUP.`);
+    onAnnounce?.(i18n.t('import.announcedConfirmed', { count: importedCount }));
     onConfirm(sources);
   }
 </script>
@@ -142,19 +143,18 @@
   onkeydown={(e) => { if (e.key === 'Escape') onCancel(); }}
 >
   <div class="panel-toggle import-wizard-title-bar">
-    <h2 id="import-wizard-title">Importazione file</h2>
+    <h2 id="import-wizard-title">{i18n.t('import.title')}</h2>
     <span class="import-wizard-count">{importCountLabel}</span>
   </div>
   <div class="panel-body">
     {#if hasMultipleFiles}
-      <p class="import-wizard-help">Configura ogni sorgente, poi conferma per costruire un batch unico di CUP.</p>
+      <p class="import-wizard-help">{i18n.t('import.help')}</p>
     {/if}
 
     {#if currentFileGroup}
       {#if hasMultipleFiles}
-        <div class="import-source-nav" aria-label="Navigazione file">
-          <label class="import-file-select">
-            File
+        <div class="import-source-nav" aria-label={i18n.t('import.fileNav')}>
+          <label class="import-file-select">{i18n.t('import.file')}
             <select
               value={String(currentFileIndex)}
               disabled={loading}
@@ -185,8 +185,7 @@
 
       {#if availableAdditionalSheets.length > 0}
         <div class="additional-sheet-controls">
-          <label>
-            Scheda o colonna Excel
+          <label>{i18n.t('import.additionalSheet')}
             <select
               value={selectedAdditionalSheetName}
               disabled={loading}
@@ -197,8 +196,7 @@
               {/each}
             </select>
           </label>
-          <button class="secondary" type="button" disabled={loading} onclick={handleAddSheet}>
-            Carica colonna da scheda
+          <button class="secondary" type="button" disabled={loading} onclick={handleAddSheet}>{i18n.t('import.loadSheetColumn')}
           </button>
         </div>
       {/if}
@@ -206,16 +204,15 @@
 
     <div class="actions-row import-actions">
       <div class="button-row import-button-row">
-        <button class="primary" type="button" disabled={loading} onclick={handleConfirm}>
-          Conferma importazione
+        <button class="primary" type="button" disabled={loading} onclick={handleConfirm}>{i18n.t('import.confirm')}
         </button>
-        <button class="secondary" type="button" disabled={loading} onclick={onCancel}>Annulla</button>
+        <button class="secondary" type="button" disabled={loading} onclick={onCancel}>{i18n.t('import.cancel')}</button>
       </div>
     </div>
 
     <p class="live-message" aria-live="polite">
       {#if loading}
-        Aggiornamento sorgente in corso.
+        {i18n.t('import.loading')}
       {:else}
         {message}
       {/if}

@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '../i18n/i18n.svelte.js';
   import type { ImportSource } from '../lib/core/import-plan.js';
 
   interface Props {
@@ -26,16 +27,16 @@
   let htmlId = $derived(source.id.replace(/[^a-zA-Z0-9_-]/g, '-'));
   let selectedColumnIndex = $derived(source.selectedColumnIndexes[0] ?? 0);
   let hasMultipleSheets = $derived((source.parsed.sheetNames?.length ?? 0) > 1);
-  let sheetLabel = $derived(source.sheetName ? ` - scheda "${source.sheetName}"` : '');
-  let rowLabel = $derived(`${source.parsed.rows.length} righe dati`);
+  let sheetLabel = $derived(source.sheetName ? ` - ${i18n.t('source.sheetMeta', { sheet: source.sheetName })}` : '');
+  let rowLabel = $derived(i18n.t('source.rowsData', { count: source.parsed.rows.length }));
   let headerMeta = $derived(
     source.parsed.headerDetectedAutomatically === source.headerPresent
       ? source.headerPresent
-        ? 'intestazione rilevata automaticamente'
-        : 'intestazione non rilevata automaticamente'
+        ? i18n.t('source.headerAutoYes')
+        : i18n.t('source.headerAutoNo')
       : source.headerPresent
-        ? 'intestazione impostata manualmente'
-        : 'prima riga trattata manualmente come dati',
+        ? i18n.t('source.headerManualYes')
+        : i18n.t('source.headerManualNo'),
   );
 </script>
 
@@ -60,14 +61,13 @@
         disabled={disabled}
         onchange={(event) => onIncludeChange((event.target as HTMLInputElement).checked)}
       />
-      <span>Includi sorgente</span>
+      <span>{i18n.t('source.include')}</span>
     </label>
   </div>
 
   <!-- Row 2: sheet selector (left) + header toggle (right) -->
   <div class="import-source-row">
-    <label class="import-sheet-select" class:hidden={!hasMultipleSheets}>
-      Scheda Excel
+    <label class="import-sheet-select" class:hidden={!hasMultipleSheets}>{i18n.t('source.excelSheet')}
       <select
         id={`sheet-select-${htmlId}`}
         disabled={disabled || !hasMultipleSheets}
@@ -88,13 +88,12 @@
         disabled={disabled}
         onchange={(event) => onHeaderChange((event.target as HTMLInputElement).checked)}
       />
-      <span>La prima riga contiene intestazioni</span>
+      <span>{i18n.t('source.headerToggle')}</span>
     </label>
   </div>
 
   <!-- Column CUP selector -->
-  <label class="import-column-select">
-    Colonna CUP
+  <label class="import-column-select">{i18n.t('source.cupColumn')}
     <select
       id={`column-select-${htmlId}`}
       disabled={disabled || !source.included}
@@ -102,19 +101,19 @@
       onchange={(event) => onColumnChange(Number((event.target as HTMLSelectElement).value))}
     >
       {#each source.parsed.headers as header, index (index)}
-        <option value={String(index)}>{header || `Colonna ${index + 1}`}</option>
+        <option value={String(index)}>{header || i18n.t('source.column', { number: index + 1 })}</option>
       {/each}
     </select>
   </label>
 
   <!-- Preview table -->
   <div class="table-wrap import-preview-table">
-    <table aria-label={`Anteprima - ${source.fileName}`}>
+    <table aria-label={i18n.t('source.preview', { file: source.fileName })}>
       <thead>
         <tr>
-          <th>Riga</th>
+          <th>{i18n.t('source.row')}</th>
           {#each source.parsed.headers as header, index (index)}
-            <th>{header || `Colonna ${index + 1}`}</th>
+            <th>{header || i18n.t('source.column', { number: index + 1 })}</th>
           {/each}
         </tr>
       </thead>
@@ -140,7 +139,7 @@
       disabled={disabled}
       onchange={(event) => onSkipMissingCupChange((event.target as HTMLInputElement).checked)}
     />
-    <span>Ignora celle CUP assenti</span>
+    <span>{i18n.t('source.skipMissing')}</span>
   </label>
 
 </div>

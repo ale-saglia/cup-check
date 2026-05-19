@@ -340,12 +340,12 @@ Acceptance:
 - Etichette ARIA mantenute su tabelle, input file, pulsanti azione non testuali e pannelli operativi.
 - Quality gate Lighthouse integrato in CI tramite `npm run test:lighthouse` dopo `npm run build` (soglia ≥ 90).
 
-### D4. i18n base
+### ✅ D4. i18n base
 
-- File `src/i18n/it.json` e `src/i18n/en.json`: tutte le stringhe UI, etichette esiti, messaggi errore.
-- `LanguageSwitcher.svelte` con persistenza `localStorage`.
-- Le stringhe nel template Svelte diventano `$derived` dal file di lingua attivo.
-- Fixture e contratti interni restano in italiano.
+- File `src/i18n/it.json` e `src/i18n/en.json`: stringhe UI, etichette e messaggi principali estratti dal codice Svelte. Italiano come lingua sorgente; inglese presente come bozza POC/portfolio da rifinire editorialmente.
+- `LanguageSwitcher.svelte` con persistenza `localStorage`; nessuna lingua nell'URL, il routing hash resta invariato.
+- Helper reattivo `src/i18n/i18n.svelte.ts` con caricamento dinamico di `en.json` e fallback italiano.
+- Fixture e contratti interni restano in italiano; gli outcome tecnici non vengono tradotti perché sono parte del contratto dati.
 
 ### D5. Dichiarazione di accessibilità
 

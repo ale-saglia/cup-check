@@ -2,6 +2,7 @@
 
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
+import { i18n } from '../src/i18n/i18n.svelte.js';
 import { mountLayout } from '../src/layout.js';
 
 describe('layout', () => {
@@ -72,6 +73,20 @@ describe('layout', () => {
     menu.open = false;
     document.dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(menu.open).toBe(false);
+  });
+
+  it('aggiorna header, footer e menu al cambio lingua', async () => {
+    await i18n.setLocale('en');
+
+    expect(root.querySelector('.brand')?.textContent).toBe('CUP Check');
+    expect(root.querySelector('.nav-menu-toggle')?.textContent).toBe('Tools');
+    expect(root.querySelector('.nav-menu-list')?.textContent).toContain(
+      'Fetch CUP from PDF invoices',
+    );
+    expect(root.querySelector('.site-footer')?.textContent).toContain('Built by');
+    expect(root.querySelector('.site-footer')?.textContent).toContain('Source code and license');
+
+    await i18n.setLocale('it');
   });
 
   it('ignora keydown con altri tasti sulla lista', () => {

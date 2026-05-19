@@ -1,5 +1,6 @@
 <script lang="ts">
   import { onMount } from 'svelte';
+  import { i18n } from '../i18n/i18n.svelte.js';
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
   import { validateCup, OUTCOMES } from '../lib/core/validator.js';
@@ -31,14 +32,14 @@
     const active = entries.find((e) => ['parsing', 'ocr'].includes(e.status));
     if (active?.status === 'ocr') {
       const progress = active.ocrProgress;
-      if (progress?.ocrLoading) return `Caricamento OCR per ${active.name}`;
+      if (progress?.ocrLoading) return i18n.t('pdf.ocrLoadingFor', { file: active.name });
       if (progress && progress.totalPages > 0) {
-        return `OCR ${active.name}: pagina ${progress.page} di ${progress.totalPages}`;
+        return i18n.t('pdf.ocrPage', { file: active.name, page: progress.page, total: progress.totalPages });
       }
-      return `OCR in corso per ${active.name}`;
+      return i18n.t('pdf.ocrRunningFor', { file: active.name });
     }
-    if (active?.status === 'parsing') return `Lettura PDF ${active.name}`;
-    return `Elaborati ${done} di ${entries.length} PDF`;
+    if (active?.status === 'parsing') return i18n.t('pdf.reading', { file: active.name });
+    return i18n.t('pdf.processed', { done, total: entries.length });
   });
 
   $effect(() => {
@@ -77,7 +78,7 @@
     });
     // entries.slice() returns the reactive proxies; mutations via these proxies update the template
     queue.push(...entries.slice(startIdx));
-    liveAnnouncement = `${files.length} PDF aggiunti alla coda`;
+    liveAnnouncement = i18n.t('pdf.addedToQueue', { count: files.length });
     drainQueue();
   }
 
@@ -130,7 +131,7 @@
       );
     } catch (err) {
       entry.status = 'error';
-      entry.error = (err as Error).message ?? 'Errore sconosciuto';
+      entry.error = (err as Error).message ?? i18n.t('pdf.unknownError');
     } finally {
       entry.file = null;
     }
@@ -217,7 +218,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = 'estrazione-cup.csv';
+    a.download = i18n.t('pdf.exportFileName');
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -227,7 +228,7 @@
     entries = [];
     queue.length = 0;
     processing = false;
-    liveAnnouncement = 'Risultati PDF cancellati';
+    liveAnnouncement = i18n.t('pdf.cleared');
   }
 
   // ── CSV builders ───────────────────────────────────────────────────────────
@@ -304,17 +305,10 @@
   }
 </script>
 
-<h1>Estrai CUP da fatture PDF</h1>
+<h1>{i18n.t('pdf.title')}</h1>
+<p class="project-note">{i18n.t('pdf.intro')}</p>
 <p class="project-note">
-  Carica uno o più PDF per estrarre automaticamente i codici CUP. I file sono elaborati interamente
-  in locale, nessun dato viene inviato a server esterni. Per batch grandi i risultati appariranno
-  progressivamente man mano che i PDF vengono elaborati.
-</p>
-<p class="project-note">
-  I CUP contrassegnati con <strong>ocr</strong> nella colonna Fonte sono stati estratti tramite
-  riconoscimento ottico del testo: verificane sempre la correttezza prima di utilizzarli, poiché
-  errori di lettura (es. confusione tra lettere e cifre) o frammentazioni del testo possono
-  produrre codici inesatti.
+  {i18n.t('pdf.ocrNoteBefore')} <strong>ocr</strong> {i18n.t('pdf.ocrNoteAfter')}
 </p>
 
 <div
@@ -322,7 +316,7 @@
   class="dropzone pdf-dropzone"
   class:pdf-dropzone--drag={dropzoneActive}
   role="region"
-  aria-label="Zona di rilascio file PDF"
+  aria-label={i18n.t('pdf.dropzone')}
   ondragover={handleDragOver}
   ondragleave={handleDragLeave}
   ondrop={handleDrop}
@@ -337,14 +331,14 @@
       bind:this={fileInputEl}
       onchange={handleFileChange}
     />
-    <span>Trascina i PDF qui oppure <span class="link-button">seleziona file</span></span>
+    <span>{i18n.t('pdf.dropzoneTextBefore')} <span class="link-button">{i18n.t('pdf.selectFiles')}</span></span>
   </label>
 </div>
 
 {#if hasEntries}
   <div id="pdf-results-area">
     <div class="section-head pdf-results-head">
-      <h2 style="margin-bottom:0;">Risultati</h2>
+      <h2 style="margin-bottom:0;">{i18n.t('pdf.results')}</h2>
       <QueueControls
         {hasCups}
         {hasDone}

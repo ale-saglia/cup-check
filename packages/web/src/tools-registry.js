@@ -1,16 +1,16 @@
 export const tools = [
   {
     id: 'pdf-extract',
-    label: 'Estrai CUP da fatture PDF',
+    labelKey: 'tool.pdfExtract.label',
     path: '#/pdf-extract',
     enabled: true,
-    description: 'Estrae i CUP da file PDF tramite analisi testo e OCR.',
+    descriptionKey: 'tool.pdfExtract.description',
   },
   {
     id: 'placeholder',
-    label: 'Prossimamente…',
+    labelKey: 'tool.placeholder.label',
     path: null,
     enabled: false,
-    description: '',
+    descriptionKey: '',
   },
 ];

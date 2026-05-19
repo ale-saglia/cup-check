@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '../i18n/i18n.svelte.js';
   const SUPPORTED_EXTENSIONS = ['csv', 'xlsx'];
   const SUPPORTED_TYPES = ['text/csv', 'application/vnd.ms-excel'];
   const RECOMMENDED_MAX_SIZE_BYTES = 25 * 1024 * 1024;
@@ -42,18 +43,18 @@
     error = '';
     const supported = files.filter(isSupportedFile);
     if (supported.length === 0) {
-      error = 'Carica almeno un file CSV o XLSX.';
+      error = i18n.t('dropzone.errorUnsupported');
       return;
     }
     if (supported.length !== files.length) {
-      error = 'Alcuni file sono stati ignorati: sono supportati solo CSV e XLSX.';
+      error = i18n.t('dropzone.errorSomeIgnored');
     } else {
       const oversized = supported.filter((f) => f.size > RECOMMENDED_MAX_SIZE_BYTES);
       if (oversized.length > 0) {
         error =
           oversized.length === 1
-            ? 'Un file supera i 25 MB consigliati: le prestazioni potrebbero essere ridotte.'
-            : `${oversized.length} file superano i 25 MB consigliati: le prestazioni potrebbero essere ridotte.`;
+            ? i18n.t('dropzone.warnOneLarge')
+            : i18n.t('dropzone.warnManyLarge', { count: oversized.length });
       }
     }
     onFiles(supported);
@@ -69,7 +70,7 @@
   class="dropzone dropzone--wide"
   class:dropzone--active={dragActive}
   role="group"
-  aria-label="Caricamento file CSV o XLSX"
+  aria-label={i18n.t('dropzone.label')}
   aria-disabled={disabled}
   ondragover={handleDragOver}
   ondragleave={handleDragLeave}
@@ -85,7 +86,7 @@
       bind:this={inputEl}
       onchange={handleChange}
     />
-    <span>Carica o trascina file</span>
+    <span>{i18n.t('dropzone.button')}</span>
   </label>
 </div>
 {#if error}

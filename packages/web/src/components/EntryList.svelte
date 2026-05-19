@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { i18n } from '../i18n/i18n.svelte.js';
   import type { Entry, Cup } from '../lib/types.js';
 
   interface Props {
@@ -43,15 +44,15 @@
 </script>
 
 <div class="table-wrap">
-  <table aria-label="Risultati estrazione CUP dai PDF">
+  <table aria-label={i18n.t('pdf.tableLabel')}>
     <thead>
       <tr>
-        <th scope="col">File</th>
+        <th scope="col">{i18n.t('pdf.file')}</th>
         <th scope="col" class="pdf-cup-col">CUP</th>
-        <th scope="col">Formato</th>
-        <th scope="col">Fonte</th>
-        <th scope="col">Manuale</th>
-        <th scope="col">Azioni</th>
+        <th scope="col">{i18n.t('pdf.format')}</th>
+        <th scope="col">{i18n.t('pdf.source')}</th>
+        <th scope="col">{i18n.t('pdf.manual')}</th>
+        <th scope="col">{i18n.t('pdf.actions')}</th>
       </tr>
     </thead>
     <tbody bind:this={tbodyEl}>
@@ -59,16 +60,16 @@
         {#if entry.status === 'queued'}
           <tr>
             <td class="detail-cell" title={entry.name}>{truncateName(entry.name)}</td>
-            <td colspan="5" class="pdf-status-cell"><span class="badge">In coda</span></td>
+            <td colspan="5" class="pdf-status-cell"><span class="badge">{i18n.t('pdf.queued')}</span></td>
           </tr>
         {:else if entry.status === 'parsing'}
           <tr>
             <td class="detail-cell" title={entry.name}>{truncateName(entry.name)}</td>
-            <td colspan="5" class="pdf-status-cell"><span class="badge">Lettura PDF…</span></td>
+            <td colspan="5" class="pdf-status-cell"><span class="badge">{i18n.t('pdf.readingPdf')}</span></td>
           </tr>
         {:else if entry.status === 'ocr'}
           {@const p = entry.ocrProgress}
-          {@const label = p?.ocrLoading ? 'Caricamento OCR…' : `OCR pagina ${p?.page} / ${p?.totalPages}`}
+          {@const label = p?.ocrLoading ? i18n.t('pdf.ocrLoading') : i18n.t('pdf.ocrPageShort', { page: p?.page ?? 0, total: p?.totalPages ?? 0 })}
           <tr>
             <td class="detail-cell" title={entry.name}>{truncateName(entry.name)}</td>
             <td colspan="5" class="pdf-status-cell"><span class="badge warn">{label}</span></td>
@@ -77,12 +78,12 @@
           <tr>
             <td class="detail-cell" title={entry.name}>{truncateName(entry.name)}</td>
             <td colspan="4" class="pdf-status-cell">
-              <span class="badge bad">Errore</span> {entry.error ?? ''}
+              <span class="badge bad">{i18n.t('pdf.error')}</span> {entry.error ?? ''}
             </td>
             <td>
               {#if entry.cups.length === 0}
                 <button class="link-button" type="button" onclick={() => onAddManual(entry.id)}>
-                  + aggiungi CUP
+                  {i18n.t('pdf.addCup')}
                 </button>
               {/if}
             </td>
@@ -95,10 +96,10 @@
           {#if entry.cups.length === 0}
             <tr>
               <td class="detail-cell" title={entry.name}>{truncateName(entry.name)}</td>
-              <td colspan="4" class="pdf-status-cell pdf-no-cup">Nessun CUP rilevato.</td>
+              <td colspan="4" class="pdf-status-cell pdf-no-cup">{i18n.t('pdf.noCup')}</td>
               <td>
                 <button class="link-button" type="button" onclick={() => onAddManual(entry.id)}>
-                  + aggiungi CUP
+                  {i18n.t('pdf.addCup')}
                 </button>
               </td>
             </tr>
@@ -124,7 +125,7 @@
           value={cup.value}
           maxlength="15"
           data-editing
-          aria-label="Valore CUP"
+          aria-label={i18n.t('pdf.cupValue')}
           onkeydown={(e) => handleInputKeydown(e, entryId, cup.id)}
           onblur={(e) => handleInputBlur(e, entryId, cup.id)}
           onmousedown={(e) => {
@@ -146,29 +147,27 @@
               ?.querySelector<HTMLInputElement>('input[data-editing]');
             onSaveEdit(entryId, cup.id, input?.value ?? '');
           }}
-        >salva</button>
+        >{i18n.t('pdf.save')}</button>
         <button
           class="link-button"
           type="button"
           data-cancel-edit
           onclick={() => onCancelEdit(entryId, cup.id)}
-        >annulla</button>
+        >{i18n.t('pdf.cancelEdit')}</button>
       </td>
     {:else}
       <td><code class="cup-cell">{cup.value}</code></td>
       <td>
         <span class="badge {cup.formalValid ? 'good' : 'bad'}">
-          {cup.formalValid ? 'Valido' : 'Invalido'}
+          {cup.formalValid ? i18n.t('pdf.valid') : i18n.t('pdf.invalid')}
         </span>
       </td>
       <td>{cup.source ?? ''}</td>
-      <td>{#if cup.manual}<span class="badge warn">manuale</span>{/if}</td>
+      <td>{#if cup.manual}<span class="badge warn">{i18n.t('pdf.manualBadge')}</span>{/if}</td>
       <td>
-        <button class="link-button" type="button" onclick={() => onEdit(entryId, cup.id)}>
-          modifica
+        <button class="link-button" type="button" onclick={() => onEdit(entryId, cup.id)}>{i18n.t('pdf.edit')}
         </button>
-        <button class="link-button" type="button" onclick={() => onRemove(entryId, cup.id)}>
-          rimuovi
+        <button class="link-button" type="button" onclick={() => onRemove(entryId, cup.id)}>{i18n.t('pdf.remove')}
         </button>
       </td>
     {/if}

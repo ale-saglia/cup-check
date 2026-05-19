@@ -1,5 +1,6 @@
 import { tools } from './tools-registry.js';
 import { PRODUCT_VERSION } from './version.js';
+import { i18n } from './i18n/i18n.svelte.js';
 
 function esc(str) {
   return String(str)
@@ -14,21 +15,32 @@ function buildMenuItems() {
     .filter((tool) => tool.enabled)
     .map(
       (tool) =>
-        `<li role="none"><a class="nav-menu-item" role="menuitem" href="${esc(tool.path)}">${esc(tool.label)}</a></li>`,
+        `<li role="none"><a class="nav-menu-item" role="menuitem" href="${esc(tool.path)}">${esc(tool.labelKey ? i18n.t(tool.labelKey) : tool.label)}</a></li>`,
     )
     .join('');
+}
+
+function refreshLayoutTranslations(root) {
+  root.querySelector('.site-nav')?.setAttribute('aria-label', i18n.t('app.mainNav'));
+  root.querySelectorAll('[data-i18n]').forEach((element) => {
+    element.textContent = i18n.t(element.dataset.i18n);
+  });
+  root.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
+    element.setAttribute('aria-label', i18n.t(element.dataset.i18nAriaLabel));
+  });
+  root.querySelector('.nav-menu-list').innerHTML = buildMenuItems();
 }
 
 export function mountLayout(root = document.querySelector('#app')) {
   root.innerHTML = `
     <div class="app-shell">
-      <a class="skip-link" href="#main-content">Salta al contenuto</a>
-      <nav class="site-nav" aria-label="Navigazione principale">
+      <a class="skip-link" href="#main-content">${i18n.t('app.skipToContent')}</a>
+      <nav class="site-nav" aria-label="${i18n.t('app.mainNav')}">
         <div class="nav-inner">
           <div class="nav-left">
-            <a class="brand" href="#/">Verifica CUP</a>
+            <a class="brand" data-i18n="app.brand" href="#/">${i18n.t('app.brand')}</a>
             <details class="nav-menu">
-              <summary class="nav-menu-toggle" aria-haspopup="menu">Strumenti</summary>
+              <summary class="nav-menu-toggle" data-i18n="app.tools" aria-haspopup="menu">${i18n.t('app.tools')}</summary>
               <ul class="nav-menu-list" role="menu">
                 ${buildMenuItems()}
               </ul>
@@ -40,10 +52,10 @@ export function mountLayout(root = document.querySelector('#app')) {
           </div>
         </div>
       </nav>
-      <main id="main-content" class="view-slot shell" aria-label="Area principale" tabindex="-1"></main>
+      <main id="main-content" class="view-slot shell" data-i18n-aria-label="app.mainArea" aria-label="${i18n.t('app.mainArea')}" tabindex="-1"></main>
       <footer class="site-footer">
-        <span>Sviluppato da <a href="https://ale-saglia.com" rel="noreferrer">Alessandro Saglia</a></span>
-        <span><a href="https://opencup.gov.it" target="_blank" rel="noopener noreferrer">OpenCUP</a> · <a href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer">Codice sorgente e licenza</a></span>
+        <span><span data-i18n="app.footerAuthorPrefix">${i18n.t('app.footerAuthorPrefix')}</span> <a href="https://ale-saglia.com" rel="noreferrer">Alessandro Saglia</a></span>
+        <span><span id="language-switcher-slot"></span> · <a href="https://opencup.gov.it" target="_blank" rel="noopener noreferrer">OpenCUP</a> · <a href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer" data-i18n="app.sourceAndLicense">${i18n.t('app.sourceAndLicense')}</a></span>
       </footer>
     </div>
   `;
@@ -64,6 +76,8 @@ export function mountLayout(root = document.querySelector('#app')) {
       menuToggle.focus();
     }
   });
+
+  window.addEventListener('cup-check:languagechange', () => refreshLayoutTranslations(root));
 
   menuList.addEventListener('click', () => {
     menu.open = false;
