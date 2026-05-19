@@ -11,6 +11,7 @@ export interface ImportSource {
   headerPresent: boolean;
   selectedColumnIndexes: number[];
   included: boolean;
+  skipMissingCup: boolean;
 }
 
 export interface ImportedCupRow {
@@ -20,10 +21,6 @@ export interface ImportedCupRow {
   schedaOrigine?: string;
   colonnaOrigine: string;
   sourceRowNumber: number;
-}
-
-export interface BuildImportedCupRowsOptions {
-  skipMissingCup?: boolean;
 }
 
 export async function createImportSources(files: File[]): Promise<ImportSource[]> {
@@ -94,10 +91,17 @@ export function updateSourceIncluded(source: ImportSource, included: boolean): I
   };
 }
 
-export function buildImportedCupRows(
-  sources: ImportSource[],
-  { skipMissingCup = true }: BuildImportedCupRowsOptions = {},
-): ImportedCupRow[] {
+export function updateSourceSkipMissingCup(
+  source: ImportSource,
+  skipMissingCup: boolean,
+): ImportSource {
+  return {
+    ...source,
+    skipMissingCup,
+  };
+}
+
+export function buildImportedCupRows(sources: ImportSource[]): ImportedCupRow[] {
   const importedRows: ImportedCupRow[] = [];
   const importedSourceColumns = new Set<string>();
   const fileIds = new Map<File, number>();
@@ -112,7 +116,7 @@ export function buildImportedCupRows(
 
       for (const row of source.parsed.rows) {
         const value = String(row.cells[columnIndex] ?? '');
-        if (skipMissingCup && value.trim() === '') continue;
+        if (source.skipMissingCup && value.trim() === '') continue;
 
         importedRows.push({
           value,
@@ -160,6 +164,7 @@ function createImportSource(file: File, parsed: ParsedFile, index: number): Impo
     headerPresent: parsed.headerPresent,
     selectedColumnIndexes: [parsed.suggestedColumnIndex],
     included: true,
+    skipMissingCup: true,
   };
 }
 

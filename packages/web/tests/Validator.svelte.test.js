@@ -74,7 +74,6 @@ describe('Validator', () => {
 
     expect(container.querySelector('#import-wizard')).toBeTruthy();
     expect(container.querySelector('.import-source-nav')).toBeNull();
-    expect(container.textContent).not.toContain('Includi sorgente');
     expect(container.textContent).not.toContain('Configura ogni sorgente');
     expect(container.querySelector('.import-wizard-count')?.textContent?.trim()).toBe(
       '0 righe CUP',

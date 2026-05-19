@@ -235,7 +235,7 @@ Regole:
 
 Per il primo rilascio D2, supportare una colonna CUP per scheda inclusa. Il tipo `selectedColumnIndexes` resta già pronto per abilitare più colonne nello stesso foglio senza riscrivere il modello.
 
-#### D2.2 Parsing multi-file
+#### ✅ D2.2 Parsing multi-file
 
 - `parseFile(file, options)` resta il parser atomico per un file/scheda.
 - Aggiungere helper puri in `import-plan.ts`:
@@ -270,7 +270,7 @@ La UI base deve restare semplice: una colonna CUP per sorgente. La selezione di 
 
 Implementazione: `DropZone.svelte` accetta input e drag-and-drop multi-file; `ImportWizard.svelte` orchestra il pannello interno con navigazione tra sorgenti; `ImportSourcePreview.svelte` gestisce inclusione, scheda Excel, intestazione, colonna CUP e anteprima. La conferma costruisce `ImportedCupRow[]` con metadati origine e abilita il batch normalizzato nel verificatore. Per gli XLSX viene caricata una scheda per sorgente; eventuali altre schede dello stesso file vengono aggiunte solo con l'azione esplicita "Carica colonna da altra scheda".
 
-#### D2.4 Componenti Svelte
+#### ✅ D2.4 Componenti Svelte
 
 Estrarre responsabilità da `Validator.svelte`:
 

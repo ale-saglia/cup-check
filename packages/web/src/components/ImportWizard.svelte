@@ -6,24 +6,22 @@
     createSourceFromSheet,
     updateSourceColumn,
     updateSourceHeader,
+    updateSourceIncluded,
     updateSourceSheet,
+    updateSourceSkipMissingCup,
   } from '../lib/core/import-plan.js';
   import ImportSourcePreview from './ImportSourcePreview.svelte';
 
   interface Props {
     sources: ImportSource[];
-    skipMissingCup: boolean;
     onSourcesChange: (sources: ImportSource[]) => void;
-    onSkipMissingCupChange: (skipMissingCup: boolean) => void;
     onConfirm: (sources: ImportSource[]) => void;
     onCancel: () => void;
   }
 
   let {
     sources,
-    skipMissingCup,
     onSourcesChange,
-    onSkipMissingCupChange,
     onConfirm,
     onCancel,
   }: Props = $props();
@@ -36,7 +34,7 @@
   let fileGroups = $derived.by(() => groupSourcesByFile(sources));
   let currentFileGroup = $derived(fileGroups[currentFileIndex] ?? null);
   let baseSource = $derived(currentFileGroup?.sources[0] ?? null);
-  let importedCount = $derived(buildImportedCupRows(sources, { skipMissingCup }).length);
+  let importedCount = $derived(buildImportedCupRows(sources).length);
   let includedCount = $derived(sources.filter((source) => source.included).length);
   let hasMultipleFiles = $derived(fileGroups.length > 1);
   let importCountLabel = $derived(
@@ -118,9 +116,13 @@
       return;
     }
     if (importedCount === 0) {
-      message = skipMissingCup
-        ? 'Nessuna cella CUP valorizzata nelle sorgenti incluse.'
-        : 'Nessuna riga disponibile nelle sorgenti incluse.';
+      const rowsWithoutSkip = buildImportedCupRows(
+        sources.map((s) => ({ ...s, skipMissingCup: false })),
+      ).length;
+      message =
+        rowsWithoutSkip > 0
+          ? 'Nessuna cella CUP valorizzata nelle sorgenti incluse.'
+          : 'Nessuna riga disponibile nelle sorgenti incluse.';
       return;
     }
     onConfirm(sources);
@@ -169,8 +171,8 @@
             onSheetChange={(sheetName) => handleSheetChange(source, sheetName)}
             onHeaderChange={(headerPresent) => replaceSource(updateSourceHeader(source, headerPresent))}
             onColumnChange={(columnIndex) => replaceSource(updateSourceColumn(source, columnIndex))}
-            {skipMissingCup}
-            onSkipMissingCupChange={onSkipMissingCupChange}
+            onIncludeChange={(included) => replaceSource(updateSourceIncluded(source, included))}
+            onSkipMissingCupChange={(skip) => replaceSource(updateSourceSkipMissingCup(source, skip))}
             showFileName={index === 0}
           />
         {/each}

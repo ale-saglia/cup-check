@@ -37,6 +37,7 @@ function source(overrides = {}) {
     headerPresent: sourceParsed.headerPresent,
     selectedColumnIndexes: [sourceParsed.suggestedColumnIndex],
     included: true,
+    skipMissingCup: true,
     ...overrides,
   };
 }
@@ -141,6 +142,38 @@ describe('DropZone', () => {
     zone.dispatchEvent(dragEvent('drop'));
     expect(onFiles).toHaveBeenCalledOnce();
   });
+
+  it('mostra avviso per file che superano i 25 MB consigliati', () => {
+    const onFiles = vi.fn();
+    const { container } = render(DropZone, { props: { onFiles } });
+    const input = container.querySelector('#file-input');
+
+    const bigFile = new File(['cup'], 'big.csv', { type: 'text/csv' });
+    Object.defineProperty(bigFile, 'size', { value: 26 * 1024 * 1024, configurable: true });
+    setFiles(input, [bigFile]);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+
+    expect(onFiles).toHaveBeenCalledWith([bigFile]);
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('25 MB');
+  });
+
+  it('mostra avviso aggregato per piu file grandi', () => {
+    const onFiles = vi.fn();
+    const { container } = render(DropZone, { props: { onFiles } });
+    const input = container.querySelector('#file-input');
+
+    const bigA = new File(['a'], 'a.csv', { type: 'text/csv' });
+    const bigB = new File(['b'], 'b.csv', { type: 'text/csv' });
+    Object.defineProperty(bigA, 'size', { value: 26 * 1024 * 1024, configurable: true });
+    Object.defineProperty(bigB, 'size', { value: 30 * 1024 * 1024, configurable: true });
+    setFiles(input, [bigA, bigB]);
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
+
+    expect(onFiles).toHaveBeenCalledWith([bigA, bigB]);
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('2 file');
+  });
 });
 
 describe('ImportSourcePreview', () => {
@@ -151,6 +184,7 @@ describe('ImportSourcePreview', () => {
       onSheetChange: vi.fn(),
       onHeaderChange: vi.fn(),
       onColumnChange: vi.fn(),
+      onIncludeChange: vi.fn(),
       onSkipMissingCupChange: vi.fn(),
     };
     const previewSource = source({
@@ -184,10 +218,10 @@ describe('ImportSourcePreview', () => {
           parsed: parsed({ headerPresent: false, headerDetectedAutomatically: false }),
           headerPresent: false,
         }),
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -199,10 +233,10 @@ describe('ImportSourcePreview', () => {
     const { container } = render(ImportSourcePreview, {
       props: {
         source: source({ included: false }),
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -217,11 +251,11 @@ describe('ImportSourcePreview', () => {
           parsed: parsed({ headerPresent: false, headerDetectedAutomatically: true }),
           headerPresent: false,
         }),
-        skipMissingCup: false,
         showFileName: false,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -235,10 +269,10 @@ describe('ImportSourcePreview', () => {
     const { container } = render(ImportSourcePreview, {
       props: {
         source: emptyIndexSource,
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -252,10 +286,10 @@ describe('ImportSourcePreview', () => {
         source: source({
           parsed: parsed({ headers: ['', 'Note'] }),
         }),
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -269,10 +303,10 @@ describe('ImportSourcePreview', () => {
       props: {
         source: source({ parsed: parsed({ sheetNames: ['A', 'B'] }) }),
         disabled: true,
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
@@ -280,6 +314,8 @@ describe('ImportSourcePreview', () => {
     expect(container.querySelector('#column-select')?.disabled).toBe(true);
     expect(container.querySelector('#sheet-select')?.disabled).toBe(true);
     expect(container.querySelector('#header-toggle')?.disabled).toBe(true);
+    expect(container.querySelector('#include-toggle')?.disabled).toBe(true);
+    expect(container.querySelector('#skip-missing-cup')?.disabled).toBe(true);
   });
 
   it('descrive intestazione impostata manualmente quando rilevazione automatica e falsa ma intestazione e presente', () => {
@@ -289,15 +325,32 @@ describe('ImportSourcePreview', () => {
           parsed: parsed({ headerPresent: true, headerDetectedAutomatically: false }),
           headerPresent: true,
         }),
-        skipMissingCup: true,
         onSheetChange: vi.fn(),
         onHeaderChange: vi.fn(),
         onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
         onSkipMissingCupChange: vi.fn(),
       },
     });
 
     expect(container.textContent).toContain('intestazione impostata manualmente');
+  });
+
+  it('propaga onIncludeChange quando il toggle includi viene cliccato', () => {
+    const onIncludeChange = vi.fn();
+    const { container } = render(ImportSourcePreview, {
+      props: {
+        source: source(),
+        onSheetChange: vi.fn(),
+        onHeaderChange: vi.fn(),
+        onColumnChange: vi.fn(),
+        onIncludeChange,
+        onSkipMissingCupChange: vi.fn(),
+      },
+    });
+
+    container.querySelector('#include-toggle').click();
+    expect(onIncludeChange).toHaveBeenCalledWith(false);
   });
 });
 
@@ -313,9 +366,7 @@ describe('ImportWizard', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources,
-        skipMissingCup: true,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm,
         onCancel: vi.fn(),
       },
@@ -339,9 +390,7 @@ describe('ImportWizard', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [source({ included: false })],
-        skipMissingCup: true,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -360,9 +409,7 @@ describe('ImportWizard', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [emptySource],
-        skipMissingCup: true,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm: vi.fn(),
         onCancel,
       },
@@ -372,7 +419,9 @@ describe('ImportWizard', () => {
       .find((button) => button.textContent?.includes('Conferma importazione'))
       ?.click();
     flushSync();
-    expect(container.querySelector('.live-message')?.textContent).toContain('Nessuna cella CUP');
+    expect(container.querySelector('.live-message')?.textContent).toContain(
+      'Nessuna riga disponibile',
+    );
 
     Array.from(container.querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Annulla'))
@@ -392,9 +441,7 @@ describe('ImportWizard', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [brokenSource],
-        skipMissingCup: true,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -423,9 +470,7 @@ describe('ImportWizard', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [brokenSource],
-        skipMissingCup: true,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -439,13 +484,34 @@ describe('ImportWizard', () => {
     );
   });
 
+  it('mostra errore celle CUP assenti quando tutte le celle sono vuote e skip e attivo', () => {
+    const emptyCupSource = source({
+      parsed: parsed({ rows: [{ originalRowNumber: 2, cells: ['', 'ok'] }] }),
+      skipMissingCup: true,
+    });
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [emptyCupSource],
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    flushSync();
+    expect(container.querySelector('.live-message')?.textContent).toContain(
+      'Nessuna cella CUP valorizzata',
+    );
+  });
+
   it('usa il messaggio per righe non disponibili quando skip missing e disattivato', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [source({ parsed: parsed({ rows: [] }) })],
-        skipMissingCup: false,
         onSourcesChange: vi.fn(),
-        onSkipMissingCupChange: vi.fn(),
         onConfirm: vi.fn(),
         onCancel: vi.fn(),
       },
@@ -458,5 +524,25 @@ describe('ImportWizard', () => {
     expect(container.querySelector('.live-message')?.textContent).toContain(
       'Nessuna riga disponibile',
     );
+  });
+
+  it('aggiorna included quando il toggle includi viene cliccato nella source preview', () => {
+    const onSourcesChange = vi.fn();
+    const testSource = source({ id: '0:test.csv' });
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [testSource],
+        skipMissingCup: true,
+        onSourcesChange,
+        onSkipMissingCupChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    container.querySelector('#include-toggle').click();
+    expect(onSourcesChange).toHaveBeenCalledWith([
+      expect.objectContaining({ id: '0:test.csv', included: false }),
+    ]);
   });
 });

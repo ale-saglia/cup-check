@@ -70,8 +70,9 @@ describe('import-plan', () => {
   it('mantiene le celle CUP vuote quando skipMissingCup e disattivato', async () => {
     const file = new File(['CUP,note\n,vuota'], 'vuote.csv', { type: 'text/csv' });
     const sources = await createImportSources([file]);
+    sources[0].skipMissingCup = false;
 
-    const importedRows = buildImportedCupRows(sources, { skipMissingCup: false });
+    const importedRows = buildImportedCupRows(sources);
 
     expect(importedRows).toEqual([
       {
@@ -296,9 +297,10 @@ describe('import-plan', () => {
     const sourceWithNullCell = {
       ...source,
       parsed: { ...source.parsed, rows: [{ originalRowNumber: 2, cells: [null] }] },
+      skipMissingCup: false,
     };
 
-    const rows = buildImportedCupRows([sourceWithNullCell], { skipMissingCup: false });
+    const rows = buildImportedCupRows([sourceWithNullCell]);
     expect(rows[0].value).toBe('');
   });
 

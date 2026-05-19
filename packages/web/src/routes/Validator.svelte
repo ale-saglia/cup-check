@@ -11,6 +11,7 @@
     type ImportedCupRow,
     type ImportSource,
   } from '../lib/core/import-plan.js';
+
   import { buildCsvReport, opencupUrlForResult, resultDetail } from '../lib/core/report.js';
   import { displayResults, resultRowsLabel } from '../lib/core/results.js';
   import { textInputLines } from '../text-input.js';
@@ -33,7 +34,6 @@
   let query = $state('');
   let fileName = $state('report');
   let displayFileName = $state<string | null>(null);
-  let skipMissingCup = $state(true);
   let groupSameCups = $state(true);
 
   // Panel visibility / collapse state
@@ -197,7 +197,7 @@
   }
 
   async function handleImportConfirm(sources: ImportSource[]) {
-    const nextImportedRows = buildImportedCupRows(sources, { skipMissingCup });
+    const nextImportedRows = buildImportedCupRows(sources);
     importSources = sources;
     importedRows = nextImportedRows;
     importWizardVisible = false;
@@ -314,7 +314,6 @@
     query = '';
     fileName = 'report';
     displayFileName = null;
-    skipMissingCup = true;
     groupSameCups = true;
     textCupCount = null;
     filePanelCollapsed = false;
@@ -566,9 +565,7 @@
   {#if importWizardVisible}
     <ImportWizard
       sources={importSources}
-      {skipMissingCup}
       onSourcesChange={(sources) => (importSources = sources)}
-      onSkipMissingCupChange={(value) => (skipMissingCup = value)}
       onConfirm={handleImportConfirm}
       onCancel={handleImportCancel}
     />

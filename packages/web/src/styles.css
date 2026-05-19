@@ -558,8 +558,36 @@ textarea {
   margin-bottom: 16px;
 }
 
-.import-source-header p {
-  margin-bottom: 0;
+.import-source-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.import-source-filename {
+  margin: 0 0 2px;
+  overflow: hidden;
+  font-size: 1.08rem;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.import-source-meta {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+.import-source-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  align-items: center;
+}
+
+.import-source-row .import-header-toggle {
+  margin-left: auto;
 }
 
 .import-source-nav {
@@ -594,19 +622,19 @@ textarea {
 .import-source-preview {
   display: grid;
   gap: 16px;
+  min-width: 0;
 }
 
 .import-source-header {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
-  gap: 18px;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px 18px;
   align-items: center;
+  min-width: 0;
 }
 
-.import-source-header h3 {
-  margin: 0 0 4px;
-  font-size: 1.08rem;
-  font-weight: 650;
+.import-include-toggle {
+  white-space: nowrap;
 }
 
 .import-sheet-select {
@@ -614,8 +642,7 @@ textarea {
   grid-template-columns: max-content minmax(0, 1fr);
   gap: 10px;
   align-items: center;
-  justify-self: end;
-  width: 100%;
+  min-width: min(260px, 100%);
 }
 
 .import-sheet-select select {
@@ -623,23 +650,12 @@ textarea {
   min-width: 0;
 }
 
-.import-controls {
-  display: grid;
-  grid-template-columns: minmax(220px, 1fr) auto auto;
-  gap: 18px;
-  align-items: end;
-  justify-items: start;
-}
-
 .import-column-select {
-  justify-self: start;
   width: min(320px, 100%);
 }
 
-.import-header-toggle,
 .import-skip-toggle {
-  align-self: end;
-  margin-bottom: 12px;
+  justify-self: start;
 }
 
 .import-preview-table {
@@ -665,7 +681,14 @@ textarea {
 }
 
 @media (max-width: 760px) {
-  .import-source-header,
+  .import-source-header {
+    grid-template-columns: 1fr;
+  }
+
+  .import-include-toggle {
+    margin-left: 0;
+  }
+
   .import-actions,
   .file-controls {
     display: grid;
@@ -681,7 +704,6 @@ textarea {
 
   .import-file-select,
   .import-sheet-select,
-  .import-controls,
   .additional-sheet-controls {
     grid-template-columns: 1fr;
   }
@@ -690,9 +712,18 @@ textarea {
     width: 100%;
   }
 
-  .import-header-toggle,
-  .import-skip-toggle {
-    margin-bottom: 0;
+  .import-source-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .import-actions {
+    border-top: 1px solid var(--line);
+    padding-top: 18px;
+  }
+
+  .import-source-row .import-header-toggle {
+    margin-left: 0;
   }
 
   .import-button-row {

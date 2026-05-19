@@ -7,7 +7,7 @@
     onSheetChange: (sheetName: string) => void;
     onHeaderChange: (headerPresent: boolean) => void;
     onColumnChange: (columnIndex: number) => void;
-    skipMissingCup: boolean;
+    onIncludeChange: (included: boolean) => void;
     onSkipMissingCupChange: (skipMissingCup: boolean) => void;
     showFileName?: boolean;
   }
@@ -18,7 +18,7 @@
     onSheetChange,
     onHeaderChange,
     onColumnChange,
-    skipMissingCup,
+    onIncludeChange,
     onSkipMissingCupChange,
     showFileName = true,
   }: Props = $props();
@@ -39,11 +39,32 @@
 </script>
 
 <div class="import-source-preview" aria-labelledby={`import-source-${source.id}`}>
+
+  <!-- Row 1: filename (truncated) + include toggle -->
   <div class="import-source-header">
-    <div>
-      <h3 id={`import-source-${source.id}`} class:visually-hidden={!showFileName}>{source.fileName}</h3>
-      <p>{rowLabel}{sheetLabel} - {headerMeta}</p>
+    <div class="import-source-title">
+      <h3
+        id={`import-source-${source.id}`}
+        class="import-source-filename"
+        class:visually-hidden={!showFileName}
+        title={source.fileName}
+      >{source.fileName}</h3>
+      <p class="import-source-meta">{rowLabel}{sheetLabel} - {headerMeta}</p>
     </div>
+    <label class="toggle import-include-toggle">
+      <input
+        id="include-toggle"
+        type="checkbox"
+        checked={source.included}
+        disabled={disabled}
+        onchange={(event) => onIncludeChange((event.target as HTMLInputElement).checked)}
+      />
+      <span>Includi sorgente</span>
+    </label>
+  </div>
+
+  <!-- Row 2: sheet selector (left) + header toggle (right) -->
+  <div class="import-source-row">
     <label class="import-sheet-select" class:hidden={!hasMultipleSheets}>
       Scheda Excel
       <select
@@ -54,22 +75,6 @@
       >
         {#each (source.parsed.sheetNames ?? []) as sheetName (sheetName)}
           <option value={sheetName}>{sheetName}</option>
-        {/each}
-      </select>
-    </label>
-  </div>
-
-  <div class="import-controls">
-    <label class="import-column-select">
-      Colonna CUP
-      <select
-        id="column-select"
-        disabled={disabled || !source.included}
-        value={String(selectedColumnIndex)}
-        onchange={(event) => onColumnChange(Number((event.target as HTMLSelectElement).value))}
-      >
-        {#each source.parsed.headers as header, index (index)}
-          <option value={String(index)}>{header || `Colonna ${index + 1}`}</option>
         {/each}
       </select>
     </label>
@@ -84,19 +89,24 @@
       />
       <span>La prima riga contiene intestazioni</span>
     </label>
-
-    <label class="toggle import-skip-toggle">
-      <input
-        id="skip-missing-cup"
-        type="checkbox"
-        checked={skipMissingCup}
-        disabled={disabled}
-        onchange={(event) => onSkipMissingCupChange((event.target as HTMLInputElement).checked)}
-      />
-      <span>Ignora celle CUP assenti</span>
-    </label>
   </div>
 
+  <!-- Column CUP selector -->
+  <label class="import-column-select">
+    Colonna CUP
+    <select
+      id="column-select"
+      disabled={disabled || !source.included}
+      value={String(selectedColumnIndex)}
+      onchange={(event) => onColumnChange(Number((event.target as HTMLSelectElement).value))}
+    >
+      {#each source.parsed.headers as header, index (index)}
+        <option value={String(index)}>{header || `Colonna ${index + 1}`}</option>
+      {/each}
+    </select>
+  </label>
+
+  <!-- Preview table -->
   <div class="table-wrap import-preview-table">
     <table>
       <thead>
@@ -119,4 +129,17 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Skip missing cup toggle (per source, below table) -->
+  <label class="toggle import-skip-toggle">
+    <input
+      id="skip-missing-cup"
+      type="checkbox"
+      checked={source.skipMissingCup}
+      disabled={disabled}
+      onchange={(event) => onSkipMissingCupChange((event.target as HTMLInputElement).checked)}
+    />
+    <span>Ignora celle CUP assenti</span>
+  </label>
+
 </div>

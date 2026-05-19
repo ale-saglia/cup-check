@@ -1,6 +1,7 @@
 <script lang="ts">
   const SUPPORTED_EXTENSIONS = ['csv', 'xlsx'];
   const SUPPORTED_TYPES = ['text/csv', 'application/vnd.ms-excel'];
+  const RECOMMENDED_MAX_SIZE_BYTES = 25 * 1024 * 1024;
 
   interface Props {
     disabled?: boolean;
@@ -46,6 +47,14 @@
     }
     if (supported.length !== files.length) {
       error = 'Alcuni file sono stati ignorati: sono supportati solo CSV e XLSX.';
+    } else {
+      const oversized = supported.filter((f) => f.size > RECOMMENDED_MAX_SIZE_BYTES);
+      if (oversized.length > 0) {
+        error =
+          oversized.length === 1
+            ? 'Un file supera i 25 MB consigliati: le prestazioni potrebbero essere ridotte.'
+            : `${oversized.length} file superano i 25 MB consigliati: le prestazioni potrebbero essere ridotte.`;
+      }
     }
     onFiles(supported);
   }
