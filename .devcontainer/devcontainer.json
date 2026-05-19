@@ -4,18 +4,6 @@
     "dockerfile": "Dockerfile",
     "context": ".."
   },
-  "features": {
-    "ghcr.io/coder/devcontainer-features/code-server:2": {
-      "auth": "none",
-      "disableTelemetry": true,
-      "disableUpdateCheck": true,
-      "disableWorkspaceTrust": true,
-      "workspace": "/workspaces/cup-check",
-      "appName": "cup-check",
-      "appGroup": "Web Editors",
-      "appShare": "owner"
-    }
-  },
   "customizations": {
     "vscode": {
       "extensions": [
