@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import DropZone from '../components/DropZone.svelte';
   import ImportWizard from '../components/ImportWizard.svelte';
   import ProgressBar from '../components/ProgressBar.svelte';
@@ -59,6 +59,10 @@
   let detailDialogEl: HTMLDialogElement;
   let limitsDialogEl: HTMLDialogElement;
   let resultsTableEl: HTMLTableElement;
+  let previewToggleEl: HTMLButtonElement;
+
+  let liveAnnouncement = $state('');
+  let lastFocusedBeforeWizard: HTMLElement | null = null;
 
   // --- Derived values ---
 
@@ -179,6 +183,7 @@
 
   async function beginImport(files: File[]) {
     if (files.length === 0) return;
+    lastFocusedBeforeWizard = document.activeElement as HTMLElement;
     try {
       const sources = await createImportSources(files);
       importSources = sources;
@@ -204,16 +209,21 @@
     previewPanelVisible = true;
     previewPanelCollapsed = true;
     resultsPanelVisible = false;
+    await tick();
+    previewToggleEl?.focus();
     await validateImportedRows(nextImportedRows);
   }
 
-  function handleImportCancel() {
+  async function handleImportCancel() {
     importWizardVisible = false;
     if (importedRows.length === 0) {
       importSources = [];
       displayFileName = null;
       fileName = 'report';
     }
+    await tick();
+    lastFocusedBeforeWizard?.focus();
+    lastFocusedBeforeWizard = null;
   }
 
   // --- Event handlers ---
@@ -568,6 +578,7 @@
       onSourcesChange={(sources) => (importSources = sources)}
       onConfirm={handleImportConfirm}
       onCancel={handleImportCancel}
+      onAnnounce={(msg) => (liveAnnouncement = msg)}
     />
   {/if}
 
@@ -578,6 +589,7 @@
     <button id="preview-toggle" class="panel-toggle" type="button"
       aria-expanded={previewPanelCollapsed ? 'false' : 'true'}
       aria-controls="preview-controls"
+      bind:this={previewToggleEl}
       onclick={() => (previewPanelCollapsed = !previewPanelCollapsed)}>
       <span id="preview-title">Anteprima</span>
       <span id="preview-toggle-meta">{previewToggleMeta}</span>
@@ -591,7 +603,7 @@
           </p>
           <p>Batch normalizzato con origine file, scheda, riga e colonna conservate per ogni CUP.</p>
         </div>
-        <button class="secondary" type="button" disabled={batchRunning} onclick={() => (importWizardVisible = true)}>
+        <button class="secondary" type="button" disabled={batchRunning} onclick={() => { lastFocusedBeforeWizard = document.activeElement as HTMLElement; importWizardVisible = true; }}>
           Modifica importazione
         </button>
       </div>
@@ -728,6 +740,8 @@
     </div>
   </section>
 </section>
+
+<div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>
 
 <dialog id="detail-dialog" class="detail-dialog" aria-labelledby="detail-dialog-label"
   bind:this={detailDialogEl}

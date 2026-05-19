@@ -180,26 +180,34 @@ describe('main', () => {
     expect(parseFile).toHaveBeenCalledWith(file);
     expect(document.querySelector('#import-wizard')).toBeTruthy();
 
-    document.querySelector('#sheet-select').value = 'Foglio 2';
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('[id^="sheet-select-"]').value = 'Foglio 2';
+    document
+      .querySelector('[id^="sheet-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
     expect(parseFile).toHaveBeenCalledWith(file, { sheetName: 'Foglio 2' });
 
-    document.querySelector('#column-select').value = '1';
-    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('[id^="column-select-"]').value = '1';
+    document
+      .querySelector('[id^="column-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
     expect(document.querySelector('.import-preview-table .selected')?.textContent).toBe('Trovato');
 
-    document.querySelector('#header-toggle').checked = false;
-    document.querySelector('#header-toggle').dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('[id^="header-toggle-"]').checked = false;
+    document
+      .querySelector('[id^="header-toggle-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
     expect(buildParsedRows).toHaveBeenCalled();
 
-    document.querySelector('#column-select').value = '0';
-    document.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
-    document.querySelector('#skip-missing-cup').checked = false;
+    document.querySelector('[id^="column-select-"]').value = '0';
     document
-      .querySelector('#skip-missing-cup')
+      .querySelector('[id^="column-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('[id^="skip-missing-cup-"]').checked = false;
+    document
+      .querySelector('[id^="skip-missing-cup-"]')
       .dispatchEvent(new Event('change', { bubbles: true }));
     Array.from(document.querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Conferma importazione'))
@@ -256,8 +264,10 @@ describe('main', () => {
     document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
-    document.querySelector('#sheet-select').value = 'Foglio 2';
-    document.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
+    document.querySelector('[id^="sheet-select-"]').value = 'Foglio 2';
+    document
+      .querySelector('[id^="sheet-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
     expect(document.querySelector('.live-message').textContent).toContain('parse failed');

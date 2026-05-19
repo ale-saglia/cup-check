@@ -198,12 +198,16 @@ describe('ImportSourcePreview', () => {
       },
     });
 
-    container.querySelector('#sheet-select').value = 'Foglio 2';
-    container.querySelector('#sheet-select').dispatchEvent(new Event('change', { bubbles: true }));
-    container.querySelector('#header-toggle').click();
-    container.querySelector('#column-select').value = '1';
-    container.querySelector('#column-select').dispatchEvent(new Event('change', { bubbles: true }));
-    container.querySelector('#skip-missing-cup').click();
+    container.querySelector('[id^="sheet-select-"]').value = 'Foglio 2';
+    container
+      .querySelector('[id^="sheet-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    container.querySelector('[id^="header-toggle-"]').click();
+    container.querySelector('[id^="column-select-"]').value = '1';
+    container
+      .querySelector('[id^="column-select-"]')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    container.querySelector('[id^="skip-missing-cup-"]').click();
 
     expect(callbacks.onSheetChange).toHaveBeenCalledWith('Foglio 2');
     expect(callbacks.onHeaderChange).toHaveBeenCalledWith(false);
@@ -241,7 +245,7 @@ describe('ImportSourcePreview', () => {
       },
     });
 
-    expect(container.querySelector('#column-select')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="column-select-"]')?.disabled).toBe(true);
   });
 
   it('descrive intestazioni impostate manualmente e nasconde il nome file duplicato', () => {
@@ -277,7 +281,7 @@ describe('ImportSourcePreview', () => {
       },
     });
 
-    expect(container.querySelector('#column-select')?.value).toBe('0');
+    expect(container.querySelector('[id^="column-select-"]')?.value).toBe('0');
   });
 
   it('mostra Colonna N quando la intestazione della colonna e vuota', () => {
@@ -295,7 +299,9 @@ describe('ImportSourcePreview', () => {
     });
 
     expect(container.querySelector('thead')?.textContent).toContain('Colonna 1');
-    expect(container.querySelector('#column-select option')?.textContent).toContain('Colonna 1');
+    expect(container.querySelector('[id^="column-select-"] option')?.textContent).toContain(
+      'Colonna 1',
+    );
   });
 
   it('disabilita tutti i controlli quando disabled e true', () => {
@@ -311,11 +317,11 @@ describe('ImportSourcePreview', () => {
       },
     });
 
-    expect(container.querySelector('#column-select')?.disabled).toBe(true);
-    expect(container.querySelector('#sheet-select')?.disabled).toBe(true);
-    expect(container.querySelector('#header-toggle')?.disabled).toBe(true);
-    expect(container.querySelector('#include-toggle')?.disabled).toBe(true);
-    expect(container.querySelector('#skip-missing-cup')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="column-select-"]')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="sheet-select-"]')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="header-toggle-"]')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="include-toggle-"]')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="skip-missing-cup-"]')?.disabled).toBe(true);
   });
 
   it('descrive intestazione impostata manualmente quando rilevazione automatica e falsa ma intestazione e presente', () => {
@@ -349,7 +355,7 @@ describe('ImportSourcePreview', () => {
       },
     });
 
-    container.querySelector('#include-toggle').click();
+    container.querySelector('[id^="include-toggle-"]').click();
     expect(onIncludeChange).toHaveBeenCalledWith(false);
   });
 });
@@ -476,7 +482,7 @@ describe('ImportWizard', () => {
       },
     });
 
-    const sheetSelect = container.querySelector('#sheet-select');
+    const sheetSelect = container.querySelector('[id^="sheet-select-"]');
     sheetSelect.value = 'B';
     sheetSelect.dispatchEvent(new Event('change', { bubbles: true }));
     await vi.waitFor(() =>
@@ -540,9 +546,82 @@ describe('ImportWizard', () => {
       },
     });
 
-    container.querySelector('#include-toggle').click();
+    container.querySelector('[id^="include-toggle-"]').click();
     expect(onSourcesChange).toHaveBeenCalledWith([
       expect.objectContaining({ id: '0:test.csv', included: false }),
     ]);
+  });
+
+  // D2.6 — accessibilità preparatoria
+  it('ha role=dialog e aria-labelledby sul pannello', () => {
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [source()],
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const panel = container.querySelector('#import-wizard');
+    expect(panel?.getAttribute('role')).toBe('dialog');
+    expect(panel?.getAttribute('aria-labelledby')).toBe('import-wizard-title');
+  });
+
+  it('chiama onCancel premendo Escape', () => {
+    const onCancel = vi.fn();
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [source()],
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel,
+      },
+    });
+
+    const panel = container.querySelector('#import-wizard');
+    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    expect(onCancel).toHaveBeenCalledOnce();
+  });
+
+  it('chiama onAnnounce con il conteggio righe prima di confermare', () => {
+    const onConfirm = vi.fn();
+    const onAnnounce = vi.fn();
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [source()],
+        onSourcesChange: vi.fn(),
+        onConfirm,
+        onCancel: vi.fn(),
+        onAnnounce,
+      },
+    });
+
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+
+    expect(onAnnounce).toHaveBeenCalledWith(expect.stringContaining('Importazione confermata'));
+    expect(onConfirm).toHaveBeenCalledOnce();
+  });
+
+  it('gli ID dei controlli sono unici quando due sorgenti sono visibili insieme', () => {
+    const fileA = new File(['a'], 'a.csv', { type: 'text/csv' });
+    const sourcesForSameFile = [
+      source({ id: '0:a.csv', file: fileA, fileName: 'a.csv' }),
+      source({ id: '1:a.csv', file: fileA, fileName: 'a.csv' }),
+    ];
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: sourcesForSameFile,
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    const includeToggles = container.querySelectorAll('[id^="include-toggle-"]');
+    const ids = Array.from(includeToggles).map((el) => el.id);
+    expect(new Set(ids).size).toBe(ids.length);
   });
 });

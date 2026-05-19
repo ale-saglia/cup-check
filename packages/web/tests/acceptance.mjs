@@ -186,8 +186,8 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
         .locator('#text')
         .evaluate((element) => element.classList.contains('collapsed'))) &&
       (await page.locator('#text-toggle').getAttribute('aria-expanded')) === 'false';
-    await page.locator('#skip-missing-cup').uncheck();
-    out.selectedColumn = await page.locator('#column-select').inputValue();
+    await page.locator('[id^="skip-missing-cup-"]').uncheck();
+    out.selectedColumn = await page.locator('[id^="column-select-"]').inputValue();
     await page.locator('button', { hasText: 'Conferma importazione' }).click();
     await page.waitForSelector('#results-panel:not(.hidden)');
     await page.waitForSelector('#preview-panel:not(.hidden)');
@@ -227,7 +227,7 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
     await page.locator('#pdf-send-btn').click();
     // Validator view should load with CSV auto-parsed into the import wizard
     await page.waitForSelector('#import-wizard', { timeout: 10000 });
-    out.pdfColumnSelected = await page.locator('#column-select').inputValue();
+    out.pdfColumnSelected = await page.locator('[id^="column-select-"]').inputValue();
     await page.locator('button', { hasText: 'Conferma importazione' }).click();
     await page.waitForSelector('#results-panel:not(.hidden)', { timeout: 10000 });
     await page.waitForSelector('#preview-panel:not(.hidden)', { timeout: 10000 });

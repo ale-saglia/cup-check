@@ -17,6 +17,7 @@
     onSourcesChange: (sources: ImportSource[]) => void;
     onConfirm: (sources: ImportSource[]) => void;
     onCancel: () => void;
+    onAnnounce?: (message: string) => void;
   }
 
   let {
@@ -24,6 +25,7 @@
     onSourcesChange,
     onConfirm,
     onCancel,
+    onAnnounce,
   }: Props = $props();
 
   let panelEl: HTMLElement;
@@ -125,16 +127,19 @@
           : 'Nessuna riga disponibile nelle sorgenti incluse.';
       return;
     }
+    onAnnounce?.(`Importazione confermata: ${importedCount} righe CUP.`);
     onConfirm(sources);
   }
 </script>
 
-<section
+<div
   id="import-wizard"
   class="control-panel import-wizard"
+  role="dialog"
   aria-labelledby="import-wizard-title"
   tabindex="-1"
   bind:this={panelEl}
+  onkeydown={(e) => { if (e.key === 'Escape') onCancel(); }}
 >
   <div class="panel-toggle import-wizard-title-bar">
     <h2 id="import-wizard-title">Importazione file</h2>
@@ -216,4 +221,4 @@
       {/if}
     </p>
   </div>
-</section>
+</div>

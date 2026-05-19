@@ -23,6 +23,7 @@
     showFileName = true,
   }: Props = $props();
 
+  let htmlId = $derived(source.id.replace(/[^a-zA-Z0-9_-]/g, '-'));
   let selectedColumnIndex = $derived(source.selectedColumnIndexes[0] ?? 0);
   let hasMultipleSheets = $derived((source.parsed.sheetNames?.length ?? 0) > 1);
   let sheetLabel = $derived(source.sheetName ? ` - scheda "${source.sheetName}"` : '');
@@ -53,7 +54,7 @@
     </div>
     <label class="toggle import-include-toggle">
       <input
-        id="include-toggle"
+        id={`include-toggle-${htmlId}`}
         type="checkbox"
         checked={source.included}
         disabled={disabled}
@@ -68,7 +69,7 @@
     <label class="import-sheet-select" class:hidden={!hasMultipleSheets}>
       Scheda Excel
       <select
-        id="sheet-select"
+        id={`sheet-select-${htmlId}`}
         disabled={disabled || !hasMultipleSheets}
         value={source.sheetName ?? ''}
         onchange={(event) => onSheetChange((event.target as HTMLSelectElement).value)}
@@ -81,7 +82,7 @@
 
     <label class="toggle import-header-toggle">
       <input
-        id="header-toggle"
+        id={`header-toggle-${htmlId}`}
         type="checkbox"
         checked={source.headerPresent}
         disabled={disabled}
@@ -95,7 +96,7 @@
   <label class="import-column-select">
     Colonna CUP
     <select
-      id="column-select"
+      id={`column-select-${htmlId}`}
       disabled={disabled || !source.included}
       value={String(selectedColumnIndex)}
       onchange={(event) => onColumnChange(Number((event.target as HTMLSelectElement).value))}
@@ -108,7 +109,7 @@
 
   <!-- Preview table -->
   <div class="table-wrap import-preview-table">
-    <table>
+    <table aria-label={`Anteprima - ${source.fileName}`}>
       <thead>
         <tr>
           <th>Riga</th>
@@ -133,7 +134,7 @@
   <!-- Skip missing cup toggle (per source, below table) -->
   <label class="toggle import-skip-toggle">
     <input
-      id="skip-missing-cup"
+      id={`skip-missing-cup-${htmlId}`}
       type="checkbox"
       checked={source.skipMissingCup}
       disabled={disabled}
