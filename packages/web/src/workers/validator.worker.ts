@@ -32,8 +32,11 @@ ctx.onmessage = (event) => {
   const message = event.data;
 
   if (message.type === 'lookup-result') {
-    lookupResolvers.get(message.requestId)?.(new Set(message.foundCups));
+    const resolveLookup = lookupResolvers.get(message.requestId);
     lookupResolvers.delete(message.requestId);
+    if (typeof resolveLookup === 'function') {
+      resolveLookup(new Set(message.foundCups));
+    }
     return;
   }
 
