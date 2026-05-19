@@ -197,8 +197,136 @@ Tutte e quattro le feature vengono sviluppate sui componenti Svelte della Fase B
 
 ### D2. Drag-drop multi-file
 
-- `DropZone.svelte`: feedback visivo dichiarativo (active, error, overflow); accetta più CSV/XLSX.
-- `Validator.svelte`: concatena le righe dei file con colonna `file_origine` aggiunta automaticamente; gestione coerente delle intestazioni tra file multipli.
+Obiettivo: il verificatore principale accetta più file CSV/XLSX contemporaneamente, anche con colonne diverse e, per gli XLSX, con più schede. La concatenazione non deve tentare di fondere tabelle eterogenee per intestazione: deve invece normalizzare le selezioni dell'utente in un unico batch di CUP con metadati di origine.
+
+#### D2.1 Modello dati di importazione
+
+Introdurre tipi dedicati in `src/lib/types.ts` o in un modulo tematico `src/lib/core/import-plan.ts`:
+
+```typescript
+export interface ImportSource {
+  id: string;
+  file: File;
+  fileName: string;
+  sheetName?: string;
+  parsed: ParsedFile;
+  headerPresent: boolean;
+  selectedColumnIndexes: number[];
+  included: boolean;
+}
+
+export interface ImportedCupRow {
+  value: string;
+  row: number;
+  fileOrigine: string;
+  schedaOrigine?: string;
+  colonnaOrigine: string;
+  sourceRowNumber: number;
+}
+```
+
+Regole:
+
+- `value` è il contenuto della cella CUP scelta.
+- `row` resta il numero progressivo usato dal validatore e dai risultati.
+- `sourceRowNumber` conserva il numero riga nel file originale.
+- `fileOrigine`, `schedaOrigine` e `colonnaOrigine` sono metadati UI/export.
+- Il validatore formale continua a ricevere solo liste di valori: nessun nuovo outcome e nessuna logica di esistenza entra in D2.
+
+Per il primo rilascio D2, supportare una colonna CUP per scheda inclusa. Il tipo `selectedColumnIndexes` resta già pronto per abilitare più colonne nello stesso foglio senza riscrivere il modello.
+
+#### D2.2 Parsing multi-file
+
+- `parseFile(file, options)` resta il parser atomico per un file/scheda.
+- Aggiungere helper puri in `import-plan.ts`:
+  - `createImportSources(files: File[]): Promise<ImportSource[]>`
+  - `updateSourceSheet(source, sheetName): Promise<ImportSource>`
+  - `buildImportedCupRows(sources, { skipMissingCup }): ImportedCupRow[]`
+  - `buildBatchRows(importedRows): BatchInputRow[]`
+- CSV: genera una sola `ImportSource` per file.
+- XLSX: inizialmente genera una `ImportSource` sulla prima scheda, esponendo `sheetNames`; la UI permette di cambiare scheda o aggiungerne altre dallo stesso file.
+- Se due file hanno intestazioni diverse non si tenta alcun merge per nome colonna: ogni sorgente mantiene la propria anteprima e la propria colonna CUP selezionata.
+
+#### D2.3 UI di importazione guidata
+
+Al caricamento di uno o più file si apre un pannello/dialog interno di importazione, non un popup browser. Il pannello sostituisce temporaneamente l'anteprima singolo-file e guida l'utente nella scelta delle colonne.
+
+Flusso previsto:
+
+1. L'utente carica file via input o drag-and-drop.
+2. Il sistema crea le sorgenti importabili.
+3. Si apre il pannello "Importazione file".
+4. L'utente naviga tra le sorgenti con controlli precedente/successivo.
+5. Per ogni sorgente può:
+   - includere/escludere la sorgente;
+   - scegliere la scheda Excel, se presente;
+   - indicare se la prima riga contiene intestazioni;
+   - scegliere la colonna CUP;
+   - vedere le prime righe in anteprima.
+6. Con "Conferma importazione" viene costruito un batch unico normalizzato.
+7. Il pannello anteprima del verificatore mostra il riepilogo del batch importato e abilita "Verifica".
+
+La UI base deve restare semplice: una colonna CUP per sorgente. La selezione di più colonne nello stesso foglio può essere aggiunta come controllo avanzato solo dopo che il flusso base è stabile.
+
+#### D2.4 Componenti Svelte
+
+Estrarre responsabilità da `Validator.svelte`:
+
+| Componente/modulo | Responsabilità |
+|---|---|
+| `DropZone.svelte` | input file e drag-and-drop multi-file; stati `active`, errore formato, limite dimensione consigliato; `multiple` per CSV/XLSX |
+| `ImportWizard.svelte` | orchestrazione del pannello di importazione, navigazione tra sorgenti, conferma/annulla |
+| `ImportSourcePreview.svelte` | anteprima di una sorgente: file, scheda, toggle intestazione, select colonna CUP, tabella prime righe |
+| `Validator.svelte` | stato alto livello, avvio validazione, risultati, export; non contiene più la logica di scelta file/scheda/colonna |
+| `src/lib/core/import-plan.ts` | funzioni pure per costruire/aggiornare sorgenti e batch normalizzato |
+
+`Validator.svelte` deve mantenere solo:
+
+- caricamento dataset;
+- trasferimento CSV dal tool PDF;
+- stato dei risultati;
+- chiamata a `validateRows`;
+- export e filtri.
+
+#### D2.5 Risultati ed export
+
+Quando il batch deriva da file multipli:
+
+- i risultati devono poter mostrare l'origine almeno nel dettaglio riga;
+- l'export CSV deve includere le colonne aggiuntive:
+  - `file_origine`
+  - `scheda_origine`
+  - `riga_origine`
+  - `colonna_origine`
+- il raggruppamento CUP uguali deve continuare a funzionare: in modalità raggruppata, un CUP può avere occorrenze provenienti da più file/schede.
+
+Il trasferimento dal tool PDF resta compatibile: il CSV sintetico `cup,file_origine` viene trattato come una sorgente CSV ordinaria.
+
+#### D2.6 Accessibilità preparatoria a D3
+
+Il pannello di importazione deve nascere già compatibile con il lavoro WCAG:
+
+- usare un dialog/pannello accessibile con titolo associato e focus iniziale;
+- permettere navigazione completa da tastiera;
+- associare label esplicite a select scheda, toggle intestazione e select colonna;
+- annunciare errori di parsing e conferma importazione tramite live region riusabile;
+- non basare l'interazione drag-and-drop solo sul puntatore: input file sempre disponibile.
+
+#### D2.7 Test
+
+Unit:
+
+- `import-plan.test.ts`: costruzione batch da più sorgenti, skip celle CUP vuote, metadati origine, numerazione progressiva.
+- `parser.test.js`: mantenere copertura CSV/XLSX e aggiungere casi utili a più schede se servono al wizard.
+- `DropZone.svelte.test.js`: input multiplo, drop, errore formato.
+- `ImportWizard.svelte.test.js`: navigazione sorgenti, cambio scheda, toggle intestazione, conferma importazione.
+
+Acceptance:
+
+- upload di due CSV con colonne CUP diverse;
+- upload di un XLSX con due schede e scelta della scheda corretta;
+- upload misto CSV + XLSX;
+- verifica finale con `file_origine`/`scheda_origine` visibili nell'export.
 
 ### D3. WCAG 2.1 AA
 
