@@ -34,7 +34,7 @@ Se l'utente naviga via dalla vista verificatore durante il download dei chunk, i
 
 Risolto 2026-05-18: `AbortSignal` propagato su tutta la catena di fetch in `dataset-loader.ts` (`discoverLatestDataset`, `downloadCupIndex`, `fetchAndVerifyChunk`, `fetchJson`); `Validator.svelte` crea un `AbortController` su `onMount` e lo annulla su `onDestroy`. Aggiunta contestualmente la cache `CacheStorage` con invalidazione per hash SHA-256: il manifest viene sempre fetchato dalla rete, il suo `cup_index.sha256` viene confrontato con l'hash in cache — download solo se diverso, con fallback offline se la rete non è disponibile.
 
-### 5. Ridurre la complessità di pdf-extract-view.js
+### ~~5. Ridurre la complessità di pdf-extract-view.js~~ ✅
 
 Il modulo gestisce stato (`_entries`, `_processing`, `_queue`, `_generation`), rendering, event binding e logica di business in un unico file con variabili a livello di modulo. Il debounce manuale con `_renderPending` / `_debounceTimer` è corretto ma fragile. Valutare almeno l'estrazione di:
 
@@ -45,6 +45,8 @@ Il modulo gestisce stato (`_entries`, `_processing`, `_queue`, `_generation`), r
 Non richiede un framework; è un refactor di separazione responsabilità.
 
 - File: `packages/web/src/views/pdf-extract-view.js`
+
+Risolto 2026-05-19 tramite Fase C della migrazione Svelte: `pdf-extract-view.js` (597 righe) è stato sostituito da `PdfExtract.svelte` + `EntryList.svelte` + `QueueControls.svelte`. Lo stato usa Svelte Runes, il debounce manuale è sparito, i CSV builder sono stati estratti in `src/lib/pdf/pdf-csv.ts`.
 
 ### 6. Documentare la scelta di skipWaiting incondizionato nel service worker
 
@@ -63,6 +65,8 @@ Nota 2026-05-18: C6 ha potato `render.js`, `dom.js` e `dialogs.js` con i relativ
 Nota 2026-05-18 (D1): Web Worker per batch >100k implementato — `validation-worker.ts`, `validator.worker.ts`, `ProgressBar.svelte`, integrazione in `Validator.svelte` con `AbortController` e pulsante Annulla. Mancano D2–D5.
 
 Nota 2026-05-18 (TODO #4 chiuso): `AbortSignal` per il dataset loader e cache `CacheStorage` con invalidazione SHA-256 implementati e testati in `dataset-loader.ts`; `Validator.svelte` annulla il caricamento su `onDestroy`.
+
+Nota 2026-05-19: Migrazione TS completata per tutti i file JS restanti — `extract-cups.ts`, `extract-text.ts`, `ocr.ts`, `layout.ts`, `tools-registry.ts`, `version.ts`. Rimangono intenzionalmente `.js`: `polyfills.js` (IIFE iniettato da Vite) e `sw.js` (service worker non compilato da TS).
 
 ## Bassa priorità
 

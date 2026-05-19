@@ -2,7 +2,7 @@ import { tools } from './tools-registry.js';
 import { PRODUCT_VERSION } from './version.js';
 import { i18n } from './i18n/i18n.svelte.js';
 
-function esc(str) {
+function esc(str: unknown): string {
   return String(str)
     .replace(/&/g, '&amp;')
     .replace(/</g, '&lt;')
@@ -10,28 +10,31 @@ function esc(str) {
     .replace(/"/g, '&quot;');
 }
 
-function buildMenuItems() {
+function buildMenuItems(): string {
   return tools
     .filter((tool) => tool.enabled)
     .map(
       (tool) =>
-        `<li role="none"><a class="nav-menu-item" role="menuitem" href="${esc(tool.path)}">${esc(tool.labelKey ? i18n.t(tool.labelKey) : tool.label)}</a></li>`,
+        `<li role="none"><a class="nav-menu-item" role="menuitem" href="${esc(tool.path)}">${esc(tool.labelKey ? i18n.t(tool.labelKey) : (tool.label ?? ''))}</a></li>`,
     )
     .join('');
 }
 
-function refreshLayoutTranslations(root) {
+function refreshLayoutTranslations(root: Element): void {
   root.querySelector('.site-nav')?.setAttribute('aria-label', i18n.t('app.mainNav'));
   root.querySelectorAll('[data-i18n]').forEach((element) => {
-    element.textContent = i18n.t(element.dataset.i18n);
+    (element as HTMLElement).textContent = i18n.t((element as HTMLElement).dataset['i18n'] ?? '');
   });
   root.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
-    element.setAttribute('aria-label', i18n.t(element.dataset.i18nAriaLabel));
+    element.setAttribute(
+      'aria-label',
+      i18n.t((element as HTMLElement).dataset['i18nAriaLabel'] ?? ''),
+    );
   });
-  root.querySelector('.nav-menu-list').innerHTML = buildMenuItems();
+  (root.querySelector('.nav-menu-list') as HTMLElement).innerHTML = buildMenuItems();
 }
 
-export function mountLayout(root = document.querySelector('#app')) {
+export function mountLayout(root: Element = document.querySelector('#app')!): Element | null {
   root.innerHTML = `
     <div class="app-shell">
       <a class="skip-link" href="#main-content">${i18n.t('app.skipToContent')}</a>
@@ -60,12 +63,12 @@ export function mountLayout(root = document.querySelector('#app')) {
     </div>
   `;
 
-  const menu = root.querySelector('.nav-menu');
-  const menuList = root.querySelector('.nav-menu-list');
-  const menuToggle = root.querySelector('.nav-menu-toggle');
+  const menu = root.querySelector('.nav-menu') as HTMLDetailsElement;
+  const menuList = root.querySelector('.nav-menu-list') as HTMLElement;
+  const menuToggle = root.querySelector('.nav-menu-toggle') as HTMLElement;
 
   document.addEventListener('click', (e) => {
-    if (menu.open && !menu.contains(e.target)) {
+    if (menu.open && !menu.contains(e.target as Node)) {
       menu.open = false;
     }
   });
@@ -84,8 +87,10 @@ export function mountLayout(root = document.querySelector('#app')) {
   });
 
   menuList.addEventListener('keydown', (e) => {
-    const items = [...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
-    const idx = items.indexOf(document.activeElement);
+    const items = [
+      ...menuList.querySelectorAll<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])'),
+    ];
+    const idx = items.indexOf(document.activeElement as HTMLElement);
     if (e.key === 'ArrowDown') {
       e.preventDefault();
       items[(idx + 1) % items.length]?.focus();

@@ -1,11 +1,18 @@
 import { validateCup, isStructurallyPlausible, OUTCOMES } from '../core/validator.js';
+import type { CupSource } from '../types.js';
+
+export interface CupCandidate {
+  value: string;
+  occurrences: number;
+  formalValid: boolean;
+}
 
 // OCR engines often confuse '1' (one) with 'I' (capital i). Positions 0 and 3
 // of a CUP must be letters, so we try the substitution there before giving up.
 // Only applied when ocrFix is true (i.e. the text comes from Tesseract).
-function ocrVariants(value) {
+function ocrVariants(value: string): string[] {
   if (value.length !== 15) return [];
-  const variants = [];
+  const variants: string[] = [];
   for (const pos of [0, 3]) {
     if (value[pos] === '1') {
       variants.push(value.slice(0, pos) + 'I' + value.slice(pos + 1));
@@ -14,7 +21,7 @@ function ocrVariants(value) {
   return variants;
 }
 
-function addCandidate(counts, value, ocrFix) {
+function addCandidate(counts: Map<string, number>, value: string, ocrFix: boolean): void {
   if (isStructurallyPlausible(value, { yearLookahead: 15 })) {
     counts.set(value, (counts.get(value) ?? 0) + 1);
     return;
@@ -28,13 +35,13 @@ function addCandidate(counts, value, ocrFix) {
   }
 }
 
-export function extractCupsFromText(text, { ocrFix = false } = {}) {
+export function extractCupsFromText(text: string, { ocrFix = false } = {}): CupCandidate[] {
   const normalized = text.toUpperCase();
-  const counts = new Map();
+  const counts = new Map<string, number>();
 
   // Pass 1: scan for 15-char alphanumeric sequences, keep only structural candidates.
   const scanRegex = /[A-Z0-9]{15}/g;
-  let m;
+  let m: RegExpExecArray | null;
   while ((m = scanRegex.exec(normalized)) !== null) {
     addCandidate(counts, m[0], ocrFix);
   }
@@ -57,7 +64,11 @@ export function extractCupsFromText(text, { ocrFix = false } = {}) {
   }));
 }
 
-export function extractCupsFromPages(fileName, pages, source) {
+export function extractCupsFromPages(
+  fileName: string,
+  pages: string[],
+  source: CupSource,
+): { fileName: string; status: 'ok' | 'no_cup'; source: CupSource; cups: CupCandidate[] } {
   const cups = extractCupsFromText(pages.join('\n'), { ocrFix: source === 'ocr' }).filter(
     (c) => c.formalValid,
   );

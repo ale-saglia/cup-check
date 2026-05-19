@@ -1,22 +1,24 @@
-let _pdfjsPromise = null;
+let _pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
 
-function loadPdfjs() {
+function loadPdfjs(): Promise<typeof import('pdfjs-dist')> {
   if (!_pdfjsPromise) {
     _pdfjsPromise = import('pdfjs-dist');
   }
   return _pdfjsPromise;
 }
 
-export async function extractPdfText(file) {
+export async function extractPdfText(
+  file: File,
+): Promise<{ pages: string[]; totalChars: number; needsOcr: boolean }> {
   const { getDocument } = await loadPdfjs();
   const arrayBuffer = await file.arrayBuffer();
   const data = new Uint8Array(arrayBuffer);
   const doc = await getDocument({ data }).promise;
-  const pages = [];
+  const pages: string[] = [];
   for (let i = 1; i <= doc.numPages; i++) {
     const page = await doc.getPage(i);
     const content = await page.getTextContent();
-    pages.push(content.items.map((item) => item.str).join(' '));
+    pages.push(content.items.map((item) => ('str' in item ? item.str : '')).join(' '));
   }
   await doc.destroy();
   const totalChars = pages.reduce((sum, p) => sum + p.length, 0);

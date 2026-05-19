@@ -1,4 +1,13 @@
-let _workerPromise = null;
+import type { Worker } from 'tesseract.js';
+
+interface OcrProgressEvent {
+  fileName: string;
+  page: number;
+  totalPages: number;
+  ocrLoading: boolean;
+}
+
+let _workerPromise: Promise<Worker> | null = null;
 
 function tesseractPaths() {
   const base = new URL('tesseract/', document.baseURI).href;
@@ -10,17 +19,20 @@ function tesseractPaths() {
   };
 }
 
-function getOcrWorker() {
+function getOcrWorker(): Promise<Worker> {
   if (!_workerPromise) {
     _workerPromise = (async () => {
       const { createWorker } = await import('tesseract.js');
-      return createWorker('ita+eng', 1, tesseractPaths(), { user_words_suffix: '' });
+      return createWorker('ita+eng', 1, tesseractPaths(), { user_words_suffix: '' } as Record<string, string>);
     })();
   }
   return _workerPromise;
 }
 
-export async function ocrPdf(file, { onProgress } = {}) {
+export async function ocrPdf(
+  file: File,
+  { onProgress }: { onProgress?: (progress: OcrProgressEvent) => void } = {},
+): Promise<{ pages: string[] }> {
   const { getDocument } = await import('pdfjs-dist');
   const arrayBuffer = await file.arrayBuffer();
   const doc = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
@@ -35,14 +47,14 @@ export async function ocrPdf(file, { onProgress } = {}) {
     onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: false });
   }
 
-  const pages = [];
+  const pages: string[] = [];
   for (let i = 1; i <= totalPages; i++) {
     const page = await doc.getPage(i);
     const viewport = page.getViewport({ scale: 2.0 });
     const canvas = document.createElement('canvas');
     canvas.width = viewport.width;
     canvas.height = viewport.height;
-    await page.render({ canvasContext: canvas.getContext('2d'), viewport }).promise;
+    await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
 
     const {
       data: { text },

@@ -7,6 +7,7 @@
   import { extractPdfText } from '../lib/pdf/extract-text.js';
   import { ocrPdf } from '../lib/pdf/ocr.js';
   import { extractCupsFromPages } from '../lib/pdf/extract-cups.js';
+  import { buildVerificatoreCsv, buildExportCsv } from '../lib/pdf/pdf-csv.js';
   import EntryList from '../components/EntryList.svelte';
   import QueueControls from '../components/QueueControls.svelte';
   import type { Entry, Cup } from '../lib/types.js';
@@ -202,18 +203,14 @@
 
   // ── Global actions ─────────────────────────────────────────────────────────
 
-  function completedEntries(): Entry[] {
-    return entries.filter((e) => e.status === 'done' || e.status === 'error');
-  }
-
   function handleSend() {
-    const content = buildVerificatoreCsv();
+    const content = buildVerificatoreCsv(entries);
     const file = new File([content], 'estrazione-cup.csv', { type: 'text/csv;charset=utf-8' });
     navigate(`#/?transfer=${storeTransfer(file)}`);
   }
 
   function handleExport() {
-    const content = buildExportCsv();
+    const content = buildExportCsv(entries);
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -229,48 +226,6 @@
     queue.length = 0;
     processing = false;
     liveAnnouncement = i18n.t('pdf.cleared');
-  }
-
-  // ── CSV builders ───────────────────────────────────────────────────────────
-
-  function safeCell(s: string): string {
-    return /^[=+\-@]/.test(s) ? `'${s}` : s;
-  }
-
-  function csvComma(value: unknown): string {
-    const s = String(value ?? '');
-    if (/[,"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-    return safeCell(s);
-  }
-
-  function csvSemi(value: unknown): string {
-    const s = String(value ?? '');
-    if (/[;"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-    return safeCell(s);
-  }
-
-  function buildVerificatoreCsv(): string {
-    const rows = ['cup,file_origine'];
-    for (const entry of completedEntries()) {
-      for (const cup of entry.cups) {
-        rows.push(`${csvComma(cup.value)},${csvComma(entry.name)}`);
-      }
-    }
-    return `\ufeff${rows.join('\n')}`;
-  }
-
-  function buildExportCsv(): string {
-    const rows = ['cup;file_origine;formato_valido;fonte;manuale'];
-    for (const entry of completedEntries()) {
-      for (const cup of entry.cups) {
-        rows.push(
-          [cup.value, entry.name, cup.formalValid ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
-            .map(csvSemi)
-            .join(';'),
-        );
-      }
-    }
-    return `\ufeff${rows.join('\n')}`;
   }
 
   // ── Dropzone handlers ──────────────────────────────────────────────────────

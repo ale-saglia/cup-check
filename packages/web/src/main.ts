@@ -6,7 +6,7 @@ import PdfExtract from './routes/PdfExtract.svelte';
 import LanguageSwitcher from './components/LanguageSwitcher.svelte';
 import './styles.css';
 
-const mainSlot = mountLayout(document.querySelector('#app'));
+const mainSlot = mountLayout(document.querySelector('#app')!);
 const languageSlot = document.querySelector<HTMLElement>('#language-switcher-slot');
 if (languageSlot) mount(LanguageSwitcher, { target: languageSlot });
 
