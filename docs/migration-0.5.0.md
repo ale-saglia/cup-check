@@ -304,7 +304,7 @@ Quando il batch deriva da file multipli:
 
 Il trasferimento dal tool PDF resta compatibile: il CSV sintetico `cup,file_origine` viene trattato come una sorgente CSV ordinaria.
 
-#### D2.6 Accessibilità preparatoria a D3
+#### ✅ D2.6 Accessibilità preparatoria a D3
 
 Il pannello di importazione deve nascere già compatibile con il lavoro WCAG:
 
