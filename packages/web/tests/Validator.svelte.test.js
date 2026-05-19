@@ -105,6 +105,35 @@ describe('Validator', () => {
     expect(Array.from(headers).map((th) => th.textContent)).toEqual(['Riga', 'CUP', 'CUP', 'Data']);
   });
 
+  it('annulla una importazione non confermata e ripristina il focus', async () => {
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+    vi.mocked(parseFile).mockResolvedValue({
+      ...makeParsed(),
+      headers: ['CUP'],
+      rows: [{ cells: ['G17H03000130001'], originalRowNumber: 2 }],
+      rawRows: [['CUP'], ['G17H03000130001']],
+      headerPresent: true,
+      headerDetectedAutomatically: true,
+    });
+
+    const { container } = render(Validator);
+    const input = container.querySelector('#file-input');
+    const focusSpy = vi.spyOn(document.body, 'focus');
+    Object.defineProperty(input, 'files', { value: [new File(['cup'], 'annulla.csv')] });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeTruthy());
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Annulla'))
+      ?.click();
+    flushSync();
+
+    await waitFor(() => expect(container.querySelector('#import-wizard')).toBeNull());
+    expect(container.querySelector('#file-toggle-meta')?.textContent).toBe('Nessun file caricato');
+    await waitFor(() => expect(focusSpy).toHaveBeenCalledOnce());
+  });
+
   it('conferma il wizard di importazione e abilita la verifica del batch normalizzato', async () => {
     HTMLDialogElement.prototype.showModal = vi.fn();
     HTMLDialogElement.prototype.close = vi.fn();

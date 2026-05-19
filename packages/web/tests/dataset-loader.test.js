@@ -599,6 +599,48 @@ describe('loadDataset', () => {
       dataset.close();
     });
 
+    it('ignora errori CacheStorage durante la lettura online e scarica il dataset', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const sha256 = await computeSha256Hex(sqliteBytes);
+      vi.stubGlobal('caches', {
+        open: vi.fn(async () => {
+          throw new Error('cache unavailable');
+        }),
+      });
+
+      const dataset = await loadDataset({
+        fetchFn: mockFetch({
+          './dataset-latest.json': latestPointer(),
+          [MANIFEST_URL]: makeManifest(sqliteBytes.byteLength, [sha256], {
+            sha256,
+            files: ['cup-index.sqlite.000'],
+          }),
+          [CHUNK_URL_0]: sqliteBytes,
+        }),
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    });
+
+    it('propaga errore di rete quando anche la cache offline non e leggibile', async () => {
+      vi.stubGlobal('caches', {
+        open: vi.fn(async () => {
+          throw new Error('cache unavailable');
+        }),
+      });
+
+      await expect(
+        loadDataset({
+          fetchFn: async () => {
+            throw new TypeError('network error');
+          },
+          initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+        }),
+      ).rejects.toThrow('network error');
+    });
+
     it('falls back to offline cache when network is unavailable', async () => {
       const sqliteBytes = await buildSqliteFixture();
       const sha256 = await computeSha256Hex(sqliteBytes);

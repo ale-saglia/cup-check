@@ -350,6 +350,19 @@ describe('main', () => {
     expect(document.querySelector('#cup-textarea')).toBeNull();
   });
 
+  it('smonta il componente PDF quando si torna al verificatore', async () => {
+    window.history.replaceState({}, '', '#/pdf-extract');
+    await loadMain();
+    expect(document.querySelector('#pdf-dropzone')).toBeTruthy();
+
+    window.history.replaceState({}, '', '#/');
+    window.dispatchEvent(new Event('hashchange'));
+    await flush();
+
+    expect(document.querySelector('#pdf-dropzone')).toBeNull();
+    expect(document.querySelector('#cup-textarea')).toBeTruthy();
+  });
+
   it('toggles all panels', async () => {
     await loadMain();
 

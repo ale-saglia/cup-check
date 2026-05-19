@@ -174,6 +174,21 @@ describe('DropZone', () => {
     expect(onFiles).toHaveBeenCalledWith([bigA, bigB]);
     expect(container.querySelector('[role="alert"]')?.textContent).toContain('2 file');
   });
+
+  it('gestisce change e drop senza FileList disponibile', () => {
+    const onFiles = vi.fn();
+    const { container } = render(DropZone, { props: { onFiles } });
+    const input = container.querySelector('#file-input');
+    const zone = container.querySelector('.dropzone');
+
+    Object.defineProperty(input, 'files', { configurable: true, value: undefined });
+    input.dispatchEvent(new Event('change', { bubbles: true }));
+    zone.dispatchEvent(new Event('drop', { bubbles: true, cancelable: true }));
+    flushSync();
+
+    expect(onFiles).not.toHaveBeenCalled();
+    expect(container.querySelector('[role="alert"]')?.textContent).toContain('Carica almeno');
+  });
 });
 
 describe('ImportSourcePreview', () => {
@@ -358,10 +373,48 @@ describe('ImportSourcePreview', () => {
     container.querySelector('[id^="include-toggle-"]').click();
     expect(onIncludeChange).toHaveBeenCalledWith(false);
   });
+
+  it('nasconde il selettore scheda quando esiste una sola scheda Excel', () => {
+    const { container } = render(ImportSourcePreview, {
+      props: {
+        source: source({
+          parsed: parsed({ selectedSheetName: 'Unica', sheetNames: ['Unica'] }),
+        }),
+        onSheetChange: vi.fn(),
+        onHeaderChange: vi.fn(),
+        onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
+        onSkipMissingCupChange: vi.fn(),
+      },
+    });
+
+    expect(container.querySelector('.import-sheet-select')?.classList.contains('hidden')).toBe(
+      true,
+    );
+    expect(container.querySelector('[id^="sheet-select-"]')?.disabled).toBe(true);
+  });
 });
 
 describe('ImportWizard', () => {
   afterEach(() => cleanup());
+
+  it('renderizza uno stato vuoto senza sorgenti importabili', () => {
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [],
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    expect(container.querySelector('.import-source-preview')).toBeNull();
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Conferma importazione'))
+      ?.click();
+    flushSync();
+    expect(container.querySelector('.live-message')?.textContent).toContain('Includi almeno');
+  });
 
   it('mostra solo il dropdown file e conferma il batch multi-file', () => {
     const onConfirm = vi.fn();

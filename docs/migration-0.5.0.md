@@ -314,7 +314,7 @@ Il pannello di importazione deve nascere già compatibile con il lavoro WCAG:
 - annunciare errori di parsing e conferma importazione tramite live region riusabile;
 - non basare l'interazione drag-and-drop solo sul puntatore: input file sempre disponibile.
 
-#### D2.7 Test
+#### ✅ D2.7 Test
 
 Unit:
 

@@ -29,7 +29,8 @@ try {
   const baseUrl = `http://127.0.0.1:${port}/`;
   await waitForHttp(baseUrl);
   const xlsxPath = await writeAcceptanceWorkbook();
-  const result = await runBrowserAcceptance(baseUrl, xlsxPath);
+  const d2Files = await writeD2AcceptanceFiles();
+  const result = await runBrowserAcceptance(baseUrl, xlsxPath, d2Files);
 
   assert(
     result.controllerAfterOnlineReload,
@@ -81,6 +82,24 @@ try {
     result.pdfColumnSelected === '0',
     `Colonna cup non preselezionata nell'anteprima: ${result.pdfColumnSelected}`,
   );
+  assert(
+    result.d2.twoCsvExport.includes('primo.csv') &&
+      result.d2.twoCsvExport.includes('secondo.csv') &&
+      result.d2.twoCsvExport.includes('file_origine') &&
+      result.d2.twoCsvExport.includes('colonna_origine'),
+    'export due CSV senza metadati origine attesi',
+  );
+  assert(
+    result.d2.xlsxExport.includes('CUP corretti') &&
+      result.d2.xlsxExport.includes('scheda_origine'),
+    'export XLSX multi-scheda senza scheda origine attesa',
+  );
+  assert(
+    result.d2.mixedSummary.includes('2 CUP unici da 2 righe') &&
+      result.d2.mixedPreview.includes('misto.csv') &&
+      result.d2.mixedPreview.includes('misto.xlsx'),
+    `upload misto inatteso: ${JSON.stringify(result.d2)}`,
+  );
 
   console.log(JSON.stringify(result, null, 2));
 } finally {
@@ -129,7 +148,7 @@ async function setupDatasetMock(context) {
   );
 }
 
-async function runBrowserAcceptance(baseUrl, xlsxPath) {
+async function runBrowserAcceptance(baseUrl, xlsxPath, d2Files) {
   const chromePath = findChromePath();
   const launchOptions = {
     headless: true,
@@ -170,6 +189,10 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
       Boolean(navigator.serviceWorker?.controller),
     );
 
+    out.d2 = await runD2ImportAcceptance(page, baseUrl, d2Files);
+
+    await page.goto(baseUrl, { waitUntil: 'load' });
+    await page.waitForLoadState('networkidle');
     await page.locator('#cup-textarea').fill(XSS_PAYLOAD);
     await page.click('#text-check-button');
     await page.waitForSelector('#results-panel:not(.hidden)');
@@ -255,6 +278,55 @@ async function runBrowserAcceptance(baseUrl, xlsxPath) {
   }
 }
 
+async function runD2ImportAcceptance(page, baseUrl, files) {
+  const d2 = {};
+
+  await page.goto(baseUrl, { waitUntil: 'load' });
+  await page.waitForLoadState('networkidle');
+  await page.setInputFiles('#file-input', [files.firstCsv, files.secondCsv]);
+  await page.waitForSelector('#import-wizard');
+  await page.locator('button', { hasText: 'Conferma importazione' }).click();
+  await page.waitForSelector('#results-panel:not(.hidden)');
+  d2.twoCsvExport = await captureCsvExport(page);
+
+  await page.goto(baseUrl, { waitUntil: 'load' });
+  await page.waitForLoadState('networkidle');
+  await page.setInputFiles('#file-input', files.sheetWorkbook);
+  await page.waitForSelector('#import-wizard');
+  await page.locator('[id^="sheet-select-"]').selectOption('CUP corretti');
+  await page.locator('button', { hasText: 'Conferma importazione' }).click();
+  await page.waitForSelector('#results-panel:not(.hidden)');
+  d2.xlsxExport = await captureCsvExport(page);
+
+  await page.goto(baseUrl, { waitUntil: 'load' });
+  await page.waitForLoadState('networkidle');
+  await page.setInputFiles('#file-input', [files.mixedCsv, files.mixedWorkbook]);
+  await page.waitForSelector('#import-wizard');
+  await page.locator('button', { hasText: 'Conferma importazione' }).click();
+  await page.waitForSelector('#results-panel:not(.hidden)');
+  d2.mixedSummary = await page.locator('#summary').textContent();
+  await page.locator('#preview-toggle').click();
+  d2.mixedPreview = await page.locator('#preview-table').textContent();
+
+  return d2;
+}
+
+async function captureCsvExport(page) {
+  await page.evaluate(() => {
+    window.__cupCheckLastExport = '';
+    window.URL.createObjectURL = (blob) => {
+      blob.text().then((text) => {
+        window.__cupCheckLastExport = text;
+      });
+      return 'blob:cup-check-acceptance';
+    };
+    window.URL.revokeObjectURL = () => {};
+  });
+  await page.locator('#export-button').click();
+  await page.waitForFunction(() => Boolean(window.__cupCheckLastExport));
+  return page.evaluate(() => window.__cupCheckLastExport);
+}
+
 async function runA11yAudit(page) {
   await page.addScriptTag({ content: axe.source });
   const result = await page.evaluate(async () => {
@@ -279,6 +351,80 @@ async function runA11yAudit(page) {
     tool: 'axe-core',
     violations: violations.length,
   };
+}
+
+async function writeD2AcceptanceFiles() {
+  const dir = tmpdir();
+  const firstCsv = join(dir, 'cup-check-d2-primo.csv');
+  const secondCsv = join(dir, 'cup-check-d2-secondo.csv');
+  const mixedCsv = join(dir, 'cup-check-d2-misto.csv');
+  const sheetWorkbook = join(dir, 'cup-check-d2-schede.xlsx');
+  const mixedWorkbook = join(dir, 'cup-check-d2-misto.xlsx');
+
+  await writeFile(firstCsv, 'CUP,note\nG17H03000130001,ok\n');
+  await writeFile(secondCsv, 'id,Codice CUP\n42,A58C15000390001\n');
+  await writeFile(mixedCsv, 'CUP\nG17H03000130001\n');
+  await writeWorkbook(sheetWorkbook, [
+    { name: 'Info', rows: [['note'], ['nessun CUP qui']] },
+    { name: 'CUP corretti', rows: [['Codice CUP'], ['A58C15000390001']] },
+  ]);
+  await writeWorkbook(mixedWorkbook, [
+    { name: 'CUP', rows: [['Codice CUP'], ['F11D24000000003']] },
+  ]);
+
+  return { firstCsv, secondCsv, mixedCsv, sheetWorkbook, mixedWorkbook };
+}
+
+async function writeWorkbook(outputPath, sheets) {
+  const worksheetOverrides = sheets
+    .map(
+      (_, index) =>
+        `<Override PartName="/xl/worksheets/sheet${index + 1}.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.worksheet+xml"/>`,
+    )
+    .join('');
+  const workbookSheets = sheets
+    .map(
+      (sheet, index) =>
+        `<sheet name="${escapeXml(sheet.name)}" sheetId="${index + 1}" r:id="rId${index + 1}"/>`,
+    )
+    .join('');
+  const workbookRelationships = sheets
+    .map(
+      (_, index) =>
+        `<Relationship Id="rId${index + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${index + 1}.xml"/>`,
+    )
+    .join('');
+
+  const zip = new JSZip();
+  zip.file(
+    '[Content_Types].xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/xl/workbook.xml" ContentType="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet.main+xml"/>${worksheetOverrides}</Types>`,
+  );
+  zip.file(
+    '_rels/.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="xl/workbook.xml"/></Relationships>`,
+  );
+  zip.file(
+    'xl/workbook.xml',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${workbookSheets}</sheets></workbook>`,
+  );
+  zip.file(
+    'xl/_rels/workbook.xml.rels',
+    `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${workbookRelationships}</Relationships>`,
+  );
+  sheets.forEach((sheet, index) => {
+    zip.file(
+      `xl/worksheets/sheet${index + 1}.xml`,
+      `<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${workbookSheetRows(sheet.rows)}</sheetData></worksheet>`,
+    );
+  });
+
+  await writeFile(outputPath, await zip.generateAsync({ type: 'nodebuffer' }));
 }
 
 async function writeAcceptanceWorkbook() {
@@ -361,6 +507,20 @@ async function getFreePort() {
   probe.close();
   await once(probe, 'close');
   return freePort;
+}
+
+function workbookSheetRows(rows) {
+  return rows
+    .map((row, rowIndex) => {
+      const cells = row
+        .map((value, cellIndex) => {
+          const ref = `${columnName(cellIndex + 1)}${rowIndex + 1}`;
+          return `<c r="${ref}" t="inlineStr"><is><t>${escapeXml(value)}</t></is></c>`;
+        })
+        .join('');
+      return `<row r="${rowIndex + 1}">${cells}</row>`;
+    })
+    .join('');
 }
 
 function columnName(number) {

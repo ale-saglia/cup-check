@@ -396,6 +396,22 @@ describe('validator.worker', () => {
     );
   });
 
+  it('pubblica un messaggio di errore se il batch nel worker fallisce', async () => {
+    const { scope, messages } = await loadRealWorkerScope();
+
+    scope.onmessage?.({
+      data: {
+        type: 'start',
+        rows: null,
+        lookup: false,
+        chunkSize: 1,
+      },
+    });
+
+    const error = await waitForMessage(messages, 'error');
+    expect(error.message).toContain('Cannot read');
+  });
+
   it('ignora risultati lookup senza richiesta pendente e completa senza lookup', async () => {
     const { scope, messages } = await loadRealWorkerScope();
 
