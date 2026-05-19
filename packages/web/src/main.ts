@@ -3,6 +3,7 @@ import { register, start } from './router.js';
 import { mount, unmount } from 'svelte';
 import Validator from './routes/Validator.svelte';
 import PdfExtract from './routes/PdfExtract.svelte';
+import XmlExtract from './routes/XmlExtract.svelte';
 import LanguageSwitcher from './components/LanguageSwitcher.svelte';
 import './styles.css';
 
@@ -32,6 +33,18 @@ register(
   () => {
     pdfExtractUnmount?.();
     pdfExtractUnmount = null;
+  },
+);
+let xmlExtractUnmount: (() => void) | null = null;
+register(
+  '#/xml-extract',
+  () => {
+    const instance = mount(XmlExtract, { target: mainSlot! });
+    xmlExtractUnmount = () => unmount(instance);
+  },
+  () => {
+    xmlExtractUnmount?.();
+    xmlExtractUnmount = null;
   },
 );
 start();

@@ -363,6 +363,19 @@ describe('main', () => {
     expect(document.querySelector('#cup-textarea')).toBeTruthy();
   });
 
+  it('monta e smonta il componente XML extract', async () => {
+    window.history.replaceState({}, '', '#/xml-extract');
+    await loadMain();
+    expect(document.querySelector('#xml-dropzone')).toBeTruthy();
+
+    window.history.replaceState({}, '', '#/');
+    window.dispatchEvent(new Event('hashchange'));
+    await flush();
+
+    expect(document.querySelector('#xml-dropzone')).toBeNull();
+    expect(document.querySelector('#cup-textarea')).toBeTruthy();
+  });
+
   it('toggles all panels', async () => {
     await loadMain();
 

@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Fattura PA con CUP menzionato solo nel testo libero della Causale (fallback) -->
+<FatturaElettronica versione="FPA12" xmlns="http://ivaservizi.agenziaentrate.gov.it/docs/xsd/fatture/v1.2">
+  <FatturaElettronicaHeader>
+    <DatiTrasmissione>
+      <IdTrasmittente><IdPaese>IT</IdPaese><IdCodice>11111111111</IdCodice></IdTrasmittente>
+      <ProgressivoInvio>3</ProgressivoInvio>
+      <FormatoTrasmissione>FPA12</FormatoTrasmissione>
+      <CodiceDestinatario>0000000</CodiceDestinatario>
+    </DatiTrasmissione>
+    <CedentePrestatore>
+      <DatiAnagrafici>
+        <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>11111111111</IdCodice></IdFiscaleIVA>
+        <Anagrafica><Denominazione>Servizi Srl</Denominazione></Anagrafica>
+        <RegimeFiscale>RF01</RegimeFiscale>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>Via Garibaldi 3</Indirizzo><CAP>40100</CAP><Comune>Bologna</Comune><Nazione>IT</Nazione>
+      </Sede>
+    </CedentePrestatore>
+    <CessionarioCommittente>
+      <DatiAnagrafici>
+        <CodiceFiscale>80003450765</CodiceFiscale>
+        <Anagrafica><Denominazione>Regione Emilia-Romagna</Denominazione></Anagrafica>
+      </DatiAnagrafici>
+      <Sede>
+        <Indirizzo>Viale Aldo Moro 52</Indirizzo><CAP>40127</CAP><Comune>Bologna</Comune><Nazione>IT</Nazione>
+      </Sede>
+    </CessionarioCommittente>
+  </FatturaElettronicaHeader>
+  <FatturaElettronicaBody>
+    <DatiGenerali>
+      <DatiGeneraliDocumento>
+        <TipoDocumento>TD01</TipoDocumento>
+        <Divisa>EUR</Divisa>
+        <Data>2024-06-01</Data>
+        <Numero>2024/099</Numero>
+        <Causale>Fattura relativa al progetto CUP A58C15000390001 - SAL 2/2024</Causale>
+      </DatiGeneraliDocumento>
+    </DatiGenerali>
+    <DatiBeniServizi>
+      <DettaglioLinee>
+        <NumeroLinea>1</NumeroLinea>
+        <Descrizione>Stato avanzamento lavori</Descrizione>
+        <Quantita>1.00</Quantita>
+        <PrezzoUnitario>8000.00</PrezzoUnitario>
+        <PrezzoTotale>8000.00</PrezzoTotale>
+        <AliquotaIVA>22.00</AliquotaIVA>
+      </DettaglioLinee>
+    </DatiBeniServizi>
+  </FatturaElettronicaBody>
+</FatturaElettronica>

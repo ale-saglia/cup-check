@@ -88,7 +88,7 @@ export interface DownloadProgress {
 // ── PdfExtract types ──────────────────────────────────────────────────────────
 
 export type EntryStatus = 'queued' | 'parsing' | 'ocr' | 'done' | 'error';
-export type CupSource = 'text' | 'ocr' | 'manuale';
+export type CupSource = 'text' | 'ocr' | 'xml' | 'manuale';
 
 export interface OcrProgress {
   ocrLoading: boolean;
@@ -110,7 +110,7 @@ export interface Entry {
   file: File | null;
   name: string;
   status: EntryStatus;
-  source: 'text' | 'ocr' | null;
+  source: 'text' | 'ocr' | 'xml' | null;
   cups: Cup[];
   ocrProgress: OcrProgress | null;
   error: string | null;

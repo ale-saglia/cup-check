@@ -16,6 +16,13 @@ export const tools: Tool[] = [
     descriptionKey: 'tool.pdfExtract.description',
   },
   {
+    id: 'xml-extract',
+    labelKey: 'tool.xmlExtract.label',
+    path: '#/xml-extract',
+    enabled: true,
+    descriptionKey: 'tool.xmlExtract.description',
+  },
+  {
     id: 'placeholder',
     labelKey: 'tool.placeholder.label',
     path: null,
