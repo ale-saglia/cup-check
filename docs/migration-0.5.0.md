@@ -179,7 +179,7 @@ La potatura C6 ha rimosso anche il codice morto rimasto dopo la migrazione Svelt
 
 Baseline prima della rimozione: `lines 99.58%`, `branches 95.56%` con denominatore ancora inquinato da `render.js`. Dopo la rimozione e l'inclusione dei componenti Svelte nella coverage V8: `lines 99.71%`, `branches 90.11%` sul codice vivo misurato; le soglie target restano `lines: 95` e `branches: 90`.
 
-Debito residuo per Fase D: `src/layout.js` resta vivo perché importato da `main.ts`; anche il router artigianale resta temporaneamente in `router.ts`. Entrambi vanno assorbiti nel layer Svelte durante le feature `0.5.0`, senza anticipare refactor in C6.
+Nota architetturale: `src/layout.ts` e `router.ts` rimangono moduli TS puri per scelta deliberata — logica applicativa in TypeScript, solo UI in Svelte. Non vanno migrati a componenti Svelte.
 
 ---
 

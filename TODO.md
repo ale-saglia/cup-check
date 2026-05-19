@@ -56,7 +56,7 @@ Risolto 2026-05-19 tramite Fase C della migrazione Svelte: `pdf-extract-view.js`
 
 Risolto 2026-05-19: creato `docs/adr/0010-service-worker-skip-waiting.md` con contesto, precondizioni di sicurezza, opzioni da valutare alla 0.9.0 e alternative scartate. Aggiunto commento in `sw.js` che rimanda all'ADR.
 
-### 7. Migrazione TypeScript + Svelte 5 (milestone 0.5.0)
+### ~~7. Migrazione TypeScript + Svelte 5 (milestone 0.5.0)~~ ✅
 
 Decisione in [ADR 0009](docs/adr/0009-svelte-frontend-migration.md). Piano dettagliato in [docs/migration-0.5.0.md](docs/migration-0.5.0.md).
 
@@ -69,6 +69,8 @@ Nota 2026-05-18 (D1): Web Worker per batch >100k implementato — `validation-wo
 Nota 2026-05-18 (TODO #4 chiuso): `AbortSignal` per il dataset loader e cache `CacheStorage` con invalidazione SHA-256 implementati e testati in `dataset-loader.ts`; `Validator.svelte` annulla il caricamento su `onDestroy`.
 
 Nota 2026-05-19: Migrazione TS completata per tutti i file JS restanti — `extract-cups.ts`, `extract-text.ts`, `ocr.ts`, `layout.ts`, `tools-registry.ts`, `version.ts`. Rimangono intenzionalmente `.js`: `polyfills.js` (IIFE iniettato da Vite) e `sw.js` (service worker non compilato da TS).
+
+Risolto 2026-05-19: tutte le fasi A–D5 completate (D2–D5 implementate nella stessa giornata di D1). `layout.ts` e `router.ts` rimangono intenzionalmente moduli TS puri — la scelta architetturale è logica in TS, solo UI in Svelte.
 
 ## Bassa priorità
 
