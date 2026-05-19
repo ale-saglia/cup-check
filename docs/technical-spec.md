@@ -20,6 +20,47 @@
 | Hosting                    | GitHub Pages                   | CORS nativi, zero costi operativi                  |
 | Python library             | Python 3.12+, uv, pytest, ruff | Integrazione applicativa e parity test             |
 
+## Compatibilità Browser
+
+### Target di build
+
+Vite non dichiara un `target` esplicito; la build produce ES modules nativi (equivalente a `esnext`). Il runtime minimo richiesto è un browser con supporto a ES modules dinamici e `import.meta`:
+
+| Browser   | Versione minima |
+| --------- | --------------- |
+| Chrome    | 87              |
+| Edge      | 88              |
+| Firefox   | 78              |
+| Safari    | 14              |
+
+### Polyfill
+
+L'IIFE in `src/polyfills.js` è iniettato da Vite in `<head>` prima di qualsiasi modulo e anteposto al worker pdf.js. Copre le API mancanti nei browser pre-2023:
+
+| API                                       | Introdotta nativamente |
+| ----------------------------------------- | ---------------------- |
+| `Promise.withResolvers`                   | Chrome 119, Firefox 121, Safari 17.4 |
+| `Promise.try`                             | Chrome 130, Firefox 134, Safari 18.2 |
+| `ReadableStream.prototype[Symbol.asyncIterator]` | Chrome 124, Firefox 110, Safari 16.4 |
+
+### Browser legacy (Chromium 109)
+
+Chrome 109 è il browser legacy più datato coperto dai test acceptance (`CHROME_PATH` nel devcontainer punta a Chromium 109 via VNC). A questa versione si applicano le seguenti limitazioni note:
+
+- **pdf.js in modalità single-thread**: `OffscreenCanvas` è assente; il worker pdf.js esegue il rendering sul thread principale. L'OCR Tesseract.js può richiedere diversi minuti per pagina e la UI può sembrare bloccata.
+- **Web Worker batch limitato**: il batch pesante (>100 k CUP) usa un `Worker` dedicato introdotto nella `0.5.0`; su Chrome 109 il worker funziona ma trasferire `SharedArrayBuffer` non è disponibile senza `COOP`/`COEP` — il batch usa quindi `postMessage` con copia.
+
+Per un'esperienza ottimale (elaborazione PDF multi-thread, OCR rapido, batch fluido) è raccomandato un browser rilasciato negli ultimi due anni.
+
+### Feature richieste e degradazione
+
+| Feature             | Richiesta per                        | Degrado se assente                              |
+| ------------------- | ------------------------------------ | ----------------------------------------------- |
+| Service Worker      | Cache offline app-shell e dataset    | App funziona online; dataset riscaricato a ogni sessione |
+| `CacheStorage`      | Invalidazione dataset per SHA-256    | Nessuna cache dataset; download completo a ogni apertura |
+| WebAssembly         | OCR Tesseract.js                     | OCR non disponibile; il tool PDF usa solo estrazione testo nativa |
+| Web Worker          | Batch >100 k CUP senza bloccare la UI | Non applicabile: fallback sincrono non implementato; richiede Worker |
+
 ## Struttura Repo
 
 ```text

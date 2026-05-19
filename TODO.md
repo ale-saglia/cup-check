@@ -90,8 +90,10 @@ Anche dopo aver risolto il punto 2, aggiungere un test che verifichi che il bloc
 
 Risolto 2026-05-19: aggiunto describe block `polyfills build regression` in `polyfills.test.js` con 4 test: (1) la trasformazione `export`→IIFE produce JS valido, (2) `applyAllPolyfills()` chiama tutti i gruppi `apply*` esportati (static analysis), (3) l'IIFE si esegue senza errori in un contesto legacy, (4) l'IIFE applica gli stessi polyfill del modulo. La funzione `buildPolyfillsScript()` è replicata nel test con la stessa logica di `vite.config.ts` per rilevare immediatamente qualsiasi divergenza.
 
-### 10. Considerare un manifest di compatibilità browser esplicito
+### ~~10. Considerare un manifest di compatibilità browser esplicito~~ ✅
 
 Il supporto a Chrome 109 e browser legacy è testato via acceptance con Chromium legacy, ma non esiste un documento che dichiari esplicitamente i browser supportati e le limitazioni note. Una sezione in `docs/technical-spec.md` o nel README eviterebbe domande ricorrenti.
 
 - File: `docs/technical-spec.md` o `README.md`
+
+Risolto 2026-05-19: aggiunta sezione "Compatibilità Browser" in `docs/technical-spec.md` con tabella versioni minime per browser, elenco polyfill e relative versioni di introduzione nativa, limitazioni note su Chromium 109 (pdf.js single-thread, OCR lento, batch via postMessage), e tabella feature/degrado per Service Worker, CacheStorage, WebAssembly e Web Worker.
