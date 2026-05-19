@@ -29,21 +29,22 @@ The project is designed for zero operational cost, browser-side processing, audi
 
 ## Stato
 
-**Versione corrente: 0.4.1** — web app statica, package Python `cup-check` su PyPI, tool di estrazione CUP da PDF.
+**Versione corrente: 0.4.1** — web app statica, package Python `cup-check` su PyPI, tool di estrazione CUP da PDF e da fatture XML FatturaPA.
 
 Il dataset OpenCUP statico è uno snapshot mensile; il numero di CUP indicizzati è riportato nel `dataset-manifest.json` della release corrente.
 
-**Roadmap**: `0.4.1` rilasciata · `0.5.0` in progettazione (UX & accessibilità WCAG AA, batch >100k con Web Worker) · [dettaglio completo](docs/roadmap.md).
+**Roadmap**: `0.4.1` rilasciata · `0.5.0` in sviluppo (frontend TypeScript + Svelte 5, import multi-file, accessibilità WCAG AA, batch >100k con Web Worker, i18n) · [dettaglio completo](docs/roadmap.md).
 
 ## Cosa Fa
 
-- Valida CUP da file CSV e XLSX.
+- Valida CUP da file CSV e XLSX, anche multi-file con tracciabilità dell'origine.
 - Valida CUP incollati come testo, uno per riga.
 - Verifica la presenza nel dataset OpenCUP statico quando il dataset è disponibile.
 - Mostra risultati filtrabili per esito e testo.
 - Mostra ed esporta i risultati raggruppati per CUP o riga per riga.
 - Funziona offline dopo la prima visita.
 - Espone una libreria Python installabile come `cup-check`.
+- Interfaccia in italiano e inglese con selettore lingua persistito.
 
 ## Strumenti
 
@@ -58,6 +59,18 @@ Disponibile nel menu "Strumenti" della web app, il tool estrae automaticamente i
 5. Clicca **Apri nel verificatore** per passare l'elenco estratto al verificatore principale, oppure **Esporta CSV** per scaricare il file `cup,file_origine` direttamente.
 
 Il tool mostra la validazione formale del CUP (regex + checksum). La verifica di esistenza nel dataset OpenCUP avviene solo nel verificatore principale, dopo il passaggio. I file PDF sono elaborati interamente nel browser; nessun dato viene trasmesso a server esterni.
+
+### Estrai CUP da fatture XML (FatturaPA)
+
+Disponibile nel menu "Strumenti" della web app, il tool estrae CUP da fatture elettroniche in formato FatturaPA (XML):
+
+1. Apri il menu **Strumenti** e scegli **Estrai CUP da fatture XML**.
+2. Carica uno o più file XML tramite la zona di rilascio o il selettore file.
+3. Il tool cerca prima i campi strutturati (`CodiceCUP` e `AltriDatiGestionali[TipoDato=CUP]`) e usa testo libero (`Causale`, `Descrizione`) come fallback.
+4. Correggi manualmente eventuali CUP letti in modo imperfetto dal testo libero.
+5. Clicca **Apri nel verificatore** per passare l'elenco al verificatore principale, oppure **Esporta CSV** per scaricare il file direttamente.
+
+L'estrazione avviene interamente nel browser con DOMParser nativo; nessun dato viene trasmesso a server esterni.
 
 ## Privacy
 

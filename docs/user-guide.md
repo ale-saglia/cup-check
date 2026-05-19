@@ -16,14 +16,14 @@ Hai un file con 500 CUP da verificare prima di inviare un prospetto al MEF, a un
 ## Controllo Da File
 
 1. Apri la [web app](https://ale-saglia.github.io/cup-check/).
-2. Carica un file CSV o XLSX.
-3. Se il file Excel contiene più fogli, scegli il foglio da controllare.
+2. Carica uno o più file CSV o XLSX tramite il wizard di importazione.
+3. Per ogni file, se è un Excel con più fogli, scegli il foglio da controllare.
 4. Verifica che la colonna proposta sia quella dei CUP. Se necessario, seleziona un'altra colonna.
 5. Indica se la prima riga contiene intestazioni.
-6. Decidi se ignorare le righe senza CUP.
+6. Usa il toggle per includere o escludere singole sorgenti senza ricaricare i file.
 7. Avvia il controllo.
 
-La tabella risultati mostra gli esiti per CUP, con possibilità di raggruppare i codici uguali o vedere il dettaglio riga per riga nell'export CSV.
+La tabella risultati mostra gli esiti per CUP. Se hai importato più file, l'export CSV include le colonne `file_origine`, `scheda_origine`, `riga_origine` e `colonna_origine` per tracciabilità completa.
 
 ## Controllo Da Testo
 
@@ -70,6 +70,29 @@ I CUP con fonte **ocr** nella colonna *Fonte* richiedono attenzione particolare:
 - Su **Chrome 109 o precedenti** (e browser equivalenti per data di rilascio) il motore PDF opera in modalità di compatibilità a singolo thread: l'OCR può richiedere diversi minuti per pagina e la UI può sembrare bloccata durante l'elaborazione. Aggiornare il browser a una versione recente risolve il problema.
 
 Il tool PDF non sostituisce il verificatore: prepara l'elenco dei CUP da controllare e mantiene l'origine del file come colonna tracciabile fino all'export finale.
+
+## Estrazione CUP Da Fatture XML (FatturaPA)
+
+Disponibile nel menu **Strumenti** della web app, il tool estrae CUP da file XML in formato FatturaPA, tipico delle fatture elettroniche della PA italiana.
+
+### Flusso base
+
+1. Apri il menu **Strumenti** e scegli **Estrai CUP da fatture XML**.
+2. Trascina uno o più file XML nella zona di rilascio, oppure usa il pulsante per selezionarli.
+3. Il tool analizza ogni file con DOMParser nativo:
+   - Cerca prima i campi strutturati `CodiceCUP` e `AltriDatiGestionali` con `TipoDato=CUP`.
+   - Se non li trova, ricade sul testo libero dei campi `Causale` e `Descrizione`.
+4. La tabella si popola con una riga per ogni coppia *file ↔ CUP*. Per ogni CUP viene mostrata la validazione formale (struttura e checksum), ma non ancora la verifica OpenCUP.
+
+### Correzione manuale e azioni finali
+
+Le operazioni di correzione, passaggio al verificatore ed export CSV sono identiche al tool PDF. Consulta la sezione [Estrazione CUP Da PDF](#estrazione-cup-da-pdf) per i dettagli.
+
+### Limiti del tool XML
+
+- L'estrazione da testo libero (`Causale`, `Descrizione`) è un fallback: i CUP incorporati in frasi descrittive possono essere rilevati parzialmente o non rilevati. Usa sempre la correzione manuale per i CUP con fonte **testo**.
+- La validazione mostrata nella tabella è solo **formale** (regole `R0`–`R5`). La verifica di esistenza nel dataset OpenCUP si esegue nel verificatore dopo il passaggio.
+- Il tool accetta solo file XML conformi allo schema FatturaPA. File XML di altro tipo possono produrre risultati vuoti o parziali.
 
 ## Lettura Degli Esiti
 

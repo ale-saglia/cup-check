@@ -2,11 +2,24 @@
 
 ## Unreleased
 
+- Completa la migrazione del frontend a TypeScript + Svelte 5 (milestone 0.5.0): riorganizzazione di `src/` in `lib/core`, `lib/data`, `lib/pdf`, conversione dei moduli da JS a TS, vite.config e ESLint migrati, `Validator.svelte` come nuovo entry point Svelte 5 montato via `mount()`. La migrazione copre fasi A1–C6 con coverage completa.
+- Aggiunge il tool **Estrai CUP da fatture elettroniche XML** (route `#/xml-extract`): legge file FatturaPA con DOMParser nativo, cerca prima i campi strutturati (`CodiceCUP`, `AltriDatiGestionali[TipoDato=CUP]`) e ricade sul testo libero (`Causale`, `Descrizione`) come fallback. Condivide con il tool PDF il flusso di correzione manuale, il passaggio al verificatore e l'export CSV.
+- Introduce l'import multi-file nel verificatore: un wizard guida alla selezione di uno o più file CSV/XLSX, con toggle per includere o escludere singole sorgenti e scelta della colonna per ciascun file. I metadati di origine (file, scheda, riga, colonna) vengono propagati fino all'export CSV come colonne `file_origine`, `scheda_origine`, `riga_origine`, `colonna_origine`. File sopra 25 MB ricevono un avviso advisory nella DropZone.
+
 - Sposta la validazione batch in un Web Worker dedicato per batch >100 k righe: il thread principale resta reattivo durante l'elaborazione. Per batch minori la validazione avviene in-thread senza overhead. Il lookup OpenCUP avviene sempre sul main thread tramite protocollo `lookup-request`/`lookup-result`, evitando di trasferire il dataset al worker.
 - Aggiunge `ProgressBar.svelte` e un pannello di progresso in `Validator.svelte` con pulsante Annulla; i trigger di validazione ed export sono disabilitati durante una corsa in corso.
 - Espone `AbortController` per annullare validazioni in corso; `onDestroy` interrompe automaticamente eventuali batch all'uscita dalla vista.
 - Aggiunge `AbortSignal` a `loadLatestDataset` e all'intera catena di fetch del dataset; `Validator.svelte` annulla il download automaticamente su `onDestroy`, eliminando il download fantasma quando l'utente naviga via prima del completamento.
 - Introduce la cache `CacheStorage` per il dataset SQLite: il file viene riscaricato solo se l'hash SHA-256 dichiarato nel manifest differisce da quello del file in cache, coprendo sia rigenerazioni del dataset sia bitrot. Se la rete non è disponibile e la cache contiene dati validi, il dataset viene servito offline senza errore.
+
+- Completa l'accessibilità WCAG D3: aggiunge skip link, focus management tra viste e live region per i processi asincroni. Il gate Lighthouse è integrato in CI per mantenere il punteggio nel tempo.
+- Aggiunge accessibilità preparatoria al pannello di importazione multi-file (D2.6): attributi ARIA su DropZone, toggle sorgenti e wizard.
+- Aggiunge i18n base con selettore lingua persistito: le stringhe principali della UI sono disponibili in italiano e inglese; le chiavi i18n coprono anche i tool PDF e XML.
+
+- Aggiunge `markdownlint` a pre-commit e `svelte-check` a Makefile, CI e pre-commit.
+- Aggiunge gate coverage al pre-push hook e verifica coverage a `check` e `release-check`.
+- Integra Codecov Bundle Analysis e Test Analytics per Python e web.
+- Pubblica la dichiarazione di accessibilità (`docs/accessibility.md`) e aggiunge la sezione compatibilità browser in `docs/technical-spec.md`.
 
 - Aggiunge test acceptance e anteprima con Chromium legacy (v109) tramite VNC per verificare la compatibilità con browser meno recenti.
 - Elimina il falso errore Tesseract `failed to load ita.special-words` che compariva alla prima esecuzione OCR.
