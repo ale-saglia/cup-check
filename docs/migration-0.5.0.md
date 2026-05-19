@@ -347,7 +347,7 @@ Acceptance:
 - Helper reattivo `src/i18n/i18n.svelte.ts` con caricamento dinamico di `en.json` e fallback italiano.
 - Fixture e contratti interni restano in italiano; gli outcome tecnici non vengono tradotti perché sono parte del contratto dati.
 
-### D5. Dichiarazione di accessibilità
+### ✅ D5. Dichiarazione di accessibilità
 
 - `docs/accessibility.md`: conformità dichiarata, limitazioni note, contatto per segnalazioni.
 
