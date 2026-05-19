@@ -1,3 +1,6 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import {
   applyAllPolyfills,
@@ -346,6 +349,76 @@ describe('Uint8Array polyfills', () => {
       applyUint8ArrayPolyfills();
       const original = new Uint8Array([1, 2, 3, 100, 200, 255]);
       expect(Uint8Array.fromBase64(original.toBase64())).toEqual(original);
+    });
+  });
+});
+
+describe('polyfills build regression', () => {
+  const webDir = resolve(fileURLToPath(import.meta.url), '../..');
+
+  function buildPolyfillsScript() {
+    const src = readFileSync(resolve(webDir, 'src/polyfills.js'), 'utf8');
+    const bare = src.replace(/^export\s+/gm, '');
+    return `(function(){\n${bare}\napplyAllPolyfills();\n})();`;
+  }
+
+  it('la trasformazione export→IIFE produce JS sintatticamente valido', () => {
+    expect(() => new Function(buildPolyfillsScript())).not.toThrow();
+  });
+
+  it('applyAllPolyfills chiama tutti i gruppi apply* esportati', () => {
+    const src = readFileSync(resolve(webDir, 'src/polyfills.js'), 'utf8');
+    const groups = [...src.matchAll(/^export function (apply\w+)\(/gm)]
+      .map((m) => m[1])
+      .filter((n) => n !== 'applyAllPolyfills');
+    const bodyMatch = src.match(/function applyAllPolyfills\(\)\s*\{([^}]*)\}/);
+    const body = bodyMatch?.[1] ?? '';
+    for (const fn of groups) {
+      expect(body, `${fn} mancante da applyAllPolyfills()`).toContain(`${fn}()`);
+    }
+  });
+
+  describe('IIFE generato su contesto legacy', () => {
+    let saved;
+
+    beforeEach(() => {
+      saved = {
+        withResolvers: Promise.withResolvers,
+        try: Promise.try,
+        getOrInsertComputed: Map.prototype.getOrInsertComputed,
+        toHex: Uint8Array.prototype.toHex,
+        toBase64: Uint8Array.prototype.toBase64,
+        fromBase64: Uint8Array.fromBase64,
+      };
+      delete Promise.withResolvers;
+      delete Promise.try;
+      delete Map.prototype.getOrInsertComputed;
+      delete Uint8Array.prototype.toHex;
+      delete Uint8Array.prototype.toBase64;
+      delete Uint8Array.fromBase64;
+    });
+
+    afterEach(() => {
+      Promise.withResolvers = saved.withResolvers;
+      Promise.try = saved.try;
+      Map.prototype.getOrInsertComputed = saved.getOrInsertComputed;
+      Uint8Array.prototype.toHex = saved.toHex;
+      Uint8Array.prototype.toBase64 = saved.toBase64;
+      Uint8Array.fromBase64 = saved.fromBase64;
+    });
+
+    it('si esegue senza errori', () => {
+      expect(() => new Function(buildPolyfillsScript())()).not.toThrow();
+    });
+
+    it('applica gli stessi polyfill del modulo', () => {
+      new Function(buildPolyfillsScript())();
+      expect(typeof Promise.withResolvers).toBe('function');
+      expect(typeof Promise.try).toBe('function');
+      expect(typeof Map.prototype.getOrInsertComputed).toBe('function');
+      expect(typeof Uint8Array.prototype.toHex).toBe('function');
+      expect(typeof Uint8Array.prototype.toBase64).toBe('function');
+      expect(typeof Uint8Array.fromBase64).toBe('function');
     });
   });
 });

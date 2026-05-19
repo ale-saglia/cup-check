@@ -82,11 +82,13 @@ Il pattern try/catch-per-entry con stato mutabile a livello modulo funziona e il
 
 Risolto 2026-05-19: il file è già stato migrato a `PdfExtract.svelte` (TODO #5). `drainQueue` avvolgeva il loop senza `try/finally`: se `processEntry` avesse lanciato inaspettatamente, `processing` sarebbe rimasto `true` per sempre bloccando la coda. Aggiunto `try/finally` che garantisce il reset di `processing` in ogni caso. Aggiunto test "due file che falliscono in successione non bloccano la coda" che copriva il caso mancante.
 
-### 9. Aggiungere test di regressione per il drift polyfill
+### ~~9. Aggiungere test di regressione per il drift polyfill~~ ✅
 
 Anche dopo aver risolto il punto 2, aggiungere un test che verifichi che il blocco inline in `index.html` (o il suo sostituto generato) e il modulo `polyfills.js` producano lo stesso comportamento. Un test di build che confronti i due output previene regressioni future.
 
 - File: `packages/web/tests/`
+
+Risolto 2026-05-19: aggiunto describe block `polyfills build regression` in `polyfills.test.js` con 4 test: (1) la trasformazione `export`→IIFE produce JS valido, (2) `applyAllPolyfills()` chiama tutti i gruppi `apply*` esportati (static analysis), (3) l'IIFE si esegue senza errori in un contesto legacy, (4) l'IIFE applica gli stessi polyfill del modulo. La funzione `buildPolyfillsScript()` è replicata nel test con la stessa logica di `vite.config.ts` per rilevare immediatamente qualsiasi divergenza.
 
 ### 10. Considerare un manifest di compatibilità browser esplicito
 
