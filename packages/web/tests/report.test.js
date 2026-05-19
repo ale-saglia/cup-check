@@ -8,6 +8,18 @@ import {
 import { displayResults, uniqueResultsByCup } from '../src/lib/core/results.js';
 import { OUTCOMES, validateCup } from '../src/lib/core/validator.js';
 
+/** @param {Partial<import('../src/lib/core/import-plan.js').ImportedCupRow>[]} overrides */
+function makeImportedRow(overrides) {
+  return {
+    value: 'A12B23000000001',
+    row: 1,
+    fileOrigine: 'file.csv',
+    colonnaOrigine: 'CUP',
+    sourceRowNumber: 1,
+    ...overrides,
+  };
+}
+
 describe('resultDetail', () => {
   it('shows non-blocking normalization warnings for valid CUPs', () => {
     const result = validateCup('  g17h03000130001  ', null, { currentYear: 2026 });
@@ -94,6 +106,94 @@ describe('resultDetail', () => {
 
   it('formatRule falls back to "regola non documentata" for unknown rule codes', () => {
     expect(formatRule('R99')).toBe('R99 - regola non documentata');
+  });
+});
+
+describe('buildCsvReport — colonne origine', () => {
+  it('aggiunge le 4 colonne origine quando importedRows è fornito', () => {
+    const result = validateCup('A12B23000000001', 1, { currentYear: 2026 });
+    const importedRows = [
+      makeImportedRow({
+        row: 1,
+        fileOrigine: 'dati.csv',
+        colonnaOrigine: 'CUP',
+        sourceRowNumber: 5,
+      }),
+    ];
+
+    const csv = buildCsvReport([result], importedRows);
+    const header = csv.split('\n')[0];
+    const dataRow = csv.split('\n')[1];
+
+    expect(header).toContain('file_origine;scheda_origine;riga_origine;colonna_origine');
+    expect(dataRow).toContain('dati.csv;;5;CUP');
+  });
+
+  it('include la scheda quando presente', () => {
+    const result = validateCup('A12B23000000001', 1, { currentYear: 2026 });
+    const importedRows = [
+      makeImportedRow({
+        row: 1,
+        fileOrigine: 'dati.xlsx',
+        schedaOrigine: 'Foglio1',
+        colonnaOrigine: 'Codice',
+        sourceRowNumber: 3,
+      }),
+    ];
+
+    const csv = buildCsvReport([result], importedRows);
+    expect(csv.split('\n')[1]).toContain('dati.xlsx;Foglio1;3;Codice');
+  });
+
+  it('non aggiunge le colonne origine quando importedRows è vuoto', () => {
+    const result = validateCup('A12B23000000001', 1, { currentYear: 2026 });
+
+    const csv = buildCsvReport([result], []);
+    expect(csv).not.toContain('file_origine');
+  });
+
+  it('in modalità raggruppata, un CUP con 2 occorrenze da file diversi aggrega i valori', () => {
+    const results = uniqueResultsByCup([
+      validateCup('A12B23000000001', 1, { currentYear: 2026 }),
+      validateCup('A12B23000000001', 2, { currentYear: 2026 }),
+    ]);
+    const importedRows = [
+      makeImportedRow({ row: 1, fileOrigine: 'a.csv', colonnaOrigine: 'CUP', sourceRowNumber: 10 }),
+      makeImportedRow({ row: 2, fileOrigine: 'b.csv', colonnaOrigine: 'CUP', sourceRowNumber: 7 }),
+    ];
+
+    const csv = buildCsvReport(results, importedRows);
+    const dataRow = csv.split('\n')[1];
+
+    expect(dataRow).toContain('a.csv, b.csv');
+    expect(dataRow).toContain('10, 7');
+  });
+
+  it('in modalità non raggruppata, ogni riga ha la propria origine', () => {
+    const grouped = uniqueResultsByCup([
+      validateCup('A12B23000000001', 1, { currentYear: 2026 }),
+      validateCup('A12B23000000001', 2, { currentYear: 2026 }),
+    ]);
+    const importedRows = [
+      makeImportedRow({ row: 1, fileOrigine: 'a.csv', colonnaOrigine: 'CUP', sourceRowNumber: 10 }),
+      makeImportedRow({ row: 2, fileOrigine: 'b.csv', colonnaOrigine: 'CUP', sourceRowNumber: 7 }),
+    ];
+
+    const csv = buildCsvReport(displayResults(grouped, false), importedRows);
+    const rows = csv.split('\n').slice(1);
+
+    expect(rows[0]).toContain('a.csv;;10;CUP');
+    expect(rows[1]).toContain('b.csv;;7;CUP');
+  });
+
+  it('lascia le colonne origine vuote se il batch row non è in importedRows', () => {
+    const result = validateCup('A12B23000000001', 99, { currentYear: 2026 });
+    const importedRows = [makeImportedRow({ row: 1 })];
+
+    const csv = buildCsvReport([result], importedRows);
+    const dataRow = csv.split('\n')[1];
+    // file_origine, scheda_origine, riga_origine, colonna_origine tutti vuoti
+    expect(dataRow).toMatch(/;;;;$/);
   });
 
   it('csvCell renders null value as empty string in the CSV', () => {

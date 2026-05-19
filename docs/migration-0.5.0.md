@@ -290,7 +290,7 @@ Estrarre responsabilità da `Validator.svelte`:
 - chiamata a `validateRows`;
 - export e filtri.
 
-#### D2.5 Risultati ed export
+#### ✅ D2.5 Risultati ed export
 
 Quando il batch deriva da file multipli:
 

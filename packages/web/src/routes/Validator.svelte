@@ -330,7 +330,7 @@
   }
 
   function handleExport() {
-    const blob = new Blob([buildCsvReport(displayResults(results, groupSameCups))], {
+    const blob = new Blob([buildCsvReport(displayResults(results, groupSameCups), importedRows)], {
       type: 'text/csv;charset=utf-8',
     });
     const url = URL.createObjectURL(blob);

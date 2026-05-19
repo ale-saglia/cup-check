@@ -1,4 +1,5 @@
 import type { Rule, Warning, UniqueResult } from '../types.js';
+import type { ImportedCupRow } from './import-plan.js';
 import { OUTCOMES, RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
 
@@ -42,24 +43,54 @@ export function opencupUrlForResult(result: Pick<UniqueResult, 'normalizedValue'
   return opencupUrl(result.normalizedValue);
 }
 
-export function buildCsvReport(results: UniqueResult[]): string {
-  const headers = ['righe_originali', 'cup_normalizzato', 'esito', 'dettaglio', 'link_opencup'];
+export function buildCsvReport(results: UniqueResult[], importedRows: ImportedCupRow[] = []): string {
+  const hasOrigin = importedRows.length > 0;
+  const headers = [
+    'righe_originali',
+    'cup_normalizzato',
+    'esito',
+    'dettaglio',
+    'link_opencup',
+    ...(hasOrigin ? ['file_origine', 'scheda_origine', 'riga_origine', 'colonna_origine'] : []),
+  ];
+
+  const rowIndex = hasOrigin ? new Map(importedRows.map((r) => [r.row, r])) : null;
+
   const lines = [
     headers.join(';'),
-    ...results.map((result) =>
-      [
+    ...results.map((result) => {
+      const cells = [
         resultRowsLabel(result),
         result.normalizedValue,
         result.outcome,
         resultDetail(result),
         opencupUrlForResult(result),
-      ]
-        .map(csvCell)
-        .join(';'),
-    ),
+      ];
+
+      if (rowIndex) {
+        const inputRows = (result.inputRows ?? [result.inputRow]).filter((r): r is number => r !== null);
+        const origins = inputRows.flatMap((row) => {
+          const found = rowIndex.get(row);
+          return found ? [found] : [];
+        });
+        cells.push(
+          uniqueJoin(origins.map((r) => r.fileOrigine)),
+          uniqueJoin(origins.map((r) => r.schedaOrigine ?? '')),
+          origins.map((r) => String(r.sourceRowNumber)).join(', '),
+          uniqueJoin(origins.map((r) => r.colonnaOrigine)),
+        );
+      }
+
+      return cells.map(csvCell).join(';');
+    }),
   ];
 
   return `\ufeff${lines.join('\n')}`;
+}
+
+function uniqueJoin(values: string[]): string {
+  const unique = [...new Set(values.filter((v) => v.trim() !== ''))];
+  return unique.join(', ');
 }
 
 function csvCell(value: unknown): string {
