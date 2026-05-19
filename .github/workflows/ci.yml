@@ -47,6 +47,7 @@ jobs:
       - run: npm run build
         env:
           CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
+      - run: npm run test:lighthouse
 
   python-matrix:
     name: Prepare Python matrix

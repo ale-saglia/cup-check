@@ -22,6 +22,7 @@ function buildMenuItems() {
 export function mountLayout(root = document.querySelector('#app')) {
   root.innerHTML = `
     <div class="app-shell">
+      <a class="skip-link" href="#main-content">Salta al contenuto</a>
       <nav class="site-nav" aria-label="Navigazione principale">
         <div class="nav-inner">
           <div class="nav-left">
@@ -39,7 +40,7 @@ export function mountLayout(root = document.querySelector('#app')) {
           </div>
         </div>
       </nav>
-      <main class="view-slot shell" aria-label="Area principale"></main>
+      <main id="main-content" class="view-slot shell" aria-label="Area principale" tabindex="-1"></main>
       <footer class="site-footer">
         <span>Sviluppato da <a href="https://ale-saglia.com" rel="noreferrer">Alessandro Saglia</a></span>
         <span><a href="https://opencup.gov.it" target="_blank" rel="noopener noreferrer">OpenCUP</a> · <a href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer">Codice sorgente e licenza</a></span>

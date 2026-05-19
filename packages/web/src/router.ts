@@ -25,10 +25,20 @@ function dispatch(): void {
   currentUnmount = route.unmountFn;
   currentPath = basePath;
   route.mountFn();
+  focusMainContent();
 }
 
 window.addEventListener('hashchange', dispatch);
 
 export function start(): void {
   dispatch();
+}
+
+function focusMainContent(): void {
+  const schedule = window.requestAnimationFrame ??
+    ((callback: FrameRequestCallback) => window.setTimeout(() => callback(performance.now()), 0));
+  schedule(() => {
+    const main = document.querySelector<HTMLElement>('#main-content');
+    main?.focus({ preventScroll: true });
+  });
 }

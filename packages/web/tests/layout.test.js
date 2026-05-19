@@ -21,6 +21,15 @@ describe('layout', () => {
     document.body.removeChild(root);
   });
 
+  it('monta skip link e main focusabile per la navigazione da tastiera', () => {
+    const skipLink = root.querySelector('.skip-link');
+    const main = root.querySelector('#main-content');
+
+    expect(skipLink?.textContent).toBe('Salta al contenuto');
+    expect(skipLink?.getAttribute('href')).toBe('#main-content');
+    expect(main?.getAttribute('tabindex')).toBe('-1');
+  });
+
   it('chiude il menu e rimette il focus sul toggle alla pressione di Escape', () => {
     menu.open = true;
     document.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
@@ -40,18 +49,14 @@ describe('layout', () => {
   });
 
   it('sposta il focus alla voce successiva con ArrowDown', () => {
-    const items = [
-      ...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])'),
-    ];
+    const items = [...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
     items[0]?.focus();
     menuList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowDown', bubbles: true }));
-    expect(document.activeElement).toBe(items[(1) % items.length]);
+    expect(document.activeElement).toBe(items[1 % items.length]);
   });
 
   it('sposta il focus alla voce precedente con ArrowUp', () => {
-    const items = [
-      ...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])'),
-    ];
+    const items = [...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
     items[0]?.focus();
     menuList.dispatchEvent(new KeyboardEvent('keydown', { key: 'ArrowUp', bubbles: true }));
     expect(document.activeElement).toBe(items[(items.length - 1) % items.length]);
@@ -70,9 +75,7 @@ describe('layout', () => {
   });
 
   it('ignora keydown con altri tasti sulla lista', () => {
-    const items = [
-      ...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])'),
-    ];
+    const items = [...menuList.querySelectorAll('[role="menuitem"]:not([aria-disabled="true"])')];
     items[0]?.focus();
     const before = document.activeElement;
     menuList.dispatchEvent(new KeyboardEvent('keydown', { key: 'Enter', bubbles: true }));
@@ -81,10 +84,12 @@ describe('layout', () => {
 });
 
 describe('layout: escaping voci menu', () => {
-  it('label e path delle voci vengono escaped prima di essere inseriti nell\'HTML', async () => {
+  it("label e path delle voci vengono escaped prima di essere inseriti nell'HTML", async () => {
     vi.resetModules();
     vi.doMock('../src/tools-registry.js', () => ({
-      tools: [{ id: 'xss', label: '<script>alert(1)</script>', path: '"><img src=x>', enabled: true }],
+      tools: [
+        { id: 'xss', label: '<script>alert(1)</script>', path: '"><img src=x>', enabled: true },
+      ],
     }));
     vi.doMock('../src/version.js', () => ({ PRODUCT_VERSION: 'test' }));
 

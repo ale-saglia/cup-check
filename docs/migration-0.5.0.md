@@ -330,14 +330,14 @@ Acceptance:
 - upload misto CSV + XLSX;
 - verifica finale con `file_origine`/`scheda_origine` visibili nell'export.
 
-### D3. WCAG 2.1 AA
+### ✅ D3. WCAG 2.1 AA
 
 - Live region `aria-live="polite"` in `Validator.svelte` (lookup, Worker progress) e `PdfExtract.svelte` (OCR, coda).
-- Focus management al cambio vista in `router.ts`.
-- Link "Salta al contenuto" in `main.ts` / layout.
-- Contrasto colore AA verificato su tutti i componenti.
-- Etichette ARIA su tabelle, input file, pulsanti icona.
-- Quality gate Lighthouse a11y in CI (soglia ≥ 90).
+- Focus management al cambio vista in `router.ts`, con `#main-content` focusabile dopo il mount della rotta.
+- Link "Salta al contenuto" nel layout applicativo, visibile al focus e collegato all'area principale.
+- Contrasto colore AA verificato tramite gate Lighthouse; baseline locale D3: accessibility `100`.
+- Etichette ARIA mantenute su tabelle, input file, pulsanti azione non testuali e pannelli operativi.
+- Quality gate Lighthouse integrato in CI tramite `npm run test:lighthouse` dopo `npm run build` (soglia ≥ 90).
 
 ### D4. i18n base
 

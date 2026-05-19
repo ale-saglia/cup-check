@@ -63,6 +63,7 @@
 
   let liveAnnouncement = $state('');
   let lastFocusedBeforeWizard: HTMLElement | null = null;
+  let lastBatchAnnouncement = '';
 
   // --- Derived values ---
 
@@ -125,6 +126,15 @@
     if (batchProgress.phase === 'lookup') return 'Verifica presenza nel dataset OpenCUP';
     if (batchProgress.phase === 'complete') return '';
     return batchUsedWorker ? 'Validazione formato CUP in background' : 'Validazione formato CUP';
+  });
+
+  $effect(() => {
+    if (!batchProgress || !batchProgressLabel) return;
+    const message = `${batchProgressLabel}: ${batchProgress.percent}%`;
+    if (message !== lastBatchAnnouncement) {
+      liveAnnouncement = message;
+      lastBatchAnnouncement = message;
+    }
   });
 
   // --- Lifecycle ---
@@ -296,6 +306,7 @@
       });
       batchUsedWorker = batch.usedWorker;
       batchProgress = null;
+      liveAnnouncement = `Verifica completata: ${batch.results.length} risultati`;
       return batch;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
@@ -310,6 +321,7 @@
 
   function handleCancelBatch() {
     batchController?.abort();
+    liveAnnouncement = 'Verifica annullata';
   }
 
   function handleClear() {

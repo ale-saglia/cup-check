@@ -455,6 +455,9 @@ describe('Validator', () => {
     expect(container.querySelector('#summary')?.textContent).toContain('2 CUP unici da 3 righe');
     expect(container.querySelector('#summary')?.textContent).toContain('1 trovati OpenCUP');
     expect(container.querySelector('#summary')?.textContent).toContain('1 invalidi');
+    expect(container.querySelector('[role="status"]')?.textContent).toContain(
+      'Verifica completata',
+    );
     expect(container.querySelectorAll('#results-table tbody tr')).toHaveLength(2);
     expect(container.querySelector('#results-table thead')?.textContent).toContain('Fonte');
     expect(container.querySelector('#results-table thead')?.textContent).not.toContain('Dettaglio');

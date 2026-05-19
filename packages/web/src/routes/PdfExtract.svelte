@@ -17,12 +17,36 @@
   let processing = $state(false);
   let queue: Entry[] = [];
   let generation = $state(0);
+  let liveAnnouncement = $state('');
+  let lastQueueAnnouncement = '';
 
   // ── Derived ────────────────────────────────────────────────────────────────
 
   let hasCups = $derived(entries.some((e) => e.cups.length > 0));
   let hasDone = $derived(entries.some((e) => e.status === 'done' || e.status === 'error'));
   let hasEntries = $derived(entries.length > 0);
+  let queueAnnouncement = $derived.by(() => {
+    if (entries.length === 0) return '';
+    const done = entries.filter((e) => e.status === 'done' || e.status === 'error').length;
+    const active = entries.find((e) => ['parsing', 'ocr'].includes(e.status));
+    if (active?.status === 'ocr') {
+      const progress = active.ocrProgress;
+      if (progress?.ocrLoading) return `Caricamento OCR per ${active.name}`;
+      if (progress && progress.totalPages > 0) {
+        return `OCR ${active.name}: pagina ${progress.page} di ${progress.totalPages}`;
+      }
+      return `OCR in corso per ${active.name}`;
+    }
+    if (active?.status === 'parsing') return `Lettura PDF ${active.name}`;
+    return `Elaborati ${done} di ${entries.length} PDF`;
+  });
+
+  $effect(() => {
+    if (queueAnnouncement && queueAnnouncement !== lastQueueAnnouncement) {
+      liveAnnouncement = queueAnnouncement;
+      lastQueueAnnouncement = queueAnnouncement;
+    }
+  });
 
   // ── Lifecycle ──────────────────────────────────────────────────────────────
 
@@ -53,6 +77,7 @@
     });
     // entries.slice() returns the reactive proxies; mutations via these proxies update the template
     queue.push(...entries.slice(startIdx));
+    liveAnnouncement = `${files.length} PDF aggiunti alla coda`;
     drainQueue();
   }
 
@@ -202,6 +227,7 @@
     entries = [];
     queue.length = 0;
     processing = false;
+    liveAnnouncement = 'Risultati PDF cancellati';
   }
 
   // ── CSV builders ───────────────────────────────────────────────────────────
@@ -338,3 +364,6 @@
     />
   </div>
 {/if}
+
+
+<div class="visually-hidden" role="status" aria-live="polite" aria-atomic="true">{liveAnnouncement}</div>

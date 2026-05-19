@@ -122,6 +122,7 @@ describe('PdfExtract: elaborazione file', () => {
     uploadFiles(container, [makeFile()]);
     // entries.push() is synchronous → DOM update batched but detectable via waitFor
     await waitFor(() => expect(container.querySelector('#pdf-results-area')).not.toBeNull());
+    expect(container.querySelector('[role="status"]')?.textContent).toMatch(/PDF|coda/);
   });
 
   it('input change senza file non aggiunge entry', () => {

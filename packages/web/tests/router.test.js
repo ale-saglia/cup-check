@@ -101,4 +101,26 @@ describe('router module (fresh import per test)', () => {
 
     expect(mountFn).toHaveBeenCalledTimes(1);
   });
+
+  it('porta il focus al contenuto principale dopo il cambio rotta', async () => {
+    const previousRaf = window.requestAnimationFrame;
+    window.requestAnimationFrame = (callback) => {
+      callback(0);
+      return 1;
+    };
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.tabIndex = -1;
+    document.body.appendChild(main);
+
+    const { register, start } = await import('../src/router.js');
+    register('#/', vi.fn());
+    window.location.hash = '#/';
+    start();
+
+    expect(document.activeElement).toBe(main);
+
+    main.remove();
+    window.requestAnimationFrame = previousRaf;
+  });
 });
