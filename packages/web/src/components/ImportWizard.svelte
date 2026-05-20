@@ -29,7 +29,7 @@
     onAnnounce,
   }: Props = $props();
 
-  let panelEl: HTMLElement;
+  let dialogEl: HTMLDialogElement;
   let currentFileIndex = $state(0);
   let loading = $state(false);
   let message = $state('');
@@ -54,7 +54,12 @@
   });
 
   onMount(() => {
-    panelEl?.focus();
+    if (!dialogEl.open && typeof dialogEl.showModal === 'function') {
+      dialogEl.showModal();
+    } else if (!dialogEl.open) {
+      dialogEl.setAttribute('open', '');
+    }
+    dialogEl.focus();
   });
 
   function replaceSource(source: ImportSource) {
@@ -133,14 +138,14 @@
   }
 </script>
 
-<div
+<dialog
   id="import-wizard"
   class="control-panel import-wizard"
-  role="dialog"
   aria-labelledby="import-wizard-title"
+  aria-modal="true"
   tabindex="-1"
-  bind:this={panelEl}
-  onkeydown={(e) => { if (e.key === 'Escape') onCancel(); }}
+  bind:this={dialogEl}
+  oncancel={onCancel}
 >
   <div class="panel-toggle import-wizard-title-bar">
     <h2 id="import-wizard-title">{i18n.t('import.title')}</h2>
@@ -218,4 +223,4 @@
       {/if}
     </p>
   </div>
-</div>
+</dialog>

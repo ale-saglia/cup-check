@@ -547,7 +547,23 @@ textarea {
 }
 
 .import-wizard {
+  position: fixed;
+  inset: 50% auto auto 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  width: min(960px, calc(100vw - 32px));
+  max-height: calc(100vh - 32px);
+  max-height: calc(100dvh - 32px);
+  padding: 0;
+  overflow: auto;
+  background: var(--bg);
+  color: var(--text);
+  box-shadow: 0 18px 50px var(--shadow);
   outline: none;
+}
+
+.import-wizard::backdrop {
+  background: var(--backdrop);
 }
 
 .import-wizard:focus-visible {

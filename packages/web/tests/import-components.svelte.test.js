@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { afterEach, describe, expect, it, vi } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, render } from '@testing-library/svelte';
 import { flushSync } from 'svelte';
 import DropZone from '../src/components/DropZone.svelte';
@@ -396,7 +396,16 @@ describe('ImportSourcePreview', () => {
 });
 
 describe('ImportWizard', () => {
-  afterEach(() => cleanup());
+  beforeEach(() => {
+    HTMLDialogElement.prototype.showModal = vi.fn(function showModal() {
+      this.setAttribute('open', '');
+    });
+  });
+
+  afterEach(() => {
+    cleanup();
+    vi.restoreAllMocks();
+  });
 
   it('renderizza uno stato vuoto senza sorgenti importabili', () => {
     const { container } = render(ImportWizard, {
@@ -606,7 +615,7 @@ describe('ImportWizard', () => {
   });
 
   // D2.6 — accessibilità preparatoria
-  it('ha role=dialog e aria-labelledby sul pannello', () => {
+  it('usa un dialog nativo modale con nome accessibile', () => {
     const { container } = render(ImportWizard, {
       props: {
         sources: [source()],
@@ -617,11 +626,13 @@ describe('ImportWizard', () => {
     });
 
     const panel = container.querySelector('#import-wizard');
-    expect(panel?.getAttribute('role')).toBe('dialog');
+    expect(panel?.tagName).toBe('DIALOG');
     expect(panel?.getAttribute('aria-labelledby')).toBe('import-wizard-title');
+    expect(panel?.getAttribute('aria-modal')).toBe('true');
+    expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
   });
 
-  it('chiama onCancel premendo Escape', () => {
+  it('chiama onCancel quando il dialog riceve cancel', () => {
     const onCancel = vi.fn();
     const { container } = render(ImportWizard, {
       props: {
@@ -633,7 +644,7 @@ describe('ImportWizard', () => {
     });
 
     const panel = container.querySelector('#import-wizard');
-    panel.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+    panel.dispatchEvent(new Event('cancel', { bubbles: true, cancelable: true }));
     expect(onCancel).toHaveBeenCalledOnce();
   });
 
