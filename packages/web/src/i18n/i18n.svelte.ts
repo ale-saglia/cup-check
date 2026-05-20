@@ -4,6 +4,7 @@ import { isLocalizedError } from '../lib/core/errors.js';
 export type Locale = 'it' | 'en';
 
 type Messages = Record<string, string>;
+type MessageLoader = (locale: Locale) => Promise<Messages>;
 
 const STORAGE_KEY = 'cup-check:language';
 const FALLBACK_LOCALE: Locale = 'it';
@@ -12,7 +13,8 @@ const fallbackMessages = itMessages as Messages;
 const initial = initialLocale();
 let locale = $state<Locale>(FALLBACK_LOCALE);
 let messages = $state<Messages>(fallbackMessages);
-let loadingLocale: Locale | null = null;
+let loadingLocale = $state<Locale | null>(null);
+let messageLoader: MessageLoader = loadMessages;
 
 void setLocale(initial);
 
@@ -27,6 +29,9 @@ export const i18n = {
   },
   get messages() {
     return messages;
+  },
+  get loadingLocale() {
+    return loadingLocale;
   },
   t,
   errorMessage,
@@ -46,16 +51,20 @@ export function errorMessage(error: unknown): string {
 
 export async function setLocale(nextLocale: Locale): Promise<void> {
   if (!isLocale(nextLocale)) return;
-  locale = nextLocale;
-  persistLocale(nextLocale);
   loadingLocale = nextLocale;
-  const nextMessages = await loadMessages(nextLocale);
-  if (loadingLocale === nextLocale) {
-    messages = nextMessages;
-    if (typeof document !== 'undefined') {
-      document.documentElement.lang = nextLocale;
-      window.dispatchEvent(new CustomEvent('cup-check:languagechange', { detail: { locale: nextLocale } }));
+  try {
+    const nextMessages = await messageLoader(nextLocale);
+    if (loadingLocale === nextLocale) {
+      messages = nextMessages;
+      locale = nextLocale;
+      persistLocale(nextLocale);
+      if (typeof document !== 'undefined') {
+        document.documentElement.lang = nextLocale;
+        window.dispatchEvent(new CustomEvent('cup-check:languagechange', { detail: { locale: nextLocale } }));
+      }
     }
+  } finally {
+    if (loadingLocale === nextLocale) loadingLocale = null;
   }
 }
 
@@ -78,4 +87,11 @@ async function loadMessages(nextLocale: Locale): Promise<Messages> {
   if (nextLocale === 'it') return fallbackMessages;
   const module = await import('./en.json');
   return module.default as Messages;
+}
+
+export function setMessageLoaderForTest(loader: MessageLoader): () => void {
+  messageLoader = loader;
+  return () => {
+    messageLoader = loadMessages;
+  };
 }
