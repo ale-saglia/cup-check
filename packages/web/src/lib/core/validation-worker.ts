@@ -1,4 +1,5 @@
 import type { Dataset, UniqueResult } from '../types.js';
+import { LocalizedError } from './errors.js';
 import { applyDatasetLookup, uniqueResultsByCup } from './results.js';
 import { OUTCOMES, validateCup } from './validator.js';
 
@@ -40,7 +41,7 @@ type WorkerMessage =
   | { type: 'lookup-request'; requestId: number; cups: string[] }
   | { type: 'result-chunk'; results: UniqueResult[] }
   | { type: 'complete'; durationMs: number }
-  | { type: 'error'; message: string };
+  | { type: 'error'; message?: string; messageKey?: string };
 
 export async function validateRows(
   rows: BatchInputRow[],
@@ -124,7 +125,7 @@ function validateRowsWithWorker(
     options.signal?.addEventListener('abort', abort, { once: true });
 
     worker.onerror = (event) => {
-      finishReject(new Error(event.message || 'Errore nel worker di validazione'));
+      finishReject(event.message ? new Error(event.message) : new LocalizedError('error.validationWorkerFailed'));
     };
 
     worker.onmessage = (event: MessageEvent<WorkerMessage>) => {
@@ -153,7 +154,7 @@ function validateRowsWithWorker(
       }
 
       if (message.type === 'error') {
-        finishReject(new Error(message.message));
+        finishReject(message.messageKey ? new LocalizedError(message.messageKey) : new Error(message.message));
         return;
       }
 
@@ -201,5 +202,5 @@ function throwIfAborted(signal?: AbortSignal) {
 }
 
 function abortError(): DOMException {
-  return new DOMException('Operazione annullata', 'AbortError');
+  return new DOMException('error.operationCancelled', 'AbortError');
 }

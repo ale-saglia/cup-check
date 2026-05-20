@@ -1,4 +1,5 @@
 import itMessages from './it.json';
+import { isLocalizedError } from '../lib/core/errors.js';
 
 export type Locale = 'it' | 'en';
 
@@ -28,12 +29,19 @@ export const i18n = {
     return messages;
   },
   t,
+  errorMessage,
   setLocale,
 };
 
 export function t(key: string, values: Record<string, string | number> = {}): string {
   const template = messages[key] ?? fallbackMessages[key] ?? key;
   return template.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name] ?? ''));
+}
+
+export function errorMessage(error: unknown): string {
+  if (isLocalizedError(error)) return t(error.key, error.values);
+  if (error instanceof Error) return error.message;
+  return t('error.unknown');
 }
 
 export async function setLocale(nextLocale: Locale): Promise<void> {

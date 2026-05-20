@@ -44,7 +44,9 @@ ctx.onmessage = (event) => {
     ctx.postMessage({
       type: 'error',
       /* v8 ignore next -- Promise rejections from this worker are Error instances in practice. */
-      message: error instanceof Error ? error.message : 'Errore nel worker di validazione',
+      ...(error instanceof Error
+        ? { message: error.message }
+        : { messageKey: 'error.validationWorkerFailed' }),
     });
   });
 };

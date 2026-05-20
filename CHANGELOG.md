@@ -14,7 +14,7 @@
 
 - Completa l'accessibilità WCAG D3: aggiunge skip link, focus management tra viste e live region per i processi asincroni. Il gate Lighthouse è integrato in CI per mantenere il punteggio nel tempo.
 - Aggiunge accessibilità preparatoria al pannello di importazione multi-file (D2.6): attributi ARIA su DropZone, toggle sorgenti e wizard.
-- Aggiunge i18n base con selettore lingua persistito: le stringhe principali della UI sono disponibili in italiano e inglese; le chiavi i18n coprono anche i tool PDF e XML.
+- Aggiunge i18n base con selettore lingua persistito: le stringhe principali della UI sono disponibili in italiano e inglese; le chiavi i18n coprono anche i tool PDF e XML, gli errori parser/worker e le etichette dinamiche dell'importazione.
 
 - Aggiunge `markdownlint` a pre-commit e `svelte-check` a Makefile, CI e pre-commit.
 - Aggiunge gate coverage al pre-push hook e verifica coverage a `check` e `release-check`.

@@ -179,7 +179,10 @@ describe('main', () => {
     document.querySelector('#file-input').dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
-    expect(parseFile).toHaveBeenCalledWith(file);
+    expect(parseFile).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({ columnLabel: expect.any(Function) }),
+    );
     expect(document.querySelector('#import-wizard')).toBeTruthy();
 
     document.querySelector('[id^="sheet-select-"]').value = 'Foglio 2';
@@ -187,7 +190,10 @@ describe('main', () => {
       .querySelector('[id^="sheet-select-"]')
       .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
-    expect(parseFile).toHaveBeenCalledWith(file, { sheetName: 'Foglio 2' });
+    expect(parseFile).toHaveBeenCalledWith(
+      file,
+      expect.objectContaining({ sheetName: 'Foglio 2', columnLabel: expect.any(Function) }),
+    );
 
     document.querySelector('[id^="column-select-"]').value = '1';
     document

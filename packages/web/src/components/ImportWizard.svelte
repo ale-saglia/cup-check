@@ -13,6 +13,10 @@
   } from '../lib/core/import-plan.js';
   import ImportSourcePreview from './ImportSourcePreview.svelte';
 
+  const importPlanI18nOptions = () => ({
+    columnLabel: (index: number) => i18n.t('source.column', { number: index + 1 }),
+  });
+
   interface Props {
     sources: ImportSource[];
     onSourcesChange: (sources: ImportSource[]) => void;
@@ -37,7 +41,7 @@
   let fileGroups = $derived.by(() => groupSourcesByFile(sources));
   let currentFileGroup = $derived(fileGroups[currentFileIndex] ?? null);
   let baseSource = $derived(currentFileGroup?.sources[0] ?? null);
-  let importedCount = $derived(buildImportedCupRows(sources).length);
+  let importedCount = $derived(buildImportedCupRows(sources, importPlanI18nOptions()).length);
   let includedCount = $derived(sources.filter((source) => source.included).length);
   let hasMultipleFiles = $derived(fileGroups.length > 1);
   let importCountLabel = $derived(
@@ -80,9 +84,9 @@
     loading = true;
     message = '';
     try {
-      replaceSource(await updateSourceSheet(source, sheetName));
+      replaceSource(await updateSourceSheet(source, sheetName, importPlanI18nOptions()));
     } catch (error) {
-      message = (error as Error).message;
+      message = i18n.errorMessage(error);
     } finally {
       loading = false;
     }
@@ -94,11 +98,11 @@
     loading = true;
     message = '';
     try {
-      const source = await createSourceFromSheet(baseSource, sheetName, sources.length);
+      const source = await createSourceFromSheet(baseSource, sheetName, sources.length, importPlanI18nOptions());
       onSourcesChange([...sources, source]);
       message = '';
     } catch (error) {
-      message = (error as Error).message;
+      message = i18n.errorMessage(error);
     } finally {
       loading = false;
     }
@@ -131,6 +135,7 @@
     if (importedCount === 0) {
       const rowsWithoutSkip = buildImportedCupRows(
         sources.map((s) => ({ ...s, skipMissingCup: false })),
+        importPlanI18nOptions(),
       ).length;
       message =
         rowsWithoutSkip > 0
@@ -184,7 +189,7 @@
             {source}
             disabled={loading}
             onSheetChange={(sheetName) => handleSheetChange(source, sheetName)}
-            onHeaderChange={(headerPresent) => replaceSource(updateSourceHeader(source, headerPresent))}
+            onHeaderChange={(headerPresent) => replaceSource(updateSourceHeader(source, headerPresent, importPlanI18nOptions()))}
             onColumnChange={(columnIndex) => replaceSource(updateSourceColumn(source, columnIndex))}
             onIncludeChange={(included) => replaceSource(updateSourceIncluded(source, included))}
             onSkipMissingCupChange={(skip) => replaceSource(updateSourceSkipMissingCup(source, skip))}

@@ -1,22 +1,30 @@
 import Papa from 'papaparse';
 import readXlsxFile, { readSheet } from 'read-excel-file/browser';
 import type { ParsedFile, ParsedRow } from '../types.js';
+import { LocalizedError } from './errors.js';
 
 const SUPPORTED_CSV_TYPES = ['text/csv', 'application/vnd.ms-excel'];
 const CSV_DELIMITERS_TO_GUESS = [',', ';', '\t', '|'];
 
-export async function parseFile(file: File, options: { sheetName?: string } = {}): Promise<ParsedFile> {
+export type ColumnLabelFormatter = (index: number) => string;
+
+interface ParseOptions {
+  sheetName?: string;
+  columnLabel?: ColumnLabelFormatter;
+}
+
+export async function parseFile(file: File, options: ParseOptions = {}): Promise<ParsedFile> {
   const extension = file.name.split('.').pop()?.toLowerCase();
 
   if (extension === 'xlsx') {
-    return parseXlsx(file, options.sheetName);
+    return parseXlsx(file, options);
   }
 
   if (extension === 'csv' || SUPPORTED_CSV_TYPES.includes(file.type)) {
-    return parseCsv(file);
+    return parseCsv(file, options.columnLabel);
   }
 
-  throw new Error('Formato non supportato. Carica un file CSV o XLSX.');
+  throw new LocalizedError('error.unsupportedFile');
 }
 
 export function detectCupColumn(headers: string[]): number {
@@ -31,9 +39,13 @@ export function hasHeader(row: string[]): boolean {
   });
 }
 
-export function buildParsedRows(rawRows: string[][], headerPresent: boolean): ParsedFile {
+export function buildParsedRows(
+  rawRows: string[][],
+  headerPresent: boolean,
+  columnLabel: ColumnLabelFormatter = defaultColumnLabel,
+): ParsedFile {
   const firstRow = rawRows[0] ?? [];
-  const headers = headerPresent ? firstRow : firstRow.map((_, index) => `Colonna ${index + 1}`);
+  const headers = headerPresent ? firstRow : firstRow.map((_, index) => columnLabel(index));
   const dataRows = headerPresent ? rawRows.slice(1) : rawRows;
 
   return {
@@ -49,35 +61,42 @@ export function buildParsedRows(rawRows: string[][], headerPresent: boolean): Pa
   };
 }
 
-async function parseCsv(file: File): Promise<ParsedFile> {
+async function parseCsv(file: File, columnLabel?: ColumnLabelFormatter): Promise<ParsedFile> {
   const buffer = await file.arrayBuffer();
   const utf8Text = decodeCsv(buffer, 'utf-8');
   const utf8Rows = await parseCsvText(utf8Text);
 
-  if (!shouldRetryWithWindows1252(file, utf8Text, utf8Rows)) return normalizeRows(utf8Rows);
+  if (!shouldRetryWithWindows1252(file, utf8Text, utf8Rows)) {
+    return normalizeRows(utf8Rows, {}, columnLabel);
+  }
 
   const windows1252Text = decodeCsv(buffer, 'windows-1252');
   const windows1252Rows = await parseCsvText(windows1252Text);
-  return normalizeRows(windows1252Rows);
+  return normalizeRows(windows1252Rows, {}, columnLabel);
 }
 
-async function parseXlsx(file: File, sheetName?: string): Promise<ParsedFile> {
+async function parseXlsx(file: File, options: ParseOptions): Promise<ParsedFile> {
   const sheets = await readXlsxFile(file);
   const sheetNames = sheets.map((s) => s.sheet);
-  const selectedSheetName = sheetName ?? sheetNames[0];
+  const selectedSheetName = options.sheetName ?? sheetNames[0];
   const rows = await readSheet(file, selectedSheetName);
-  return normalizeRows(rows as string[][], { sheetNames, selectedSheetName });
+  return normalizeRows(rows as string[][], { sheetNames, selectedSheetName }, options.columnLabel);
 }
 
 function normalizeRows(
   rawRows: string[][],
   metadata: Partial<Pick<ParsedFile, 'sheetNames' | 'selectedSheetName'>> = {},
+  columnLabel: ColumnLabelFormatter = defaultColumnLabel,
 ): ParsedFile {
   const rows = rawRows.map((row) => row.map((cell) => String(cell ?? '')));
   return {
-    ...buildParsedRows(rows, hasHeader(rows[0] ?? [])),
+    ...buildParsedRows(rows, hasHeader(rows[0] ?? []), columnLabel),
     ...metadata,
   };
+}
+
+function defaultColumnLabel(index: number): string {
+  return `Column ${index + 1}`;
 }
 
 function decodeCsv(buffer: ArrayBuffer, encoding: 'utf-8' | 'windows-1252'): string {

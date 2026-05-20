@@ -53,7 +53,7 @@ describe('buildParsedRows', () => {
       false,
     );
 
-    expect(parsed.headers).toEqual(['Colonna 1', 'Colonna 2']);
+    expect(parsed.headers).toEqual(['Column 1', 'Column 2']);
     expect(parsed.rows.map((row) => row.originalRowNumber)).toEqual([1, 2]);
   });
 
@@ -75,7 +75,7 @@ describe('buildParsedRows', () => {
 
     expect(detected.headerDetectedAutomatically).toBe(true);
     expect(detected.rows[0].originalRowNumber).toBe(2);
-    expect(overridden.headers).toEqual(['Colonna 1', 'Colonna 2']);
+    expect(overridden.headers).toEqual(['Column 1', 'Column 2']);
     expect(overridden.rows[0]).toEqual({ originalRowNumber: 1, cells: ['NON_E_UN_CUP', 'nota'] });
   });
 });
@@ -135,7 +135,7 @@ describe('parseFile', () => {
     const parsed = await parseFile(file);
 
     expect(parsed.headerPresent).toBe(false);
-    expect(parsed.headers).toEqual(['Colonna 1']);
+    expect(parsed.headers).toEqual(['Column 1']);
     expect(parsed.rows.map((row) => row.originalRowNumber)).toEqual([1, 2]);
   });
 
@@ -230,7 +230,7 @@ describe('parseFile', () => {
     const parsed = await parseFile(file);
 
     expect(parsed.headerPresent).toBe(false);
-    expect(parsed.headers).toEqual(['Colonna 1']);
+    expect(parsed.headers).toEqual(['Column 1']);
     expect(parsed.rows.map((row) => row.originalRowNumber)).toEqual([1, 2]);
   });
 
@@ -280,9 +280,10 @@ describe('parseFile', () => {
   it('rejects unsupported file formats', async () => {
     const file = new File(['{}'], 'cups.json', { type: 'application/json' });
 
-    await expect(parseFile(file)).rejects.toThrow(
-      'Formato non supportato. Carica un file CSV o XLSX.',
-    );
+    await expect(parseFile(file)).rejects.toMatchObject({
+      name: 'LocalizedError',
+      key: 'error.unsupportedFile',
+    });
   });
 
   it('parses an empty CSV file without throwing', async () => {

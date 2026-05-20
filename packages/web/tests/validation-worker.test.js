@@ -302,13 +302,16 @@ describe('validateRows', () => {
     ).rejects.toThrow('boom');
   });
 
-  it('propaga errori runtime del worker con messaggio di fallback', async () => {
+  it('propaga errori runtime del worker con chiave di fallback traducibile', async () => {
     await expect(
       validateRows(makeRows(['G17H03000130001']), {
         forceWorker: true,
         workerFactory: () => new ErrorEventWorker(),
       }),
-    ).rejects.toThrow('Errore nel worker di validazione');
+    ).rejects.toMatchObject({
+      name: 'LocalizedError',
+      key: 'error.validationWorkerFailed',
+    });
   });
 });
 

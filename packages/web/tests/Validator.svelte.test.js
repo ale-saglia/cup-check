@@ -70,7 +70,10 @@ describe('Validator', () => {
     flushSync();
 
     expect(consumeTransfer).toHaveBeenCalledWith('testid123');
-    expect(parseFile).toHaveBeenCalledWith(pendingFile);
+    expect(parseFile).toHaveBeenCalledWith(
+      pendingFile,
+      expect.objectContaining({ columnLabel: expect.any(Function) }),
+    );
 
     expect(container.querySelector('#import-wizard')).toBeTruthy();
     expect(container.querySelector('.import-source-nav')).toBeNull();
@@ -297,7 +300,12 @@ describe('Validator', () => {
     Array.from(container.querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Carica colonna da scheda'))
       ?.click();
-    await waitFor(() => expect(parseFile).toHaveBeenCalledWith(file, { sheetName: 'Scheda B' }));
+    await waitFor(() =>
+      expect(parseFile).toHaveBeenCalledWith(
+        file,
+        expect.objectContaining({ sheetName: 'Scheda B', columnLabel: expect.any(Function) }),
+      ),
+    );
     await waitFor(() =>
       expect(container.querySelector('.import-wizard-count')?.textContent).toContain('2 righe CUP'),
     );

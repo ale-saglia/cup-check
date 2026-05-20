@@ -22,6 +22,9 @@
   import type { Dataset, UniqueResult, Outcome, DownloadProgress } from '../lib/types.js';
 
   const MAX_RENDERED_RESULT_ROWS = 500;
+  const importPlanI18nOptions = () => ({
+    columnLabel: (index: number) => i18n.t('source.column', { number: index + 1 }),
+  });
 
   // Core state (replaces state.js)
   let dataset = $state<Dataset | null>(null);
@@ -68,7 +71,12 @@
 
   // --- Derived values ---
 
-  let fileToggleMeta = $derived(displayFileName ?? i18n.t('validator.noFile'));
+  let fileToggleMeta = $derived(
+    displayFileName ??
+      (importSources.length > 1
+        ? i18n.t('validator.sourcesCount', { count: importSources.length })
+        : i18n.t('validator.noFile')),
+  );
   let textToggleMeta = $derived(
     textCupCount !== null ? i18n.t('validator.textCount', { count: textCupCount }) : i18n.t('validator.noText'),
   );
@@ -197,11 +205,11 @@
     if (files.length === 0) return;
     lastFocusedBeforeWizard = document.activeElement as HTMLElement;
     try {
-      const sources = await createImportSources(files);
+      const sources = await createImportSources(files, importPlanI18nOptions());
       importSources = sources;
       importedRows = [];
       fileName = sources.length === 1 ? sources[0].fileName.replace(/\.[^.]+$/, '') : 'cup-import';
-      displayFileName = sources.length === 1 ? sources[0].fileName : `${sources.length} sorgenti`;
+      displayFileName = sources.length === 1 ? sources[0].fileName : null;
       filePanelCollapsed = true;
       textPanelCollapsed = true;
       importWizardVisible = true;
@@ -209,12 +217,12 @@
       previewPanelCollapsed = false;
       resultsPanelVisible = false;
     } catch (error) {
-      alert((error as Error).message);
+      alert(i18n.errorMessage(error));
     }
   }
 
   async function handleImportConfirm(sources: ImportSource[]) {
-    const nextImportedRows = buildImportedCupRows(sources);
+    const nextImportedRows = buildImportedCupRows(sources, importPlanI18nOptions());
     importSources = sources;
     importedRows = nextImportedRows;
     importWizardVisible = false;
@@ -312,7 +320,7 @@
       return batch;
     } catch (error) {
       if ((error as Error).name !== 'AbortError') {
-        alert((error as Error).message);
+        alert(i18n.errorMessage(error));
       }
       return null;
     } finally {

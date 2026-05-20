@@ -269,13 +269,16 @@ describe('import-plan', () => {
     expect(updated.parsed.selectedSheetName).toBe('Dati');
   });
 
-  it('usa Colonna N come etichetta quando la intestazione della colonna e vuota', async () => {
+  it('usa una formatter traducibile quando la intestazione della colonna e vuota', async () => {
     const file = new File([',Note\nG17H03000130001,ok'], 'no-header.csv', { type: 'text/csv' });
     const [source] = await createImportSources([file]);
     source.selectedColumnIndexes = [0];
 
-    const rows = buildImportedCupRows([source]);
+    const rows = buildImportedCupRows([source], {
+      columnLabel: (index) => `Colonna ${index + 1}`,
+    });
     expect(rows[0].colonnaOrigine).toBe('Colonna 1');
+    expect(buildImportedCupRows([source])[0].colonnaOrigine).toBe('Column 1');
   });
 
   it('esclude e include una sorgente tramite updateSourceIncluded', async () => {

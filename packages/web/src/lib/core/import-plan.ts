@@ -1,6 +1,6 @@
 import type { ParsedFile } from '../types.js';
 import type { BatchInputRow } from './validation-worker.js';
-import { buildParsedRows, parseFile } from './parser.js';
+import { buildParsedRows, parseFile, type ColumnLabelFormatter } from './parser.js';
 
 export interface ImportSource {
   id: string;
@@ -23,10 +23,17 @@ export interface ImportedCupRow {
   sourceRowNumber: number;
 }
 
-export async function createImportSources(files: File[]): Promise<ImportSource[]> {
+interface ImportPlanOptions {
+  columnLabel?: ColumnLabelFormatter;
+}
+
+export async function createImportSources(
+  files: File[],
+  options: ImportPlanOptions = {},
+): Promise<ImportSource[]> {
   const sources = await Promise.all(
     files.map(async (file, index) => {
-      const parsed = await parseFile(file);
+      const parsed = await parseFile(file, { columnLabel: options.columnLabel });
       return createImportSource(file, parsed, index);
     }),
   );
@@ -37,10 +44,11 @@ export async function createImportSources(files: File[]): Promise<ImportSource[]
 export async function updateSourceSheet(
   source: ImportSource,
   sheetName: string,
+  options: ImportPlanOptions = {},
 ): Promise<ImportSource> {
   if (!source.parsed.sheetNames?.includes(sheetName)) return source;
 
-  const parsed = await parseFile(source.file, { sheetName });
+  const parsed = await parseFile(source.file, { sheetName, columnLabel: options.columnLabel });
   return {
     ...source,
     id: source.id,
@@ -56,15 +64,20 @@ export async function createSourceFromSheet(
   source: ImportSource,
   sheetName: string,
   index: number,
+  options: ImportPlanOptions = {},
 ): Promise<ImportSource> {
   if (!source.parsed.sheetNames?.includes(sheetName)) return source;
 
-  const parsed = await parseFile(source.file, { sheetName });
+  const parsed = await parseFile(source.file, { sheetName, columnLabel: options.columnLabel });
   return createImportSource(source.file, parsed, index);
 }
 
-export function updateSourceHeader(source: ImportSource, headerPresent: boolean): ImportSource {
-  const parsed = buildParsedRows(source.parsed.rawRows, headerPresent) as ParsedFile;
+export function updateSourceHeader(
+  source: ImportSource,
+  headerPresent: boolean,
+  options: ImportPlanOptions = {},
+): ImportSource {
+  const parsed = buildParsedRows(source.parsed.rawRows, headerPresent, options.columnLabel) as ParsedFile;
   return {
     ...source,
     parsed: {
@@ -111,7 +124,10 @@ export function updateSourceSkipMissingCup(
   };
 }
 
-export function buildImportedCupRows(sources: ImportSource[]): ImportedCupRow[] {
+export function buildImportedCupRows(
+  sources: ImportSource[],
+  options: ImportPlanOptions = {},
+): ImportedCupRow[] {
   const importedRows: ImportedCupRow[] = [];
   const importedSourceColumns = new Set<string>();
   const fileIds = new Map<File, number>();
@@ -133,7 +149,7 @@ export function buildImportedCupRows(sources: ImportSource[]): ImportedCupRow[] 
           row: importedRows.length + 1,
           fileOrigine: source.fileName,
           ...(source.sheetName ? { schedaOrigine: source.sheetName } : {}),
-          colonnaOrigine: columnLabel(source.parsed, columnIndex),
+          colonnaOrigine: columnLabel(source.parsed, columnIndex, options.columnLabel),
           sourceRowNumber: row.originalRowNumber,
         });
       }
@@ -183,7 +199,11 @@ function sourceId(fileName: string, sheetName: string | undefined, index: number
   return `${index}:${fileName}${suffix}`;
 }
 
-function columnLabel(parsed: ParsedFile, columnIndex: number): string {
+function columnLabel(
+  parsed: ParsedFile,
+  columnIndex: number,
+  formatter: ColumnLabelFormatter = (index) => `Column ${index + 1}`,
+): string {
   const header = parsed.headers[columnIndex];
-  return header && header.trim() ? header : `Colonna ${columnIndex + 1}`;
+  return header && header.trim() ? header : formatter(columnIndex);
 }

@@ -46,6 +46,24 @@ describe('i18n', () => {
     expect(i18n.t('validator.completed', { count: 3 })).toBe('Verifica completata: 3 risultati');
   });
 
+  it('traduce gli errori localizzabili al boundary UI', async () => {
+    const { LocalizedError } = await import('../src/lib/core/errors.js');
+    const { i18n } = await import('../src/i18n/i18n.svelte.js');
+
+    await i18n.setLocale('en');
+
+    expect(i18n.errorMessage(new LocalizedError('error.unsupportedFile'))).toBe(
+      'Unsupported format. Load a CSV or XLSX file.',
+    );
+  });
+
+  it('gestisce errori non localizzabili e valori sconosciuti', async () => {
+    const { i18n } = await import('../src/i18n/i18n.svelte.js');
+
+    expect(i18n.errorMessage(new Error('boom'))).toBe('boom');
+    expect(i18n.errorMessage(null)).toBe('Errore sconosciuto');
+  });
+
   it('lo switcher cambia lingua dal select nativo', async () => {
     render(LanguageSwitcher);
     const select = screen.getByLabelText('Lingua');
