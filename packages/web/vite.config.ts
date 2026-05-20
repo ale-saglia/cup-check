@@ -119,7 +119,7 @@ function polyfillsPlugin() {
   return {
     name: 'cup-check-polyfills',
     transformIndexHtml() {
-      return [{ tag: 'script', injectTo: 'head-prepend', children: buildPolyfillsScript() }];
+      return [{ tag: 'script', injectTo: 'head', children: buildPolyfillsScript() }];
     },
   };
 }
