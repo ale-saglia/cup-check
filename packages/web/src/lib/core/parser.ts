@@ -3,6 +3,7 @@ import readXlsxFile, { readSheet } from 'read-excel-file/browser';
 import type { ParsedFile, ParsedRow } from '../types.js';
 
 const SUPPORTED_CSV_TYPES = ['text/csv', 'application/vnd.ms-excel'];
+const CSV_DELIMITERS_TO_GUESS = [',', ';', '\t', '|'];
 
 export async function parseFile(file: File, options: { sheetName?: string } = {}): Promise<ParsedFile> {
   const extension = file.name.split('.').pop()?.toLowerCase();
@@ -49,16 +50,15 @@ export function buildParsedRows(rawRows: string[][], headerPresent: boolean): Pa
 }
 
 async function parseCsv(file: File): Promise<ParsedFile> {
-  const text = await file.text();
+  const buffer = await file.arrayBuffer();
+  const utf8Text = decodeCsv(buffer, 'utf-8');
+  const utf8Rows = await parseCsvText(utf8Text);
 
-  return new Promise((resolve, reject) => {
-    Papa.parse<string[]>(text, {
-      // Preserve empty rows so row numbers in validation results match the original file.
-      skipEmptyLines: false,
-      complete: (result) => resolve(normalizeRows(result.data)),
-      error: reject,
-    });
-  });
+  if (!shouldRetryWithWindows1252(file, utf8Text, utf8Rows)) return normalizeRows(utf8Rows);
+
+  const windows1252Text = decodeCsv(buffer, 'windows-1252');
+  const windows1252Rows = await parseCsvText(windows1252Text);
+  return normalizeRows(windows1252Rows);
 }
 
 async function parseXlsx(file: File, sheetName?: string): Promise<ParsedFile> {
@@ -78,4 +78,34 @@ function normalizeRows(
     ...buildParsedRows(rows, hasHeader(rows[0] ?? [])),
     ...metadata,
   };
+}
+
+function decodeCsv(buffer: ArrayBuffer, encoding: 'utf-8' | 'windows-1252'): string {
+  return new TextDecoder(encoding, { fatal: false }).decode(buffer).replace(/^\uFEFF/, '');
+}
+
+function parseCsvText(text: string): Promise<string[][]> {
+  return new Promise((resolve, reject) => {
+    Papa.parse<string[]>(text, {
+      delimiter: '',
+      delimitersToGuess: CSV_DELIMITERS_TO_GUESS,
+      // Preserve empty rows so row numbers in validation results match the original file.
+      skipEmptyLines: false,
+      complete: (result) => resolve(result.data),
+      error: reject,
+    });
+  });
+}
+
+function shouldRetryWithWindows1252(file: File, text: string, rows: string[][]): boolean {
+  return hasReplacementCharacterInPreview(text) || (file.size > 1024 && parsesAsSingleColumn(rows));
+}
+
+function hasReplacementCharacterInPreview(text: string): boolean {
+  return text.split(/\r\n|\n|\r/, 5).some((line) => line.includes('\uFFFD'));
+}
+
+function parsesAsSingleColumn(rows: string[][]): boolean {
+  const meaningfulRows = rows.filter((row) => row.some((cell) => String(cell ?? '').trim() !== ''));
+  return meaningfulRows.length > 0 && meaningfulRows.every((row) => row.length <= 1);
 }

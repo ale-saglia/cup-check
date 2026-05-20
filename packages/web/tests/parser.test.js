@@ -91,6 +91,42 @@ describe('parseFile', () => {
     expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: ['G17H03000130001', 'ok'] }]);
   });
 
+  it('strips an explicit UTF-8 BOM from CSV headers', async () => {
+    const file = new File(['\uFEFFCUP,note\nG17H03000130001,ok'], 'cups.csv', { type: 'text/csv' });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headers).toEqual(['CUP', 'note']);
+    expect(parsed.suggestedColumnIndex).toBe(0);
+  });
+
+  it('retries CSV parsing with Windows-1252 when UTF-8 replacement characters appear', async () => {
+    const file = new File(
+      [windows1252Bytes('attività;Codice CUP;note\nRendicontazione;G17H03000130001;ok')],
+      'legacy.csv',
+      { type: 'text/csv' },
+    );
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headers).toEqual(['attività', 'Codice CUP', 'note']);
+    expect(parsed.suggestedColumnIndex).toBe(1);
+    expect(parsed.rows).toEqual([
+      { originalRowNumber: 2, cells: ['Rendicontazione', 'G17H03000130001', 'ok'] },
+    ]);
+  });
+
+  it('retries large single-column CSV files without changing parsed data', async () => {
+    const longNote = 'nota '.repeat(260);
+    const file = new File([`${longNote}\n${longNote}`], 'single-column.csv', { type: 'text/csv' });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headerPresent).toBe(true);
+    expect(parsed.headers).toEqual([longNote]);
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: [longNote] }]);
+  });
+
   it('parses CSV without header', async () => {
     const file = new File(['G17H03000130001\nA58C15000390001'], 'cups.csv', {
       type: 'text/csv',
@@ -351,4 +387,15 @@ function escapeXml(value) {
     .replaceAll('<', '&lt;')
     .replaceAll('>', '&gt;')
     .replaceAll('"', '&quot;');
+}
+
+function windows1252Bytes(value) {
+  return new Uint8Array(
+    Array.from(value, (char) => {
+      if (char === 'à') return 0xe0;
+      const code = char.charCodeAt(0);
+      if (code > 0x7f) throw new Error('missing Windows-1252 test mapping for ' + char);
+      return code;
+    }),
+  );
 }
