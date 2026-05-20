@@ -39,14 +39,21 @@
     onSaveEdit(entryId, cupId, (e.target as HTMLInputElement).value);
   }
 
-  // Re-focus the active editing input after each render.
+  // Focus the editing input only when a new cup enters editing mode, not on every entries mutation.
   let tbodyEl: HTMLTableSectionElement;
+  let lastActivatedId: string | null = null;
   $effect(() => {
     void entries;
     const active = tbodyEl?.querySelector<HTMLInputElement>('input[data-editing]');
     if (active) {
-      active.focus();
-      if (active.value) active.select();
+      const id = active.dataset.cupId ?? null;
+      if (id !== lastActivatedId) {
+        lastActivatedId = id;
+        active.focus();
+        if (active.value) active.select();
+      }
+    } else {
+      lastActivatedId = null;
     }
   });
 </script>
@@ -158,6 +165,7 @@
           value={cup.value}
           maxlength="15"
           data-editing
+          data-cup-id={cup.id}
           aria-label={i18n.t('pdf.cupValue')}
           onkeydown={(e) => handleInputKeydown(e, entry.id, cup.id)}
           onblur={(e) => handleInputBlur(e, entry.id, cup.id)}
