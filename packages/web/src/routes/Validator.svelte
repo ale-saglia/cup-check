@@ -307,7 +307,7 @@
     };
 
     try {
-      const loadedDataset = dataset ?? (await datasetPromise.catch(() => null));
+      const loadedDataset = dataset ?? (await datasetPromise);
       const batch = await validateRows(rows, {
         dataset: loadedDataset,
         signal: batchController.signal,
