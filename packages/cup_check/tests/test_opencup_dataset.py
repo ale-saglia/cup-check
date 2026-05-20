@@ -245,6 +245,55 @@ def test_download_projects_zip_writes_response_body(tmp_path: Path) -> None:
     assert destination.read_bytes() == b"dataset"
 
 
+def test_download_projects_zip_skips_existing_destination(tmp_path: Path) -> None:
+    destination = tmp_path / "OpendataProgetti.zip"
+    destination.write_bytes(b"cached-dataset")
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        raise AssertionError("download should be skipped")
+
+    result = download_projects_zip(
+        destination,
+        source_url="https://example.test/opencup.zip",
+        skip_if_exists=True,
+        _opener=fake_urlopen,
+    )
+
+    assert result == destination
+    assert destination.read_bytes() == b"cached-dataset"
+
+
+def test_download_projects_zip_overwrites_existing_by_default(tmp_path: Path) -> None:
+    destination = tmp_path / "OpendataProgetti.zip"
+    destination.write_bytes(b"stale-dataset")
+
+    downloaded = []
+
+    class FakeResponse:
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *_):
+            pass
+
+        def read(self, n: int) -> bytes:
+            if not downloaded:
+                downloaded.append(True)
+                return b"fresh-dataset"
+            return b""
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        return FakeResponse()
+
+    download_projects_zip(
+        destination,
+        source_url="https://example.test/opencup.zip",
+        _opener=fake_urlopen,
+    )
+
+    assert destination.read_bytes() == b"fresh-dataset"
+
+
 def test_download_projects_zip_reports_progress_every_interval(tmp_path: Path) -> None:
     class ChunkedResponse:
         def __init__(self):

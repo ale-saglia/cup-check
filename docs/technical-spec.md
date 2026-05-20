@@ -257,7 +257,8 @@ make web-preview-dataset
 ```
 
 `make dataset-release-local` genera `dist/dataset/` con `dataset-latest.json`,
-`dataset-manifest.json` e chunk `cup-index.sqlite.*`, scaricando prima il dump OpenCUP.
+`dataset-manifest.json` e chunk `cup-index.sqlite.*`, usando il dump OpenCUP in
+`data/OpendataProgetti.zip` e scaricandolo solo se non è già presente.
 La data snapshot predefinita è il primo giorno del mese UTC corrente; può essere sovrascritta
 con `DATASET_SNAPSHOT_DATE=YYYY-MM-DD`.
 

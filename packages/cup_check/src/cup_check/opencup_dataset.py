@@ -89,9 +89,20 @@ def download_projects_zip(
     retry_backoff_seconds: float = OPENCUP_DOWNLOAD_RETRY_BACKOFF_SECONDS,
     progress_interval_bytes: int = OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES,
     on_progress: Callable[[int], None] | None = None,
+    skip_if_exists: bool = False,
     _opener=urlopen,
 ) -> Path:
+    """Scarica il dump OpenCUP in ``destination``.
+
+    Per default sovrascrive sempre il file esistente. Passa ``skip_if_exists=True``
+    per saltare il download se ``destination`` e' gia' presente su disco — utile in
+    ambienti locali dove il dump non cambia tra una run e l'altra (es. target Make).
+    """
     destination_path = Path(destination)
+    if skip_if_exists and destination_path.exists():
+        LOGGER.info("Dump OpenCUP gia presente in %s, download saltato.", destination_path)
+        return destination_path
+
     destination_path.parent.mkdir(parents=True, exist_ok=True)
     _download_url_to_path(
         source_url,

@@ -184,7 +184,7 @@ python-build: ## Genera sdist e wheel del package Python
 
 $(DATA_DIR)/OpendataProgetti.zip:
 	mkdir -p $(DATA_DIR)
-	cd $(PYTHON_DIR) && uv run python -c "from cup_check.opencup_dataset import download_projects_zip; download_projects_zip('../../$(DATA_DIR)/OpendataProgetti.zip')"
+	cd $(PYTHON_DIR) && uv run python -c "from cup_check.opencup_dataset import download_projects_zip; download_projects_zip('../../$(DATA_DIR)/OpendataProgetti.zip', skip_if_exists=True)"
 
 .PHONY: dataset-download
 dataset-download: $(DATA_DIR)/OpendataProgetti.zip ## Scarica il dump OpenCUP in data/OpendataProgetti.zip
@@ -198,9 +198,11 @@ dataset-release-local: ## Genera dist/dataset per la preview locale con chunk e 
 	@command -v uv >/dev/null 2>&1 || { echo >&2 "Errore: 'uv' non trovato. Esegui prima: make python-install"; exit 1; }
 	SNAPSHOT_DATE="$(DATASET_SNAPSHOT_DATE)"; \
 	cd $(PYTHON_DIR) && uv run python ../../scripts/build_dataset.py \
+		--skip-if-exists \
 		"$$SNAPSHOT_DATE" \
 		"../../dist/dataset" \
-		"./datasets/dataset-$${SNAPSHOT_DATE:0:7}"
+		"./datasets/dataset-$${SNAPSHOT_DATE:0:7}" \
+		"../../$(DATA_DIR)/OpendataProgetti.zip"
 
 .PHONY: draft-changelog
 draft-changelog: ## Genera un draft della prossima sezione CHANGELOG (uso: make draft-changelog [VERSION=0.5.0])
