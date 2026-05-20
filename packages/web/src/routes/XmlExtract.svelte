@@ -2,6 +2,7 @@
   import { i18n } from '../i18n/i18n.svelte.js';
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
+  import { downloadBlob } from '../lib/core/download.js';
   import { validateCup, OUTCOMES } from '../lib/core/validator.js';
   import { extractCupsFromXmlFile } from '../lib/xml/extract-cups.js';
   import { buildVerificatoreCsv, buildExportCsv } from '../lib/pdf/pdf-csv.js';
@@ -175,12 +176,7 @@
   function handleExport() {
     const content = buildExportCsv(entries);
     const blob = new Blob([content], { type: 'text/csv;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = i18n.t('xml.exportFileName');
-    a.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, i18n.t('xml.exportFileName'));
   }
 
   function handleClear() {

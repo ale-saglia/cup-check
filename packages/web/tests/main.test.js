@@ -158,6 +158,8 @@ describe('main', () => {
       expect.objectContaining({ options: { type: 'text/csv;charset=utf-8' } }),
     );
     expect(clicked).toHaveBeenCalledTimes(1);
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    await new Promise((resolve) => setTimeout(resolve, 0));
     expect(URL.revokeObjectURL).toHaveBeenCalledWith('blob:report');
   });
 

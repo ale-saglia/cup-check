@@ -419,7 +419,8 @@ describe('XmlExtract: azioni globali', () => {
     const container = await renderWithProcessedCup();
     container.querySelector('#pdf-export-btn')?.click();
     expect(URL.createObjectURL).toHaveBeenCalledOnce();
-    expect(URL.revokeObjectURL).toHaveBeenCalledOnce();
+    expect(URL.revokeObjectURL).not.toHaveBeenCalled();
+    await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledOnce());
   });
 
   it('"Pulisci" azzera la tabella e nasconde l\'area risultati', async () => {

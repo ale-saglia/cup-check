@@ -14,6 +14,7 @@
   } from '../lib/core/import-plan.js';
 
   import { buildCsvReport, opencupUrlForResult, resultDetail } from '../lib/core/report.js';
+  import { downloadBlob } from '../lib/core/download.js';
   import { displayResults, resultRowsLabel } from '../lib/core/results.js';
   import { textInputLines } from '../text-input.js';
   import { OUTCOMES, summarizeResults } from '../lib/core/validator.js';
@@ -365,12 +366,7 @@
     const blob = new Blob([buildCsvReport(displayResults(results, groupSameCups), importedRows)], {
       type: 'text/csv;charset=utf-8',
     });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `${fileName}_check.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+    downloadBlob(blob, `${fileName}_check.csv`);
   }
 
   function openResultDetailDialog(cellDetail: string) {
