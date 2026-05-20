@@ -59,3 +59,25 @@ def test_warning_types_are_public() -> None:
     result = validate_format("  g17h03000130001  ", current_year=2026)
 
     assert result.warnings == (Warning.N1, Warning.N2)
+
+
+def test_validate_format_bytes_fails_on_str_representation() -> None:
+    # str(b"G17H03000130001") == "b'G17H03000130001'" — 19 caratteri con virgolette,
+    # non un CUP valido. Documentato come comportamento atteso: chi passa bytes
+    # ottiene INVALIDO_FORMATO con R1 e R2 (lunghezza errata e caratteri non validi).
+    result = validate_format(b"G17H03000130001", current_year=2026)
+
+    assert result.outcome is Outcome.INVALIDO_FORMATO
+    assert Rule.R1 in result.failed_rules  # 19 char invece di 15
+    assert Rule.R2 in result.failed_rules  # contiene "'" non ASCII-alfanumerico
+
+
+def test_validate_many_materializes_generator() -> None:
+    # validate_many accetta qualsiasi Iterable ma chiama tuple() internamente:
+    # materializza tutto il generatore prima di restituire. Un generatore infinito
+    # causerebbe un blocco; usare solo iterabili finiti.
+    cups = (f"G17H{str(y).zfill(2)}000130001" for y in range(1, 4))
+    results = validate_many(cups, current_year=2026)
+
+    assert len(results) == 3
+    assert all(r.outcome is Outcome.FORMATO_VALIDO_DA_VERIFICARE for r in results)
