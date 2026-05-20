@@ -92,9 +92,12 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
+          shopt -s nullglob
           TAG="${{ needs.build.outputs.dataset_tag }}"
           SNAPSHOT="${{ needs.build.outputs.snapshot_date }}"
-          CHUNK_FILES=($(ls dist/dataset/cup-index.sqlite.*))
+          CHUNK_FILES=(dist/dataset/cup-index.sqlite.*)
+          [[ ${#CHUNK_FILES[@]} -gt 0 ]] || { echo "::error::no chunks built"; exit 1; }
           gh release delete "$TAG" --cleanup-tag --yes \
             --repo "${{ github.repository }}" 2>/dev/null || true
           gh release create "$TAG" \
