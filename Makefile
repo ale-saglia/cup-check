@@ -101,6 +101,7 @@ web-acceptance-chrome-legacy: web-build ## Verifica upload/offline/PWA con Chrom
 VNC_DISPLAY      := :99
 VNC_PORT         := 5900
 NOVNC_PORT       := 9000
+NOVNC_PATH       := /vnc.html?resize=scale
 VNC_PREVIEW_PORT := 4174
 VNC_RESOLUTION   := 1920x1080x24
 
@@ -123,7 +124,7 @@ web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy — noVNC
 	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
 	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
 	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
-	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
+	printf '\033[36mApri nel browser: http://localhost:%s%s\033[0m\n' $(NOVNC_PORT) '$(NOVNC_PATH)'; \
 	wait
 
 .PHONY: web-preview-dataset-chrome-legacy
@@ -146,7 +147,7 @@ web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chrom
 	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
 	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
 	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
-	printf '\033[36mApri nel browser: http://localhost:%s/vnc.html\033[0m\n' $(NOVNC_PORT); \
+	printf '\033[36mApri nel browser: http://localhost:%s%s\033[0m\n' $(NOVNC_PORT) '$(NOVNC_PATH)'; \
 	wait
 
 .PHONY: web-build

@@ -43,7 +43,8 @@
     },
     "9000": {
       "label": "noVNC (Chromium legacy)",
-      "onAutoForward": "ignore"
+      "onAutoForward": "ignore",
+      "uriFormat": "http://localhost:%s/vnc.html?resize=scale"
     }
   },
   "postCreateCommand": "make setup",
