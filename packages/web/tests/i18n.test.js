@@ -68,6 +68,74 @@ describe('i18n', () => {
     expect(i18n.errorMessage(null)).toBe('Errore sconosciuto');
   });
 
+  it('sostituisce valori di interpolazione mancanti con stringa vuota', () => {
+    // 'validator.textCount' template: "{count} CUP"
+    // Without providing {count}, the ?? '' fallback produces ''
+    const result = i18n.t('validator.textCount');
+    expect(result).toBe(' CUP');
+  });
+
+  it('annulla un cambio lingua quando un secondo setLocale sovrascrive prima della risoluzione', async () => {
+    let resolveEn;
+    const restoreLoader = setMessageLoaderForTest((locale) => {
+      if (locale === 'it') return Promise.resolve(i18n.messages);
+      return new Promise((resolve) => {
+        resolveEn = () => resolve(englishMessages);
+      });
+    });
+
+    const enPromise = i18n.setLocale('en');
+
+    // 'it' resolves immediately, making loadingLocale null before 'en' finishes
+    await i18n.setLocale('it');
+
+    // Now resolve 'en' — it should be discarded because loadingLocale changed
+    resolveEn();
+    await enPromise;
+
+    // locale stays 'it' since 'en' was superseded
+    expect(i18n.locale).toBe('it');
+    restoreLoader();
+  });
+
+  it('non aggiorna document.lang quando document non è definito', async () => {
+    vi.resetModules();
+    vi.stubGlobal('document', undefined);
+
+    const { i18n: freshI18n, setMessageLoaderForTest: freshLoader } =
+      await import('../src/i18n/i18n.svelte.js');
+    const restoreLoader = freshLoader(() => Promise.resolve(englishMessages));
+
+    // Should not throw even though document is undefined
+    await freshI18n.setLocale('en');
+    expect(freshI18n.locale).toBe('en');
+
+    restoreLoader();
+    vi.unstubAllGlobals();
+  });
+
+  it('usa FALLBACK_LOCALE quando localStorage non è disponibile (initialLocale)', async () => {
+    vi.resetModules();
+    vi.stubGlobal('localStorage', undefined);
+
+    const { i18n: freshI18n } = await import('../src/i18n/i18n.svelte.js');
+
+    // initialLocale() returns FALLBACK_LOCALE ('it') when localStorage is undefined
+    expect(freshI18n.locale).toBe('it');
+    vi.unstubAllGlobals();
+  });
+
+  it('non persiste la lingua quando localStorage non è disponibile (persistLocale)', async () => {
+    vi.stubGlobal('localStorage', undefined);
+
+    // setLocale calls persistLocale which should not throw when localStorage is undefined
+    await i18n.setLocale('it');
+    expect(i18n.locale).toBe('it');
+
+    vi.unstubAllGlobals();
+    await i18n.setLocale('it');
+  });
+
   it('lo switcher cambia lingua dal select nativo', async () => {
     render(LanguageSwitcher);
     const select = screen.getByLabelText('Lingua');
@@ -76,6 +144,15 @@ describe('i18n', () => {
 
     await waitFor(() => expect(i18n.locale).toBe('en'));
     await waitFor(() => expect(localStorage.getItem('cup-check:language')).toBe('en'));
+  });
+
+  it('renderizza lo switcher anche con locale inglese già attivo', async () => {
+    await i18n.setLocale('en');
+    render(LanguageSwitcher);
+
+    const select = screen.getByLabelText('Language');
+    expect(select.value).toBe('en');
+    expect(select.textContent).toContain('English');
   });
 
   it('mantiene locale e messaggi correnti finché la nuova lingua non è pronta', async () => {

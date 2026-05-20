@@ -14,7 +14,7 @@ export function navigate(path: string): void {
 
 function dispatch(): void {
   const hash = location.hash || '#/';
-  const basePath = hash.split('?')[0] || '#/';
+  const basePath = hash.split('?')[0];
   if (!routes.has(basePath)) {
     navigate('#/');
     return;

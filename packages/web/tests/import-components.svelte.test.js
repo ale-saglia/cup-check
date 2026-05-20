@@ -409,6 +409,21 @@ describe('ImportSourcePreview', () => {
     expect(onRemove).toHaveBeenCalledOnce();
   });
 
+  it('usa il gestore rimuovi di default senza lanciare eccezioni', () => {
+    const { container } = render(ImportSourcePreview, {
+      props: {
+        source: source(),
+        onSheetChange: vi.fn(),
+        onHeaderChange: vi.fn(),
+        onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
+        onSkipMissingCupChange: vi.fn(),
+      },
+    });
+
+    expect(() => container.querySelector('.import-remove-source')?.click()).not.toThrow();
+  });
+
   it('nasconde il selettore scheda quando esiste una sola scheda Excel', () => {
     const { container } = render(ImportSourcePreview, {
       props: {
@@ -681,6 +696,20 @@ describe('ImportWizard', () => {
     expect(panel?.getAttribute('aria-labelledby')).toBe('import-wizard-title');
     expect(panel?.getAttribute('aria-modal')).toBe('true');
     expect(HTMLDialogElement.prototype.showModal).toHaveBeenCalledOnce();
+  });
+
+  it('apre il dialog con attributo open quando showModal non è disponibile', () => {
+    HTMLDialogElement.prototype.showModal = undefined;
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [source()],
+        onSourcesChange: vi.fn(),
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    expect(container.querySelector('#import-wizard')?.hasAttribute('open')).toBe(true);
   });
 
   it('chiama onCancel quando il dialog riceve cancel', () => {

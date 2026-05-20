@@ -43,11 +43,9 @@ export function loadLatestDataset(options: LoadDatasetOptions = {}): Promise<Dat
         }
       },
     }).catch((error) => {
-      if (datasetPromise === pendingDataset) {
-        datasetPromise = null;
-        datasetController = null;
-        datasetConsumers.clear();
-      }
+      datasetPromise = null;
+      datasetController = null;
+      datasetConsumers.clear();
       throw error;
     });
     datasetPromise = pendingDataset;

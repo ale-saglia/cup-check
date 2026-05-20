@@ -4,7 +4,7 @@
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
   import { downloadBlob } from '../lib/core/download.js';
-  import { validateCup, OUTCOMES } from '../lib/core/validator.js';
+  import { addManualCup, cancelCupEdit, editCup, findEntry as findToolEntry, removeCup, saveCupEdit } from '../lib/tool-entry-actions.js';
   import { extractCupsFromXmlFile } from '../lib/xml/extract-cups.js';
   import { buildVerificatoreCsv, buildExportCsv } from '../lib/pdf/pdf-csv.js';
   import EntryList from '../components/EntryList.svelte';
@@ -70,7 +70,7 @@
     try {
       while (queue.length > 0 && gen === generation) {
         const entryId = queue.shift()!;
-        const entry = findEntry(entryId);
+        const entry = findToolEntry(entries, entryId);
         if (entry) await processEntry(entry);
       }
     } finally {
@@ -107,65 +107,24 @@
 
   // ── Cup edit operations ────────────────────────────────────────────────────
 
-  function findEntry(entryId: number): Entry | null {
-    return entries.find((e) => e.id === entryId) ?? null;
-  }
-
-  function findCup(entryId: number, cupId: string): Cup | null {
-    return findEntry(entryId)?.cups.find((c) => c.id === cupId) ?? null;
-  }
-
   function handleEdit(entryId: number, cupId: string) {
-    entries.forEach((e) => e.cups.forEach((c) => { c.editing = false; }));
-    const cup = findCup(entryId, cupId);
-    if (cup) cup.editing = true;
+    editCup(entries, entryId, cupId);
   }
 
   function handleRemove(entryId: number, cupId: string) {
-    const entry = findEntry(entryId);
-    if (entry) entry.cups = entry.cups.filter((c) => c.id !== cupId);
+    removeCup(entries, entryId, cupId);
   }
 
   function handleAddManual(entryId: number) {
-    const entry = findEntry(entryId);
-    if (!entry) return;
-    entries.forEach((e) => e.cups.forEach((c) => { c.editing = false; }));
-    entry.cups.push({
-      id: `${entryId}-m${nextId++}`,
-      value: '',
-      formalValid: false,
-      source: 'manuale',
-      manual: true,
-      editing: true,
-    });
+    addManualCup(entries, entryId, `${entryId}-m${nextId++}`);
   }
 
   function handleSaveEdit(entryId: number, cupId: string, rawValue: string) {
-    const cup = findCup(entryId, cupId);
-    if (!cup || !cup.editing) return;
-    const entry = findEntry(entryId)!;
-    const normalized = rawValue.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
-    if (normalized === '' && cup.manual) {
-      entry.cups = entry.cups.filter((c) => c.id !== cupId);
-    } else if (normalized.length > 0) {
-      cup.value = normalized;
-      cup.formalValid = validateCup(normalized).outcome !== OUTCOMES.INVALID;
-      cup.manual = true;
-      cup.editing = false;
-    } else {
-      cup.editing = false;
-    }
+    saveCupEdit(entries, entryId, cupId, rawValue);
   }
 
   function handleCancelEdit(entryId: number, cupId: string) {
-    const cup = findCup(entryId, cupId);
-    if (!cup || !cup.editing) return;
-    const entry = findEntry(entryId)!;
-    if (cup.value === '' && cup.manual) {
-      entry.cups = entry.cups.filter((c) => c.id !== cupId);
-    } else {
-      cup.editing = false;
-    }
+    cancelCupEdit(entries, entryId, cupId);
   }
 
   // ── Global actions ─────────────────────────────────────────────────────────

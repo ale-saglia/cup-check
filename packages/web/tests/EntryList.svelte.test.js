@@ -45,6 +45,13 @@ describe('EntryList', () => {
             cups: [],
             ocrProgress: { ocrLoading: false, page: 2, totalPages: 5 },
           },
+          {
+            id: 5,
+            name: 'ocr-senza-progress.pdf',
+            status: 'ocr',
+            cups: [],
+            ocrProgress: null,
+          },
         ],
         ...props,
       },
@@ -54,6 +61,7 @@ describe('EntryList', () => {
     expect(container.textContent).toContain('Lettura PDF');
     expect(container.textContent).toContain('Caricamento OCR');
     expect(container.textContent).toContain('OCR pagina 2 / 5');
+    expect(container.textContent).toContain('OCR pagina 0 / 0');
   });
 
   it('renderizza errore con CUP esistente e azioni riga', () => {
@@ -171,6 +179,35 @@ describe('EntryList', () => {
     expect(props.onCancelEdit).toHaveBeenLastCalledWith(9, '9-0');
   });
 
+  it('non rifocalizza se resta attivo lo stesso CUP in edit', () => {
+    const props = callbacks();
+    const cup = {
+      id: '9-0',
+      value: CUP2,
+      formalValid: true,
+      source: null,
+      manual: true,
+      editing: true,
+    };
+    const { container, rerender } = render(EntryList, {
+      props: {
+        entries: [{ id: 9, name: 'edit.pdf', status: 'done', cups: [cup] }],
+        ...props,
+      },
+    });
+    flushSync();
+    const input = container.querySelector('input[data-editing]');
+    const focusSpy = vi.spyOn(input, 'focus');
+
+    rerender({
+      entries: [{ id: 9, name: 'edit.pdf', status: 'done', cups: [{ ...cup, value: CUP1 }] }],
+      ...props,
+    });
+    flushSync();
+
+    expect(focusSpy).not.toHaveBeenCalled();
+  });
+
   it('non salva su mousedown dei controlli edit', () => {
     const props = callbacks();
     const { container } = render(EntryList, {
@@ -254,6 +291,18 @@ describe('EntryList', () => {
     expect(props.onAddManual).toHaveBeenCalledWith(12);
   });
 
+  it('renderizza errore senza messaggio come stringa vuota', () => {
+    const props = callbacks();
+    const { container } = render(EntryList, {
+      props: {
+        entries: [{ id: 16, name: 'errore.pdf', status: 'error', cups: [] }],
+        ...props,
+      },
+    });
+
+    expect(container.querySelector('.badge.bad')?.textContent).toBe('Errore');
+  });
+
   it('salva stringa vuota se il controllo salva non trova piu input edit', () => {
     const props = callbacks();
     const { container } = render(EntryList, {
@@ -282,5 +331,47 @@ describe('EntryList', () => {
     container.querySelector('input[data-editing]').remove();
     container.querySelector('[data-save-edit]').click();
     expect(props.onSaveEdit).toHaveBeenCalledWith(13, '13-0', '');
+  });
+
+  it('renderizza i dati fattura e le celle vuote quando richiesto', () => {
+    const props = callbacks();
+    const { container } = render(EntryList, {
+      props: {
+        showInvoiceData: true,
+        entries: [
+          {
+            id: 14,
+            name: 'fattura.pdf',
+            objectUrl: 'blob:fattura',
+            status: 'done',
+            invoiceData: {
+              data: '2026-05-20',
+              numero: '42',
+              importoTotale: '1234.50',
+              causale: 'Pagamento progetto con descrizione lunga da troncare nella tabella',
+              pivaFornitore: '12345678901',
+              nomeFornitore: 'Fornitore con denominazione lunga da troncare nella tabella',
+              cig: 'A012345678',
+            },
+            cups: [],
+          },
+          {
+            id: 15,
+            name: 'senza-dati.xml',
+            status: 'error',
+            error: '',
+            invoiceData: null,
+            cups: [],
+          },
+        ],
+        ...props,
+      },
+    });
+
+    expect(container.textContent).toContain('2026-05-20');
+    expect(container.textContent).toContain('1234,50');
+    expect(container.querySelector('a.detail-cell')?.getAttribute('href')).toBe('blob:fattura');
+    expect(container.textContent).toContain('Nessun CUP rilevato');
+    expect(container.textContent).toContain('Errore');
   });
 });

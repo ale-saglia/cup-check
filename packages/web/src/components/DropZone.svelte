@@ -16,9 +16,10 @@
   let error = $state('');
 
   function handleChange(event: Event) {
-    const files = Array.from((event.target as HTMLInputElement).files ?? []);
+    const input = event.target as HTMLInputElement;
+    const files = Array.from(input.files ?? []);
     submitFiles(files);
-    if (inputEl) inputEl.value = '';
+    input.value = '';
   }
 
   function handleDragOver(event: DragEvent) {
@@ -61,7 +62,7 @@
   }
 
   function isSupportedFile(file: File): boolean {
-    const extension = file.name.split('.').pop()?.toLowerCase() ?? '';
+    const extension = file.name.split('.').pop()!.toLowerCase();
     return SUPPORTED_EXTENSIONS.includes(extension) || SUPPORTED_TYPES.includes(file.type);
   }
 </script>

@@ -85,6 +85,29 @@ describe('extractPdfText', () => {
     expect(result.needsOcr).toBe(false);
   });
 
+  it('ignora gli item senza proprietà str (TextMarkedContent)', async () => {
+    const doc = {
+      numPages: 1,
+      getPage: vi.fn().mockResolvedValue({
+        getTextContent: () =>
+          Promise.resolve({
+            items: [
+              { str: 'CUP J91B21006430001 progetto ' },
+              { type: 'beginMarkedContent', tag: 'Artifact' },
+              { str: 'fondo europeo' },
+            ],
+          }),
+      }),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    };
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+
+    const result = await extractPdfText(fakeFile);
+
+    expect(result.pages[0]).toContain('J91B21006430001');
+    expect(result.pages[0]).toContain('fondo europeo');
+  });
+
   it('riutilizza il modulo pdfjs già caricato nelle chiamate successive (singleton)', async () => {
     const doc1 = makeDoc(['testo sufficiente per non attivare il percorso OCR nel documento uno']);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc1) });

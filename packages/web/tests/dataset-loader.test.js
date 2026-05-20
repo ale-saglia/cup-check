@@ -61,6 +61,29 @@ describe('discoverLatestDataset', () => {
     );
   });
 
+  it('usa created_at o stringa vuota quando published_at non è disponibile', async () => {
+    const withCreatedAt = await discoverLatestDataset(
+      mockFetch({
+        './dataset-latest.json': { invalid: true },
+        'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
+          { tag_name: null },
+          { tag_name: 'dataset-2026-05', created_at: '2026-05-06T00:00:00Z' },
+        ],
+      }),
+    );
+    expect(withCreatedAt.released_at).toBe('2026-05-06T00:00:00Z');
+
+    const withoutDates = await discoverLatestDataset(
+      mockFetch({
+        './dataset-latest.json': { invalid: true },
+        'https://api.github.com/repos/ale-saglia/cup-check/releases?per_page=100': [
+          { tag_name: 'dataset-2026-05' },
+        ],
+      }),
+    );
+    expect(withoutDates.released_at).toBe('');
+  });
+
   it('ignores software tags during GitHub dataset discovery', async () => {
     const result = await discoverLatestDataset(
       mockFetch({
@@ -153,6 +176,14 @@ describe('discoverLatestDataset', () => {
       'unexpected content-type "text/html; charset=utf-8"',
     );
   });
+
+  it('rejects with an empty content-type label when JSON content-type is missing', async () => {
+    const fetchFn = async (url) => {
+      if (String(url) === './dataset-latest.json') return notFound();
+      return { ok: true, headers: { get: () => null }, json: async () => [] };
+    };
+    await expect(discoverLatestDataset(fetchFn)).rejects.toThrow('unexpected content-type ""');
+  });
 });
 
 describe('loadDataset', () => {
@@ -165,6 +196,58 @@ describe('loadDataset', () => {
     loadLatestDataset({ fetchFn: vi.fn() });
 
     expect(pendingFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('rifiuta immediatamente se il signal è già abortito quando un caricamento è in corso', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
+    const pendingController = new AbortController();
+    const alreadyAborted = new AbortController();
+    alreadyAborted.abort();
+
+    // Start first load to create a shared datasetPromise in flight
+    const pending = loadLatestDataset({
+      fetchFn: () => new Promise(() => {}),
+      signal: pendingController.signal,
+    }).catch(() => null);
+
+    // Second call with already-aborted signal: followDatasetPromise hits the aborted check
+    await expect(
+      loadLatestDataset({ fetchFn: vi.fn(), signal: alreadyAborted.signal }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+
+    pendingController.abort();
+    await pending;
+  });
+
+  it('costruisce un AbortError quando la reason non è già un AbortError DOMException', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
+    const controller = new AbortController();
+
+    // Keep fetch pending so the signal abort propagates through followDatasetPromise
+    const first = loadLatestDataset({
+      fetchFn: () => new Promise(() => {}),
+      signal: controller.signal,
+    });
+
+    // Abort with a string reason (not a DOMException) so makeAbortError fallback fires
+    controller.abort('motivo stringa');
+
+    const err = await first.catch((e) => e);
+    expect(err.name).toBe('AbortError');
+    expect(err.message).toBe('The operation was aborted.');
+  });
+
+  it('propaga errori non-abort attraverso followDatasetPromise quando il caller ha un signal', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
+    const controller = new AbortController();
+    const networkError = new Error('network failure');
+
+    await expect(
+      loadLatestDataset({ fetchFn: () => Promise.reject(networkError), signal: controller.signal }),
+    ).rejects.toThrow('network failure');
   });
 
   it('keeps the shared dataset load alive until every caller aborts', async () => {
@@ -640,6 +723,33 @@ describe('loadDataset', () => {
       dataset.close();
     });
 
+    it('scarica il dataset quando la cache online non contiene sqlite', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const sha256 = await computeSha256Hex(sqliteBytes);
+      let chunkRequested = false;
+
+      const dataset = await loadDataset({
+        fetchFn: async (url) => {
+          if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+          if (String(url) === MANIFEST_URL) {
+            return Response.json(
+              makeManifest(sqliteBytes.byteLength, [sha256], {
+                sha256,
+                files: ['cup-index.sqlite.000'],
+              }),
+            );
+          }
+          chunkRequested = true;
+          return new Response(sqliteBytes);
+        },
+        initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+      });
+
+      expect(chunkRequested).toBe(true);
+      expect(dataset.hasCup('G17H03000130001')).toBe(true);
+      dataset.close();
+    });
+
     it('ignora errori CacheStorage durante la lettura online e scarica il dataset', async () => {
       const sqliteBytes = await buildSqliteFixture();
       const sha256 = await computeSha256Hex(sqliteBytes);
@@ -671,6 +781,21 @@ describe('loadDataset', () => {
           throw new Error('cache unavailable');
         }),
       });
+
+      await expect(
+        loadDataset({
+          fetchFn: async () => {
+            throw new TypeError('network error');
+          },
+          initSql: () => initSqlJs({ locateFile: () => wasmPath }),
+        }),
+      ).rejects.toThrow('network error');
+    });
+
+    it('propaga errore di rete quando la cache offline non ha metadati completi', async () => {
+      const sqliteBytes = await buildSqliteFixture();
+      const cache = await mockCaches.open(CACHE_NAME);
+      await cache.put(CACHE_KEY_SQLITE, new Response(sqliteBytes));
 
       await expect(
         loadDataset({

@@ -20,18 +20,19 @@ function buildMenuItems(): string {
     .join('');
 }
 
-function refreshLayoutTranslations(root: Element): void {
-  root.querySelector('.site-nav')?.setAttribute('aria-label', i18n.t('app.mainNav'));
+export function refreshLayoutTranslations(root: Element): void {
+  const siteNav = root.querySelector('.site-nav');
+  if (siteNav) siteNav.setAttribute('aria-label', i18n.t('app.mainNav'));
   root.querySelectorAll('[data-i18n]').forEach((element) => {
-    (element as HTMLElement).textContent = i18n.t((element as HTMLElement).dataset['i18n'] ?? '');
+    const key = (element as HTMLElement).dataset['i18n'];
+    if (key) (element as HTMLElement).textContent = i18n.t(key);
   });
   root.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
-    element.setAttribute(
-      'aria-label',
-      i18n.t((element as HTMLElement).dataset['i18nAriaLabel'] ?? ''),
-    );
+    const key = (element as HTMLElement).dataset['i18nAriaLabel'];
+    if (key) element.setAttribute('aria-label', i18n.t(key));
   });
-  (root.querySelector('.nav-menu-list') as HTMLElement).innerHTML = buildMenuItems();
+  const menuList = root.querySelector<HTMLElement>('.nav-menu-list');
+  if (menuList) menuList.innerHTML = buildMenuItems();
 }
 
 export function mountLayout(root: Element = document.querySelector('#app')!): Element | null {

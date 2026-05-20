@@ -4,14 +4,14 @@ function safeCell(s: string): string {
   return /^[=+\-@]/.test(s) ? `'${s}` : s;
 }
 
-function csvComma(value: unknown): string {
-  const s = safeCell(String(value ?? ''));
+function csvComma(value: string): string {
+  const s = safeCell(value);
   if (/[,"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
   return s;
 }
 
-function csvSemi(value: unknown): string {
-  const s = safeCell(String(value ?? ''));
+function csvSemi(value: string): string {
+  const s = safeCell(value);
   if (/[;"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
   return s;
 }

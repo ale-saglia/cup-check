@@ -114,6 +114,11 @@ describe('extractCupsFromText', () => {
     expect(result).toHaveLength(1);
     expect(result[0].value).toBe(cupStartingWithI);
   });
+
+  it('scarta anche le varianti OCR che restano strutturalmente implausibili', () => {
+    const result = extractCupsFromText('codice 100123000000001 nel documento', { ocrFix: true });
+    expect(result).toEqual([]);
+  });
 });
 
 describe('extractCupsFromPages', () => {

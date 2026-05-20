@@ -11,7 +11,6 @@ export interface CupCandidate {
 // of a CUP must be letters, so we try the substitution there before giving up.
 // Only applied when ocrFix is true (i.e. the text comes from Tesseract).
 function ocrVariants(value: string): string[] {
-  if (value.length !== 15) return [];
   const variants: string[] = [];
   for (const pos of [0, 3]) {
     if (value[pos] === '1') {

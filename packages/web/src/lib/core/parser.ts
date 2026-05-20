@@ -125,6 +125,6 @@ function hasReplacementCharacterInPreview(text: string): boolean {
 }
 
 function parsesAsSingleColumn(rows: string[][]): boolean {
-  const meaningfulRows = rows.filter((row) => row.some((cell) => String(cell ?? '').trim() !== ''));
+  const meaningfulRows = rows.filter((row) => row.some((cell) => cell.trim() !== ''));
   return meaningfulRows.length > 0 && meaningfulRows.every((row) => row.length <= 1);
 }

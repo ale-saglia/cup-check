@@ -93,8 +93,8 @@ function uniqueJoin(values: string[]): string {
   return unique.join(', ');
 }
 
-function csvCell(value: unknown): string {
-  const text = protectCsvFormula(String(value ?? ''));
+function csvCell(value: string): string {
+  const text = protectCsvFormula(value);
 
   if (/[;"\n\r]/.test(text)) {
     return `"${text.replaceAll('"', '""')}"`;

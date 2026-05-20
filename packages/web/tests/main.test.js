@@ -127,6 +127,34 @@ describe('main', () => {
     expect(navigator.serviceWorker).toBeUndefined();
   });
 
+  it('non monta LanguageSwitcher quando #language-switcher-slot è assente', async () => {
+    try {
+      vi.resetModules();
+      vi.doMock('../src/layout.js', () => ({
+        mountLayout: vi.fn((root) => {
+          root.innerHTML =
+            '<main id="main-content" tabindex="-1"></main><span id="dataset-status-bar"></span>';
+          return root.querySelector('#main-content');
+        }),
+      }));
+      vi.doMock('../src/router.js', () => ({
+        register: vi.fn(),
+        start: vi.fn(),
+      }));
+
+      document.body.innerHTML = '<main id="app"></main>';
+      vi.stubGlobal('navigator', { serviceWorker: { register: vi.fn() } });
+
+      await import('../src/main.js');
+
+      expect(document.querySelector('#language-switcher-slot')).toBeNull();
+    } finally {
+      vi.doUnmock('../src/layout.js');
+      vi.doUnmock('../src/router.js');
+      vi.resetModules();
+    }
+  });
+
   it('handles dataset discovery failures cautiously', async () => {
     await loadMain({ datasetSucceeds: false });
 

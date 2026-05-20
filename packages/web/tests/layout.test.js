@@ -3,7 +3,7 @@
 import { afterAll, beforeAll, describe, expect, it, vi } from 'vitest';
 
 import { i18n } from '../src/i18n/i18n.svelte.js';
-import { mountLayout } from '../src/layout.js';
+import { mountLayout, refreshLayoutTranslations } from '../src/layout.js';
 
 describe('layout', () => {
   let root;
@@ -120,5 +120,54 @@ describe('layout: escaping voci menu', () => {
 
     document.body.removeChild(root);
     vi.resetModules();
+  });
+
+  it('voce menu senza labelKey né label produce stringa vuota', async () => {
+    vi.resetModules();
+    vi.doMock('../src/tools-registry.js', () => ({
+      tools: [{ id: 'no-label', path: '#/no-label', enabled: true }],
+    }));
+    vi.doMock('../src/version.js', () => ({ PRODUCT_VERSION: 'test' }));
+
+    const { mountLayout: mountFresh } = await import('../src/layout.js');
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    mountFresh(root);
+
+    const item = root.querySelector('.nav-menu-item');
+    expect(item?.textContent).toBe('');
+
+    document.body.removeChild(root);
+    vi.resetModules();
+  });
+});
+
+describe('layout: refreshLayoutTranslations branch coverage', () => {
+  it('non aggiorna .site-nav e .nav-menu-list quando sono assenti nel root', () => {
+    const root = document.createElement('div');
+    expect(() => refreshLayoutTranslations(root)).not.toThrow();
+  });
+
+  it('ignora data-i18n vuoto e data-i18n-aria-label vuoto', async () => {
+    const root = document.createElement('div');
+    document.body.appendChild(root);
+    mountLayout(root);
+
+    const emptyI18n = document.createElement('span');
+    emptyI18n.dataset.i18n = '';
+    emptyI18n.textContent = 'keep-me';
+    root.appendChild(emptyI18n);
+
+    const emptyAriaI18n = document.createElement('span');
+    emptyAriaI18n.dataset.i18nAriaLabel = '';
+    emptyAriaI18n.setAttribute('aria-label', 'keep-aria');
+    root.appendChild(emptyAriaI18n);
+
+    refreshLayoutTranslations(root);
+
+    expect(emptyI18n.textContent).toBe('keep-me');
+    expect(emptyAriaI18n.getAttribute('aria-label')).toBe('keep-aria');
+
+    document.body.removeChild(root);
   });
 });

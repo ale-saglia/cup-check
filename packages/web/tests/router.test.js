@@ -123,4 +123,42 @@ describe('router module (fresh import per test)', () => {
     main.remove();
     window.requestAnimationFrame = previousRaf;
   });
+
+  it('usa il fallback setTimeout quando requestAnimationFrame non è disponibile', async () => {
+    vi.stubGlobal('requestAnimationFrame', undefined);
+
+    const main = document.createElement('main');
+    main.id = 'main-content';
+    main.tabIndex = -1;
+    document.body.appendChild(main);
+
+    const { register, start } = await import('../src/router.js');
+    register('#/', vi.fn());
+    window.location.hash = '#/';
+    start();
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(document.activeElement).toBe(main);
+
+    main.remove();
+    vi.unstubAllGlobals();
+  });
+
+  it('non lancia eccezione quando #main-content è assente nel DOM', async () => {
+    const previousRaf = window.requestAnimationFrame;
+    window.requestAnimationFrame = (callback) => {
+      callback(0);
+      return 1;
+    };
+
+    document.querySelector('#main-content')?.remove();
+
+    const { register, start } = await import('../src/router.js');
+    register('#/', vi.fn());
+    window.location.hash = '#/';
+
+    expect(() => start()).not.toThrow();
+
+    window.requestAnimationFrame = previousRaf;
+  });
 });

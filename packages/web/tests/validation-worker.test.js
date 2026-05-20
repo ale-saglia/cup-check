@@ -54,6 +54,22 @@ async function loadRealWorkerScope({ respondToLookup = true } = {}) {
   return { scope, messages };
 }
 
+class UnknownTypeWorker {
+  onmessage = null;
+  onerror = null;
+
+  postMessage() {
+    queueMicrotask(() => {
+      const handler = this.onmessage;
+      handler?.({ data: { type: 'unknown-message-type' } });
+      handler?.({ data: { type: 'result-chunk', results: [] } });
+      handler?.({ data: { type: 'complete', durationMs: 1 } });
+    });
+  }
+
+  terminate = vi.fn();
+}
+
 class DoubleCompleteWorker {
   onmessage = null;
   onerror = null;
@@ -111,6 +127,32 @@ class ErrorEventWorker {
   terminate = vi.fn();
 }
 
+class ErrorEventWithMessageWorker {
+  onmessage = null;
+  onerror = null;
+
+  postMessage() {
+    queueMicrotask(() => {
+      this.onerror?.({ message: 'worker crashed' });
+    });
+  }
+
+  terminate = vi.fn();
+}
+
+class ErrorKeyWorker {
+  onmessage = null;
+  onerror = null;
+
+  postMessage() {
+    queueMicrotask(() => {
+      this.onmessage?.({ data: { type: 'error', messageKey: 'error.validationWorkerFailed' } });
+    });
+  }
+
+  terminate = vi.fn();
+}
+
 class FakeValidationWorker {
   onmessage = null;
   onerror = null;
@@ -149,6 +191,22 @@ class FakeValidationWorker {
         this.onmessage?.({ data: { type: 'complete', durationMs: 12 } });
       });
     }
+  }
+
+  terminate = vi.fn();
+}
+
+class HangingLookupWorker {
+  onmessage = null;
+  onerror = null;
+
+  postMessage(message) {
+    if (message.type !== 'start') return;
+    queueMicrotask(() => {
+      this.onmessage?.({
+        data: { type: 'lookup-request', requestId: 7, cups: ['G17H03000130001'] },
+      });
+    });
   }
 
   terminate = vi.fn();
@@ -207,6 +265,26 @@ describe('validateRows', () => {
     ).rejects.toMatchObject({ name: 'AbortError' });
   });
 
+  it('interrompe il fallback sincrono dopo il lookup dataset', async () => {
+    const controller = new AbortController();
+    const dataset = {
+      manifest: { dataset_tag: 'test' },
+      hasCup: (cup) => {
+        controller.abort();
+        return cup === 'G17H03000130001';
+      },
+      close: vi.fn(),
+    };
+
+    await expect(
+      validateRows(makeRows(['G17H03000130001']), {
+        dataset,
+        thresholdRows: Number.POSITIVE_INFINITY,
+        signal: controller.signal,
+      }),
+    ).rejects.toMatchObject({ name: 'AbortError' });
+  });
+
   it('gestisce il percorso worker e conserva la parita dei risultati', async () => {
     const dataset = makeDataset('G17H03000130001');
     const worker = new FakeValidationWorker();
@@ -254,6 +332,25 @@ describe('validateRows', () => {
         signal: controller.signal,
       }),
     ).rejects.toMatchObject({ name: 'AbortError' });
+    expect(worker.terminate).toHaveBeenCalledOnce();
+  });
+
+  it('termina il worker se il segnale viene annullato durante una lookup-request', async () => {
+    const controller = new AbortController();
+    const worker = new HangingLookupWorker();
+
+    const pending = validateRows(makeRows(['G17H03000130001']), {
+      dataset: makeDataset('G17H03000130001'),
+      forceWorker: true,
+      workerFactory: () => worker,
+      signal: controller.signal,
+    });
+
+    await vi.waitFor(() => expect(worker.onmessage).toBeTruthy());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    controller.abort();
+
+    await expect(pending).rejects.toMatchObject({ name: 'AbortError' });
     expect(worker.terminate).toHaveBeenCalledOnce();
   });
 
@@ -312,6 +409,35 @@ describe('validateRows', () => {
       name: 'LocalizedError',
       key: 'error.validationWorkerFailed',
     });
+  });
+
+  it('propaga errori runtime del worker come Error quando onerror ha un messaggio', async () => {
+    await expect(
+      validateRows(makeRows(['G17H03000130001']), {
+        forceWorker: true,
+        workerFactory: () => new ErrorEventWithMessageWorker(),
+      }),
+    ).rejects.toThrow('worker crashed');
+  });
+
+  it('propaga errori worker con messageKey come LocalizedError', async () => {
+    await expect(
+      validateRows(makeRows(['G17H03000130001']), {
+        forceWorker: true,
+        workerFactory: () => new ErrorKeyWorker(),
+      }),
+    ).rejects.toMatchObject({
+      name: 'LocalizedError',
+      key: 'error.validationWorkerFailed',
+    });
+  });
+
+  it('ignora messaggi di tipo sconosciuto dal worker', async () => {
+    const result = await validateRows(makeRows(['G17H03000130001']), {
+      forceWorker: true,
+      workerFactory: () => new UnknownTypeWorker(),
+    });
+    expect(result.usedWorker).toBe(true);
   });
 });
 

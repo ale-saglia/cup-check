@@ -55,13 +55,43 @@ describe('Validator', () => {
     expect(container.querySelector('#cup-textarea')).toBeTruthy();
   });
 
+  it('mostra un alert quando si avvia la verifica testo senza CUP', () => {
+    const alertMock = vi.fn();
+    vi.stubGlobal('alert', alertMock);
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const { container } = render(Validator);
+    container.querySelector('#text-check-button').click();
+
+    expect(alertMock).toHaveBeenCalledWith(
+      'Nessun CUP trovato. Incolla almeno un codice, uno per riga.',
+    );
+    vi.unstubAllGlobals();
+  });
+
+  it('ignora un token transfer non presente nel registry', async () => {
+    vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    window.history.replaceState({}, '', '#/?transfer=missing');
+    const { container } = render(Validator);
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(consumeTransfer).toHaveBeenCalledWith('missing');
+    expect(container.querySelector('#import-wizard')).toBeNull();
+  });
+
   it("consuma il file dal registry transfer al mount e mostra l'anteprima", async () => {
     const pendingFile = new File(['cup\n'], 'estrazione.csv', { type: 'text/csv' });
     vi.mocked(loadLatestDataset).mockResolvedValue(makeDataset());
     vi.mocked(consumeTransfer).mockImplementation((id) =>
       id === 'testid123' ? pendingFile : null,
     );
-    vi.mocked(parseFile).mockResolvedValue(makeParsed());
+    vi.mocked(parseFile).mockImplementation(async (_file, options) => {
+      expect(options.columnLabel(0)).toBe('Colonna 1');
+      return makeParsed();
+    });
 
     window.history.replaceState({}, '', '#/?transfer=testid123');
     const { container } = render(Validator);
@@ -178,6 +208,18 @@ describe('Validator', () => {
     flushSync();
     expect(container.querySelector('#preview-panel')?.classList.contains('hidden')).toBe(false);
     expect(container.querySelector('#preview-panel')?.classList.contains('collapsed')).toBe(true);
+    container.querySelector('#preview-toggle')?.click();
+    flushSync();
+    const editImportButton = Array.from(container.querySelectorAll('button')).find((button) =>
+      button.textContent?.includes('Modifica importazione'),
+    );
+    editImportButton?.click();
+    flushSync();
+    expect(container.querySelector('#import-wizard')).toBeTruthy();
+    Array.from(container.querySelectorAll('button'))
+      .find((button) => button.textContent?.includes('Annulla'))
+      ?.click();
+    flushSync();
     expect(container.querySelector('#summary')?.textContent).toContain('1 CUP unici da 1 righe');
     const cells = Array.from(container.querySelectorAll('#results-table tbody td')).map((cell) =>
       cell.textContent?.trim(),
@@ -497,10 +539,13 @@ describe('Validator', () => {
     expect(container.querySelectorAll('#results-table tbody tr')).toHaveLength(2);
     expect(container.querySelector('#results-table thead')?.textContent).toContain('Fonte');
     expect(container.querySelector('#results-table thead')?.textContent).not.toContain('Dettaglio');
+    container.querySelector('.outcome-detail-button')?.click();
+    flushSync();
+    expect(showModal).toHaveBeenCalledOnce();
     expect(container.querySelector('.source-button')?.textContent).toBe('1++');
     container.querySelector('.source-button')?.click();
     flushSync();
-    expect(showModal).toHaveBeenCalledOnce();
+    expect(showModal).toHaveBeenCalledTimes(2);
     const sourceRows = Array.from(container.querySelectorAll('.detail-source-table tr')).map(
       (row) => Array.from(row.children).map((cell) => cell.textContent?.trim()),
     );
@@ -556,6 +601,23 @@ describe('Validator', () => {
     });
     expect(datasetBar.classList.contains('is-emphasis')).toBe(true);
 
+    datasetBar.remove();
+  });
+
+  it('non mostra errore dataset quando il caricamento viene abortito', async () => {
+    vi.mocked(loadLatestDataset).mockRejectedValue(new DOMException('aborted', 'AbortError'));
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const datasetBar = document.createElement('div');
+    datasetBar.id = 'dataset-status-bar';
+    document.body.appendChild(datasetBar);
+
+    render(Validator);
+    await waitFor(() => expect(loadLatestDataset).toHaveBeenCalled());
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(datasetBar.textContent).not.toContain('non disponibile');
+    expect(datasetBar.classList.contains('is-emphasis')).toBe(false);
     datasetBar.remove();
   });
 

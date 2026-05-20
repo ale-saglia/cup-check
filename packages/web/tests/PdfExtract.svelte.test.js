@@ -192,6 +192,21 @@ describe('PdfExtract: elaborazione file', () => {
     expect(container.innerHTML).toContain('OCR pagina');
   });
 
+  it('annuncia OCR in corso quando il progresso non ha ancora pagine totali', async () => {
+    let progressCb;
+    vi.mocked(extractPdfText).mockResolvedValue({ pages: ['x'], totalChars: 1, needsOcr: true });
+    vi.mocked(ocrPdf).mockImplementation((_file, { onProgress }) => {
+      progressCb = onProgress;
+      return new Promise(() => {});
+    });
+    const { container } = render(PdfExtract);
+    uploadFiles(container, [makeFile('scansione.pdf')]);
+    await waitFor(() => expect(vi.mocked(ocrPdf)).toHaveBeenCalled());
+    progressCb?.({ ocrLoading: false, page: 0, totalPages: 0 });
+    flushSync();
+    expect(container.querySelector('[role="status"]')?.textContent).toContain('OCR in corso');
+  });
+
   it('mostra badge errore se extractPdfText rigetta', async () => {
     vi.mocked(extractPdfText).mockRejectedValue(new Error('PDF corrotto'));
     const { container } = render(PdfExtract);

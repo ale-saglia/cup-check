@@ -133,6 +133,11 @@ describe('extractCupsFromXml — branch addCup', () => {
     expect(extractCupsFromXml(xml)).toHaveLength(0);
   });
 
+  it('ignora CodiceCUP vuoto (textContent falsy)', () => {
+    const xml = `<?xml version="1.0"?><F><CodiceCUP></CodiceCUP></F>`;
+    expect(extractCupsFromXml(xml)).toHaveLength(0);
+  });
+
   it('ignora CUP nel testo libero già trovato via campo strutturato', () => {
     // Copre il branch false di !counts.has(candidate.value) — CUP già in counts
     const xml = `<?xml version="1.0"?>
@@ -220,6 +225,16 @@ describe('extractCupsFromXmlFile — invoiceData', () => {
       </F>`;
     const r = extractCupsFromXmlFile('multi-cig.xml', xml);
     expect(r.invoiceData?.cig).toBe('CIG111 CIG222');
+  });
+
+  it('CodiceCIG vuoto non viene aggiunto al set', () => {
+    const xml = `<?xml version="1.0"?>
+      <F>
+        <CodiceCIG></CodiceCIG>
+        <CodiceCIG>CIG111</CodiceCIG>
+      </F>`;
+    const r = extractCupsFromXmlFile('test.xml', xml);
+    expect(r.invoiceData?.cig).toBe('CIG111');
   });
 
   it('CIG duplicati vengono deduplicati', () => {
