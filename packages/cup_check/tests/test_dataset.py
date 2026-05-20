@@ -122,6 +122,25 @@ def test_manifest_requires_non_empty_strings() -> None:
         DatasetManifest.from_mapping(value)
 
 
+@pytest.mark.parametrize(
+    "tag",
+    [
+        "../../etc",
+        "../dataset-2026-05",
+        "dataset-2026-05/malicious",
+        "dataset-2026",
+        "dataset-26-05",
+        "DATASET-2026-05",
+    ],
+)
+def test_manifest_rejects_invalid_dataset_tag(tag: str) -> None:
+    value = manifest_mapping()
+    value["dataset_tag"] = tag
+
+    with pytest.raises(ValueError, match="dataset_tag must match dataset-YYYY-MM"):
+        DatasetManifest.from_mapping(value)
+
+
 def test_manifest_requires_non_negative_integers() -> None:
     value = manifest_mapping()
     value["n_records"] = -1

@@ -1,9 +1,12 @@
 from __future__ import annotations
 
 import json
+import re
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
+
+_DATASET_TAG_RE = re.compile(r"^dataset-\d{4}-\d{2}$")
 
 
 @dataclass(frozen=True)
@@ -80,9 +83,13 @@ class DatasetManifest:
         ):
             raise ValueError("cup_index.files must be a non-empty list of strings")
 
+        dataset_tag = _string(value["dataset_tag"], "dataset_tag")
+        if not _DATASET_TAG_RE.match(dataset_tag):
+            raise ValueError("dataset_tag must match dataset-YYYY-MM")
+
         return cls(
             schema_version=_integer(value["schema_version"], "schema_version"),
-            dataset_tag=_string(value["dataset_tag"], "dataset_tag"),
+            dataset_tag=dataset_tag,
             released_at=_string(value["released_at"], "released_at"),
             sources_snapshot_date=_string(
                 value["sources_snapshot_date"], "sources_snapshot_date"
