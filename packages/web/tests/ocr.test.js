@@ -28,6 +28,7 @@ function makeDoc(pageCount) {
 function makeWorker(textPerPage = 'testo ocr') {
   return {
     recognize: vi.fn().mockResolvedValue({ data: { text: textPerPage } }),
+    terminate: vi.fn().mockResolvedValue(undefined),
   };
 }
 
@@ -75,6 +76,41 @@ describe('ocrPdf', () => {
 
     expect(createWorker).toHaveBeenCalledOnce();
     expect(worker.recognize).toHaveBeenCalledTimes(2);
+  });
+
+  it('terminateOcrWorker termina il singleton e permette di crearne uno nuovo', async () => {
+    const doc = makeDoc(1);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    const firstWorker = makeWorker('prima');
+    const secondWorker = makeWorker('seconda');
+    createWorker.mockResolvedValueOnce(firstWorker).mockResolvedValueOnce(secondWorker);
+
+    const { ocrPdf, terminateOcrWorker } = await loadOcr();
+    await ocrPdf(fakeFile);
+    await terminateOcrWorker();
+    await ocrPdf(fakeFile);
+
+    expect(firstWorker.terminate).toHaveBeenCalledOnce();
+    expect(createWorker).toHaveBeenCalledTimes(2);
+    expect(secondWorker.recognize).toHaveBeenCalledOnce();
+  });
+
+  it('terminateOcrWorker è no-op se il worker non è stato creato', async () => {
+    const { terminateOcrWorker } = await loadOcr();
+    await expect(terminateOcrWorker()).resolves.toBeUndefined();
+    expect(createWorker).not.toHaveBeenCalled();
+  });
+
+  it('terminateOcrWorker assorbe errori da worker in bootstrap fallito', async () => {
+    const doc = makeDoc(1);
+    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    createWorker.mockRejectedValue(new Error('worker non disponibile'));
+
+    const { ocrPdf, terminateOcrWorker } = await loadOcr();
+    const pendingOcr = ocrPdf(fakeFile);
+
+    await expect(terminateOcrWorker()).resolves.toBeUndefined();
+    await expect(pendingOcr).rejects.toThrow('worker non disponibile');
   });
 
   it('chiama onProgress con ocrLoading=true prima del caricamento worker, poi false', async () => {

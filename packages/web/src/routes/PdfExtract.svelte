@@ -1,10 +1,11 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { i18n } from '../i18n/i18n.svelte.js';
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
   import { validateCup, OUTCOMES } from '../lib/core/validator.js';
   import { extractPdfText } from '../lib/pdf/extract-text.js';
-  import { ocrPdf } from '../lib/pdf/ocr.js';
+  import { ocrPdf, terminateOcrWorker } from '../lib/pdf/ocr.js';
   import { extractCupsFromPages } from '../lib/pdf/extract-cups.js';
   import { buildVerificatoreCsv, buildExportCsv } from '../lib/pdf/pdf-csv.js';
   import EntryList from '../components/EntryList.svelte';
@@ -214,11 +215,17 @@
 
   function handleClear() {
     generation++;
+    void terminateOcrWorker();
     entries = [];
     queue.length = 0;
     processing = false;
     liveAnnouncement = i18n.t('pdf.cleared');
   }
+
+  onDestroy(() => {
+    generation++;
+    void terminateOcrWorker();
+  });
 
   // ── Dropzone handlers ──────────────────────────────────────────────────────
 

@@ -29,6 +29,19 @@ function getOcrWorker(): Promise<Worker> {
   return _workerPromise;
 }
 
+export async function terminateOcrWorker(): Promise<void> {
+  const workerPromise = _workerPromise;
+  _workerPromise = null;
+  if (!workerPromise) return;
+
+  try {
+    const worker = await workerPromise;
+    await worker.terminate();
+  } catch {
+    // Cleanup is best-effort: callers use it while leaving or clearing the view.
+  }
+}
+
 export async function ocrPdf(
   file: File,
   { onProgress }: { onProgress?: (progress: OcrProgressEvent) => void } = {},

@@ -8,7 +8,7 @@ const mockGlobalWorkerOptions = { workerSrc: '' };
 
 vi.mock('pdfjs-dist', () => ({ GlobalWorkerOptions: mockGlobalWorkerOptions }));
 vi.mock('../src/lib/pdf/extract-text.js', () => ({ extractPdfText: vi.fn() }));
-vi.mock('../src/lib/pdf/ocr.js', () => ({ ocrPdf: vi.fn() }));
+vi.mock('../src/lib/pdf/ocr.js', () => ({ ocrPdf: vi.fn(), terminateOcrWorker: vi.fn() }));
 vi.mock('../src/lib/pdf/extract-cups.js', () => ({ extractCupsFromPages: vi.fn() }));
 vi.mock('../src/router.js', () => ({ navigate: vi.fn() }));
 vi.mock('../src/lib/data/transfer.js', () => ({ storeTransfer: vi.fn() }));
@@ -18,7 +18,7 @@ vi.mock('../src/lib/core/validator.js', () => ({
 }));
 
 import { extractPdfText } from '../src/lib/pdf/extract-text.js';
-import { ocrPdf } from '../src/lib/pdf/ocr.js';
+import { ocrPdf, terminateOcrWorker } from '../src/lib/pdf/ocr.js';
 import { extractCupsFromPages } from '../src/lib/pdf/extract-cups.js';
 import { navigate } from '../src/router.js';
 import { storeTransfer } from '../src/lib/data/transfer.js';
@@ -75,6 +75,7 @@ async function waitError() {
 beforeEach(() => {
   vi.mocked(extractPdfText).mockResolvedValue({ pages: [CUP1], totalChars: 100, needsOcr: false });
   vi.mocked(ocrPdf).mockResolvedValue({ pages: [CUP1] });
+  vi.mocked(terminateOcrWorker).mockResolvedValue(undefined);
   vi.mocked(extractCupsFromPages).mockReturnValue(makeExtractResult());
   vi.mocked(storeTransfer).mockReturnValue('test-transfer-id');
   URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
@@ -554,6 +555,13 @@ describe('PdfExtract: azioni globali', () => {
     expect(container.querySelector('#pdf-results-area')).toBeNull();
   });
 
+  it('"Pulisci" termina il worker OCR se presente', async () => {
+    const container = await renderWithProcessedCup();
+    container.querySelector('#pdf-clear-btn')?.click();
+    flushSync();
+    expect(vi.mocked(terminateOcrWorker)).toHaveBeenCalledOnce();
+  });
+
   it('i pulsanti Apri/Esporta sono disabilitati se non ci sono CUP completati', async () => {
     vi.mocked(extractPdfText).mockReturnValue(new Promise(() => {}));
     const { container } = render(PdfExtract);
@@ -710,5 +718,15 @@ describe('PdfExtract: clearAll durante elaborazione', () => {
 
     expect(container.querySelector('#pdf-results-area')).not.toBeNull();
     expect(container.querySelector('.cup-cell')).not.toBeNull();
+  });
+});
+
+// ── cleanup rotta ─────────────────────────────────────────────────────────────
+
+describe('PdfExtract: cleanup rotta', () => {
+  it('termina il worker OCR quando la rotta viene smontata', () => {
+    const view = render(PdfExtract);
+    view.unmount();
+    expect(vi.mocked(terminateOcrWorker)).toHaveBeenCalledOnce();
   });
 });
