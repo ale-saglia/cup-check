@@ -418,7 +418,8 @@ describe('XmlExtract: azioni globali', () => {
   it('"Esporta CSV" crea un blob e avvia il download', async () => {
     const container = await renderWithProcessedCup();
     container.querySelector('#pdf-export-btn')?.click();
-    expect(URL.createObjectURL).toHaveBeenCalledOnce();
+    // createObjectURL è chiamata una volta per l'entry (objectUrl) e una per il blob export
+    expect(URL.createObjectURL).toHaveBeenCalledTimes(2);
     expect(URL.revokeObjectURL).not.toHaveBeenCalled();
     await waitFor(() => expect(URL.revokeObjectURL).toHaveBeenCalledOnce());
   });

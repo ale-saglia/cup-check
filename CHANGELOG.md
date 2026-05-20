@@ -27,6 +27,7 @@
 - Tronca le celle CUP troppo lunghe nella tabella risultati per evitare overflow visivo.
 - Migra `read-excel-file` alla v9.
 - Aggiorna le dipendenze npm e le GitHub Actions tramite Dependabot.
+- I nomi dei file nella tabella di estrazione CUP da PDF e XML sono ora cliccabili: aprono il file caricato in una nuova scheda del browser tramite blob URL, facilitando la verifica del contenuto.
 
 ## 0.4.1 - 2026-05-14
 

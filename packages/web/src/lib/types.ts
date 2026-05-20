@@ -118,6 +118,7 @@ export interface Cup {
 export interface Entry {
   id: number;
   file: File | null;
+  objectUrl: string | null;
   name: string;
   status: EntryStatus;
   source: 'text' | 'ocr' | 'xml' | null;

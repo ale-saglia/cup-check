@@ -59,6 +59,7 @@
       entries.push({
         id: nextId++,
         file,
+        objectUrl: URL.createObjectURL(file),
         name: file.name,
         status: 'queued',
         source: null,
@@ -209,9 +210,16 @@
     downloadBlob(blob, i18n.t('pdf.exportFileName'));
   }
 
+  function revokeObjectUrls() {
+    for (const entry of entries) {
+      if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+    }
+  }
+
   function handleClear() {
     generation++;
     void terminateOcrWorker();
+    revokeObjectUrls();
     entries = [];
     queue.length = 0;
     processing = false;
@@ -221,6 +229,7 @@
   onDestroy(() => {
     generation++;
     void terminateOcrWorker();
+    revokeObjectUrls();
   });
 
   // ── Dropzone handlers ──────────────────────────────────────────────────────

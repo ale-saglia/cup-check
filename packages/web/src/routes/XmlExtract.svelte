@@ -1,4 +1,5 @@
 <script lang="ts">
+  import { onDestroy } from 'svelte';
   import { i18n } from '../i18n/i18n.svelte.js';
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
@@ -48,6 +49,7 @@
       entries.push({
         id: nextId++,
         file,
+        objectUrl: URL.createObjectURL(file),
         name: file.name,
         status: 'queued',
         source: null,
@@ -180,13 +182,22 @@
     downloadBlob(blob, i18n.t('xml.exportFileName'));
   }
 
+  function revokeObjectUrls() {
+    for (const entry of entries) {
+      if (entry.objectUrl) URL.revokeObjectURL(entry.objectUrl);
+    }
+  }
+
   function handleClear() {
     generation++;
+    revokeObjectUrls();
     entries = [];
     queue.length = 0;
     processing = false;
     liveAnnouncement = i18n.t('xml.cleared');
   }
+
+  onDestroy(revokeObjectUrls);
 
   // ── Dropzone handlers ──────────────────────────────────────────────────────
 

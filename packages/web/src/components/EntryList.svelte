@@ -83,24 +83,24 @@
       {#each entries as entry (entry.id)}
         {#if entry.status === 'queued'}
           <tr>
-            <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+            {@render fileCell(entry)}
             <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge">{i18n.t('pdf.queued')}</span></td>
           </tr>
         {:else if entry.status === 'parsing'}
           <tr>
-            <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+            {@render fileCell(entry)}
             <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge">{i18n.t('pdf.readingPdf')}</span></td>
           </tr>
         {:else if entry.status === 'ocr'}
           {@const p = entry.ocrProgress}
           {@const label = p?.ocrLoading ? i18n.t('pdf.ocrLoading') : i18n.t('pdf.ocrPageShort', { page: p?.page ?? 0, total: p?.totalPages ?? 0 })}
           <tr>
-            <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+            {@render fileCell(entry)}
             <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge warn">{label}</span></td>
           </tr>
         {:else if entry.status === 'error'}
           <tr>
-            <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+            {@render fileCell(entry)}
             <td colspan="4" class="pdf-status-cell">
               <span class="badge bad">{i18n.t('pdf.error')}</span> {entry.error ?? ''}
             </td>
@@ -122,7 +122,7 @@
           <!-- status === 'done' -->
           {#if entry.cups.length === 0}
             <tr>
-              <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+              {@render fileCell(entry)}
               <td colspan="4" class="pdf-status-cell pdf-no-cup">{i18n.t('pdf.noCup')}</td>
               <td>
                 <button class="link-button" type="button" onclick={() => onAddManual(entry.id)}>
@@ -144,6 +144,16 @@
   </table>
 </div>
 
+{#snippet fileCell(entry: Entry)}
+  <td>
+    {#if entry.objectUrl}
+      <a class="detail-cell" href={entry.objectUrl} target="_blank" rel="noopener" title={entry.name}>{truncateName(entry.name)}</a>
+    {:else}
+      <span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span>
+    {/if}
+  </td>
+{/snippet}
+
 {#snippet invoiceCells(inv: InvoiceData | null | undefined)}
   <td>{inv?.data ?? ''}</td>
   <td>{inv?.numero ?? ''}</td>
@@ -156,7 +166,7 @@
 
 {#snippet cupRow(entry: Entry, cup: Cup)}
   <tr>
-    <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
+    {@render fileCell(entry)}
     {#if cup.editing}
       <td colspan="2">
         <input
