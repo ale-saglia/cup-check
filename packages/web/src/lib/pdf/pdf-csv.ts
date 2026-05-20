@@ -5,15 +5,15 @@ function safeCell(s: string): string {
 }
 
 function csvComma(value: unknown): string {
-  const s = String(value ?? '');
+  const s = safeCell(String(value ?? ''));
   if (/[,"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-  return safeCell(s);
+  return s;
 }
 
 function csvSemi(value: unknown): string {
-  const s = String(value ?? '');
+  const s = safeCell(String(value ?? ''));
   if (/[;"\n\r]/.test(s)) return `"${s.replaceAll('"', '""')}"`;
-  return safeCell(s);
+  return s;
 }
 
 function completedEntries(entries: Entry[]): Entry[] {

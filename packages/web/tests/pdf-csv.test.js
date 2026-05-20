@@ -76,6 +76,11 @@ describe('buildVerificatoreCsv', () => {
     expect(csv).not.toContain('"fattura.pdf"');
     expect(csv).toContain('fattura.pdf');
   });
+
+  it('csvComma: formula + virgola → apostrofo E quoting', () => {
+    const csv = buildVerificatoreCsv([makeEntry({ name: '=test,name.pdf' })]);
+    expect(csv).toContain('"\'=test,name.pdf"');
+  });
 });
 
 describe('buildExportCsv', () => {
@@ -152,6 +157,11 @@ describe('buildExportCsv', () => {
   it('csvSemi: prefisso apostrofo per @ nel nome file', () => {
     const csv = buildExportCsv([makeEntry({ name: '@note.pdf' })]);
     expect(csv).toContain("'@note.pdf");
+  });
+
+  it('csvSemi: formula + punto-e-virgola → apostrofo E quoting', () => {
+    const csv = buildExportCsv([makeEntry({ name: '=test;name.pdf' })]);
+    expect(csv).toContain('"\'=test;name.pdf"');
   });
 
   it('source null → stringa vuota nella colonna fonte', () => {
