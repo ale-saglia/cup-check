@@ -5,14 +5,19 @@ from __future__ import annotations
 
 import argparse
 import json
+import logging
 import re
 import tomllib
 from pathlib import Path
+from urllib.error import URLError
 from urllib.request import urlopen
 
 DEFAULT_MANIFEST_URL = (
     "https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json"
 )
+FALLBACK_MANIFEST = Path(__file__).parent / "python-versions-manifest.json"
+
+LOGGER = logging.getLogger(__name__)
 VERSION_RE = re.compile(r"^(\d+)\.(\d+)(?:\.(\d+))?")
 SPEC_RE = re.compile(r"(>=|<=|==|>|<|~=)\s*(\d+(?:\.\d+){1,2})")
 
@@ -53,8 +58,13 @@ def matches_specifier(version: tuple[int, int, int], specifier: str) -> bool:
 
 def load_manifest(manifest_source: str) -> list[dict[str, object]]:
     if manifest_source.startswith(("http://", "https://")):
-        with urlopen(manifest_source, timeout=20) as response:
-            return json.load(response)
+        try:
+            with urlopen(manifest_source, timeout=20) as response:
+                return json.load(response)
+        except (URLError, OSError) as exc:
+            LOGGER.warning("Manifest remoto non raggiungibile (%s), uso fallback committato.", exc)
+            with FALLBACK_MANIFEST.open(encoding="utf-8") as fallback:
+                return json.load(fallback)
     with Path(manifest_source).open(encoding="utf-8") as manifest_file:
         return json.load(manifest_file)
 
