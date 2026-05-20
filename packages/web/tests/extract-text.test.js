@@ -1,6 +1,8 @@
+// @vitest-environment jsdom
+
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { extractPdfText } from '../src/lib/pdf/extract-text.js';
-import { getDocument } from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 
 vi.mock('pdfjs-dist', () => ({
   GlobalWorkerOptions: { workerSrc: '' },
@@ -26,9 +28,24 @@ function makeDoc(pageTexts) {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  GlobalWorkerOptions.workerSrc = '';
 });
 
 describe('extractPdfText', () => {
+  it('configura il worker pdf.js prima di aprire il documento', async () => {
+    const doc = makeDoc(['testo sufficiente per non attivare ocr nel documento']);
+    getDocument.mockImplementation(() => {
+      expect(GlobalWorkerOptions.workerSrc).toBe(
+        new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href,
+      );
+      return { promise: Promise.resolve(doc) };
+    });
+
+    await extractPdfText(fakeFile);
+
+    expect(GlobalWorkerOptions.workerSrc).toContain('pdfjs/pdf.worker.min.mjs');
+  });
+
   it('estrae testo da un PDF nativo monopagina e segnala needsOcr=false', async () => {
     const text = 'CUP J91B21006430001 progetto infrastruttura comunale finanziato da fondi europei';
     const doc = makeDoc([text]);

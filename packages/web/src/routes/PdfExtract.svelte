@@ -1,5 +1,4 @@
 <script lang="ts">
-  import { onMount } from 'svelte';
   import { i18n } from '../i18n/i18n.svelte.js';
   import { navigate } from '../router.js';
   import { storeTransfer } from '../lib/data/transfer.js';
@@ -47,17 +46,6 @@
     if (queueAnnouncement && queueAnnouncement !== lastQueueAnnouncement) {
       liveAnnouncement = queueAnnouncement;
       lastQueueAnnouncement = queueAnnouncement;
-    }
-  });
-
-  // ── Lifecycle ──────────────────────────────────────────────────────────────
-
-  onMount(async () => {
-    try {
-      const { GlobalWorkerOptions } = await import('pdfjs-dist');
-      GlobalWorkerOptions.workerSrc = new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href;
-    } catch {
-      // silently fail; will surface as per-file error during extraction
     }
   });
 
