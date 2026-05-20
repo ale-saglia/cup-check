@@ -117,6 +117,8 @@
   "source.preview": "Anteprima - {file}",
   "source.row": "Riga",
   "source.column": "Colonna {number}",
+  "source.remove": "Rimuovi sorgente",
+  "source.emptySheetWarning": "Foglio vuoto: scegli un'altra scheda Excel o rimuovi questa sorgente.",
   "source.skipMissing": "Ignora celle CUP assenti",
   "source.rowsData": "{count} righe dati",
   "source.sheetMeta": "scheda \"{sheet}\"",

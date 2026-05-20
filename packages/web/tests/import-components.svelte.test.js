@@ -374,6 +374,41 @@ describe('ImportSourcePreview', () => {
     expect(onIncludeChange).toHaveBeenCalledWith(false);
   });
 
+  it('mostra warning e azione rimuovi per una sorgente senza colonne', () => {
+    const onRemove = vi.fn();
+    const emptySource = source({
+      parsed: parsed({
+        rawRows: [],
+        headers: [],
+        rows: [],
+        headerPresent: false,
+        headerDetectedAutomatically: false,
+        suggestedColumnIndex: 0,
+        selectedSheetName: 'Vuota',
+        sheetNames: ['Vuota', 'CUP'],
+      }),
+      included: false,
+      selectedColumnIndexes: [],
+    });
+    const { container } = render(ImportSourcePreview, {
+      props: {
+        source: emptySource,
+        onSheetChange: vi.fn(),
+        onHeaderChange: vi.fn(),
+        onColumnChange: vi.fn(),
+        onIncludeChange: vi.fn(),
+        onSkipMissingCupChange: vi.fn(),
+        onRemove,
+      },
+    });
+
+    expect(container.textContent).toContain('Foglio vuoto');
+    expect(container.querySelector('[id^="include-toggle-"]')?.disabled).toBe(true);
+    expect(container.querySelector('[id^="column-select-"]')).toBeNull();
+    container.querySelector('.import-remove-source')?.click();
+    expect(onRemove).toHaveBeenCalledOnce();
+  });
+
   it('nasconde il selettore scheda quando esiste una sola scheda Excel', () => {
     const { container } = render(ImportSourcePreview, {
       props: {
@@ -612,6 +647,22 @@ describe('ImportWizard', () => {
     expect(onSourcesChange).toHaveBeenCalledWith([
       expect.objectContaining({ id: '0:test.csv', included: false }),
     ]);
+  });
+
+  it('rimuove una sorgente dal wizard quando si usa Rimuovi sorgente', () => {
+    const onSourcesChange = vi.fn();
+    const removableSource = source({ id: '0:test.csv' });
+    const { container } = render(ImportWizard, {
+      props: {
+        sources: [removableSource],
+        onSourcesChange,
+        onConfirm: vi.fn(),
+        onCancel: vi.fn(),
+      },
+    });
+
+    container.querySelector('.import-remove-source')?.click();
+    expect(onSourcesChange).toHaveBeenCalledWith([]);
   });
 
   // D2.6 — accessibilità preparatoria

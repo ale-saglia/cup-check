@@ -670,8 +670,29 @@ textarea {
   min-width: 0;
 }
 
+.import-source-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  justify-content: flex-end;
+}
+
 .import-include-toggle {
   white-space: nowrap;
+}
+
+.import-remove-source {
+  min-height: 36px;
+}
+
+.import-source-warning {
+  margin: 0;
+  border-left: 3px solid var(--check);
+  padding: 10px 12px;
+  background: var(--check-bg);
+  color: var(--text);
+  font-weight: 650;
 }
 
 .import-sheet-select {
@@ -720,6 +741,10 @@ textarea {
 @media (max-width: 760px) {
   .import-source-header {
     grid-template-columns: 1fr;
+  }
+
+  .import-source-actions {
+    justify-content: flex-start;
   }
 
   .import-include-toggle {

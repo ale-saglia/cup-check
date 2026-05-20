@@ -304,6 +304,43 @@ describe('import-plan', () => {
     expect(rows[0].value).toBe('');
   });
 
+  it('esclude una sorgente XLSX quando la scheda selezionata e vuota', async () => {
+    const file = await workbookFileWithSheets([
+      {
+        name: 'Vuota',
+        rows: [],
+      },
+      {
+        name: 'CUP',
+        rows: [['CUP'], ['G17H03000130001']],
+      },
+    ]);
+
+    const [source] = await createImportSources([file]);
+    expect(source).toMatchObject({
+      sheetName: 'Vuota',
+      included: false,
+      selectedColumnIndexes: [],
+    });
+    expect(source.parsed.headers).toEqual([]);
+    expect(buildImportedCupRows([source])).toEqual([]);
+
+    const updated = await updateSourceSheet(source, 'CUP');
+    expect(updated).toMatchObject({
+      sheetName: 'CUP',
+      included: true,
+      selectedColumnIndexes: [0],
+    });
+    expect(buildImportedCupRows([updated])).toHaveLength(1);
+
+    const emptiedAgain = await updateSourceSheet(updated, 'Vuota');
+    expect(emptiedAgain).toMatchObject({
+      sheetName: 'Vuota',
+      included: false,
+      selectedColumnIndexes: [],
+    });
+  });
+
   it('aggiorna la colonna selezionata e la limita ai valori validi', async () => {
     const file = new File(['A,CUP,C\n1,G17H03000130001,3'], 'multi.csv', { type: 'text/csv' });
     const [source] = await createImportSources([file]);
@@ -313,6 +350,20 @@ describe('import-plan', () => {
 
     const clamped = updateSourceColumn(source, 99);
     expect(clamped.selectedColumnIndexes).toEqual([2]);
+
+    const emptySource = {
+      ...source,
+      parsed: { ...source.parsed, rawRows: [], headers: [], rows: [] },
+      selectedColumnIndexes: [],
+    };
+    const emptyUpdated = updateSourceColumn(emptySource, 1);
+    expect(emptyUpdated).toMatchObject({ included: false, selectedColumnIndexes: [] });
+
+    const emptyHeaderUpdated = updateSourceHeader(emptySource, false);
+    expect(emptyHeaderUpdated).toMatchObject({ included: false, selectedColumnIndexes: [] });
+
+    expect(updateSourceIncluded(emptySource, true).included).toBe(false);
+    expect(updateSourceIncluded(source, false).included).toBe(false);
   });
 });
 

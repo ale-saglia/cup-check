@@ -71,6 +71,11 @@
     message = '';
   }
 
+  function removeSource(source: ImportSource) {
+    onSourcesChange(sources.filter((candidate) => candidate.id !== source.id));
+    message = '';
+  }
+
   async function handleSheetChange(source: ImportSource, sheetName: string) {
     loading = true;
     message = '';
@@ -183,6 +188,7 @@
             onColumnChange={(columnIndex) => replaceSource(updateSourceColumn(source, columnIndex))}
             onIncludeChange={(included) => replaceSource(updateSourceIncluded(source, included))}
             onSkipMissingCupChange={(skip) => replaceSource(updateSourceSkipMissingCup(source, skip))}
+            onRemove={() => removeSource(source)}
             showFileName={index === 0}
           />
         {/each}

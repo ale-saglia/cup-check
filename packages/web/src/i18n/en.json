@@ -117,6 +117,8 @@
   "source.preview": "Preview - {file}",
   "source.row": "Row",
   "source.column": "Column {number}",
+  "source.remove": "Remove source",
+  "source.emptySheetWarning": "Empty sheet: choose another Excel sheet or remove this source.",
   "source.skipMissing": "Ignore missing CUP cells",
   "source.rowsData": "{count} data rows",
   "source.sheetMeta": "sheet \"{sheet}\"",

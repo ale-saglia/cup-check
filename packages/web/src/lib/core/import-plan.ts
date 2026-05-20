@@ -47,7 +47,8 @@ export async function updateSourceSheet(
     sheetName: parsed.selectedSheetName,
     parsed,
     headerPresent: parsed.headerPresent,
-    selectedColumnIndexes: [parsed.suggestedColumnIndex],
+    selectedColumnIndexes: parsed.headers.length > 0 ? [parsed.suggestedColumnIndex] : [],
+    included: parsed.headers.length > 0,
   };
 }
 
@@ -72,11 +73,20 @@ export function updateSourceHeader(source: ImportSource, headerPresent: boolean)
       ...(source.sheetName ? { selectedSheetName: source.sheetName } : {}),
     },
     headerPresent,
-    selectedColumnIndexes: [parsed.suggestedColumnIndex],
+    selectedColumnIndexes: parsed.headers.length > 0 ? [parsed.suggestedColumnIndex] : [],
+    included: parsed.headers.length > 0 ? source.included : false,
   };
 }
 
 export function updateSourceColumn(source: ImportSource, columnIndex: number): ImportSource {
+  if (source.parsed.headers.length === 0) {
+    return {
+      ...source,
+      selectedColumnIndexes: [],
+      included: false,
+    };
+  }
+
   const safeIndex = Math.max(0, Math.min(columnIndex, source.parsed.headers.length - 1));
   return {
     ...source,
@@ -87,7 +97,7 @@ export function updateSourceColumn(source: ImportSource, columnIndex: number): I
 export function updateSourceIncluded(source: ImportSource, included: boolean): ImportSource {
   return {
     ...source,
-    included,
+    included: source.parsed.headers.length > 0 ? included : false,
   };
 }
 
@@ -162,8 +172,8 @@ function createImportSource(file: File, parsed: ParsedFile, index: number): Impo
     ...(parsed.selectedSheetName ? { sheetName: parsed.selectedSheetName } : {}),
     parsed,
     headerPresent: parsed.headerPresent,
-    selectedColumnIndexes: [parsed.suggestedColumnIndex],
-    included: true,
+    selectedColumnIndexes: parsed.headers.length > 0 ? [parsed.suggestedColumnIndex] : [],
+    included: parsed.headers.length > 0,
     skipMissingCup: true,
   };
 }
