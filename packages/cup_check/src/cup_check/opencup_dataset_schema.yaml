@@ -1,5 +1,4 @@
 schema_version: 1
-table: cups
 category_sets:
   natura:
     manifest_key: natura_categories

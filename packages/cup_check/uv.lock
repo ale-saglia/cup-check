@@ -107,12 +107,15 @@ wheels = [
 [[package]]
 name = "cup-check"
 source = { editable = "." }
-dependencies = [
+
+[package.optional-dependencies]
+build = [
     { name = "pyyaml" },
 ]
 
 [package.dev-dependencies]
 dev = [
+    { name = "cup-check", extra = ["build"] },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -120,10 +123,12 @@ dev = [
 ]
 
 [package.metadata]
-requires-dist = [{ name = "pyyaml", specifier = ">=6.0,<7" }]
+requires-dist = [{ name = "pyyaml", marker = "extra == 'build'", specifier = ">=6.0,<7" }]
+provides-extras = ["build"]
 
 [package.metadata.requires-dev]
 dev = [
+    { name = "cup-check", extras = ["build"] },
     { name = "pre-commit", specifier = ">=4.0" },
     { name = "pytest", specifier = ">=8.0" },
     { name = "pytest-cov", specifier = ">=5.0" },
