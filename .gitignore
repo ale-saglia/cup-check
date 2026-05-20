@@ -1,18 +1,41 @@
-node_modules/
+# Build
 dist/
-coverage/
-data/
-.coverage
-coverage.xml
-junit.xml
 .vite/
-.pytest_cache/
-.ruff_cache/
+
+# Dipendenze
+node_modules/
 .venv/
+
+# Python
 __pycache__/
 *.pyc
-.DS_Store
-*.log
+.pytest_cache/
+.ruff_cache/
+.coverage
+coverage.xml
+
+# Test
+junit.xml
+coverage/
+
+# Asset scaricati a runtime (non versionati)
+data/
 *.traineddata
+
+# Log
+*.log
+
+# Editor e OS
 .vscode/
+.DS_Store
+
+# Strumenti AI
 .claude/
+
+# Credenziali e segreti
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+credentials*.json
