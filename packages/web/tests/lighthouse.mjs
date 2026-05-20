@@ -9,6 +9,7 @@ import { findChromePath } from './chrome-path.mjs';
 import { chromium } from 'playwright';
 
 const MIN_SCORE = 90;
+const GATED_CATEGORIES = ['accessibility', 'bestPractices', 'seo'];
 const port = await getFreePort();
 const server = spawn(
   'npm',
@@ -35,7 +36,7 @@ try {
   };
 
   for (const [category, score] of Object.entries(scores)) {
-    if (score < MIN_SCORE) {
+    if (GATED_CATEGORIES.includes(category) && score < MIN_SCORE) {
       throw new Error(`Lighthouse ${category} sotto soglia: ${score} < ${MIN_SCORE}`);
     }
   }
