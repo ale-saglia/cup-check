@@ -28,13 +28,13 @@ async function waitForMessage(messages, type) {
   throw new Error(`messaggio worker non ricevuto: ${type}`);
 }
 
-async function loadRealWorkerScope() {
+async function loadRealWorkerScope({ respondToLookup = true } = {}) {
   const messages = [];
   const scope = {
     onmessage: null,
     postMessage(message) {
       messages.push(message);
-      if (message.type === 'lookup-request') {
+      if (message.type === 'lookup-request' && respondToLookup) {
         queueMicrotask(() => {
           scope.onmessage?.({
             data: {
@@ -369,6 +369,30 @@ describe('validator.worker', () => {
     expect(messages.some((message) => message.type === 'lookup-request')).toBe(false);
     const resultChunk = messages.find((message) => message.type === 'result-chunk');
     expect(resultChunk.results[0].outcome).toBe('INVALIDO_FORMATO');
+  });
+
+  it('non resta appeso se il main thread non risponde al lookup', async () => {
+    const { scope, messages } = await loadRealWorkerScope({ respondToLookup: false });
+
+    scope.onmessage?.({
+      data: {
+        type: 'start',
+        rows: makeRows(['G17H03000130001']),
+        lookup: true,
+        chunkSize: 1,
+        lookupTimeoutMs: 1,
+      },
+    });
+
+    await waitForMessage(messages, 'complete');
+
+    expect(messages).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ type: 'lookup-request', cups: ['G17H03000130001'] }),
+      ]),
+    );
+    const resultChunk = messages.find((message) => message.type === 'result-chunk');
+    expect(resultChunk.results[0].outcome).toBe('NON_TROVATO_OPENCUP_DA_VERIFICARE');
   });
 
   it('riporta progresso completo anche con batch vuoto nel worker', async () => {

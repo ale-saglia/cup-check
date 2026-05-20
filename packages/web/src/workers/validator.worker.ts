@@ -9,6 +9,7 @@ type StartMessage = {
   currentYear?: number;
   lookup: boolean;
   chunkSize: number;
+  lookupTimeoutMs?: number;
 };
 
 type LookupResultMessage = {
@@ -25,17 +26,22 @@ type WorkerCtx = {
 };
 
 const ctx = self as unknown as WorkerCtx;
-const lookupResolvers = new Map<number, (foundCups: Set<string>) => void>();
+const DEFAULT_LOOKUP_TIMEOUT_MS = 30_000;
+const lookupResolvers = new Map<
+  number,
+  { resolve: (foundCups: Set<string>) => void; timeoutId: ReturnType<typeof setTimeout> }
+>();
 let nextLookupRequestId = 1;
 
 ctx.onmessage = (event) => {
   const message = event.data;
 
   if (message.type === 'lookup-result') {
-    const resolveLookup = lookupResolvers.get(message.requestId);
+    const pendingLookup = lookupResolvers.get(message.requestId);
     lookupResolvers.delete(message.requestId);
-    if (typeof resolveLookup === 'function') {
-      resolveLookup(new Set(message.foundCups));
+    if (pendingLookup) {
+      clearTimeout(pendingLookup.timeoutId);
+      pendingLookup.resolve(new Set(message.foundCups));
     }
     return;
   }
@@ -53,7 +59,13 @@ ctx.onmessage = (event) => {
 
 async function runBatch(message: StartMessage) {
   const startedAt = performance.now();
-  const { rows, currentYear, lookup, chunkSize } = message;
+  const {
+    rows,
+    currentYear,
+    lookup,
+    chunkSize,
+    lookupTimeoutMs = DEFAULT_LOOKUP_TIMEOUT_MS,
+  } = message;
   const raw = [];
 
   postProgress('validate', 0, rows.length);
@@ -66,7 +78,7 @@ async function runBatch(message: StartMessage) {
   }
 
   const unique = uniqueResultsByCup(raw);
-  const checked = lookup ? await applyLookup(unique, chunkSize) : unique;
+  const checked = lookup ? await applyLookup(unique, chunkSize, lookupTimeoutMs) : unique;
 
   for (let index = 0; index < checked.length; index += chunkSize) {
     ctx.postMessage({ type: 'result-chunk', results: checked.slice(index, index + chunkSize) });
@@ -75,7 +87,11 @@ async function runBatch(message: StartMessage) {
   ctx.postMessage({ type: 'complete', durationMs: performance.now() - startedAt });
 }
 
-async function applyLookup(results: UniqueResult[], chunkSize: number): Promise<UniqueResult[]> {
+async function applyLookup(
+  results: UniqueResult[],
+  chunkSize: number,
+  lookupTimeoutMs: number,
+): Promise<UniqueResult[]> {
   const checked: UniqueResult[] = [];
   postProgress('lookup', 0, results.length);
 
@@ -84,7 +100,8 @@ async function applyLookup(results: UniqueResult[], chunkSize: number): Promise<
     const cups = chunk
       .filter((result) => result.outcome === OUTCOMES.CHECK)
       .map((result) => result.normalizedValue);
-    const foundCups = cups.length > 0 ? await requestLookup(cups) : new Set<string>();
+    const foundCups =
+      cups.length > 0 ? await requestLookup(cups, lookupTimeoutMs) : new Set<string>();
 
     checked.push(
       ...chunk.map((result) => {
@@ -104,11 +121,15 @@ async function applyLookup(results: UniqueResult[], chunkSize: number): Promise<
   return checked;
 }
 
-function requestLookup(cups: string[]): Promise<Set<string>> {
+function requestLookup(cups: string[], timeoutMs: number): Promise<Set<string>> {
   const requestId = nextLookupRequestId;
   nextLookupRequestId += 1;
   return new Promise((resolve) => {
-    lookupResolvers.set(requestId, resolve);
+    const timeoutId = setTimeout(() => {
+      lookupResolvers.delete(requestId);
+      resolve(new Set<string>());
+    }, timeoutMs);
+    lookupResolvers.set(requestId, { resolve, timeoutId });
     ctx.postMessage({ type: 'lookup-request', requestId, cups });
   });
 }
