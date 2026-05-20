@@ -2,6 +2,7 @@ FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
 
 ARG NODE_MAJOR=22
 ARG ACTIONLINT_VERSION=1.7.12
+ARG UV_VERSION=0.11.14
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -33,9 +34,7 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list /
   && apt-get update \
   && apt-get install -y --no-install-recommends gh nodejs \
   && npm install -g lighthouse \
-  && curl -LsSf https://astral.sh/uv/install.sh | sh \
-  && mv /root/.local/bin/uv /usr/local/bin/uv \
-  && mv /root/.local/bin/uvx /usr/local/bin/uvx \
+  && pip install uv==${UV_VERSION} \
   && ACTIONLINT_ARCH="$(dpkg --print-architecture)" \
   && case "$ACTIONLINT_ARCH" in \
     amd64) ACTIONLINT_ARCH="amd64" ;; \
