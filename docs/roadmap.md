@@ -68,7 +68,7 @@ Ulteriori strumenti potranno essere aggiunti in milestone successive in base al 
 2. **Drag-and-drop multi-file nel verificatore principale**: il verificatore accetta più file CSV/XLSX contemporaneamente via input e drag-and-drop; le righe vengono concatenate in un unico batch con colonna `file_origine` aggiunta automaticamente; gestione coerente delle intestazioni tra file multipli.
 3. **WCAG 2.1 AA piena**: audit completo con Lighthouse e axe-core; focus management al cambio vista nel router; live region ARIA per avanzamento asincrono (lookup dataset, OCR, progress Worker); contrasto colore AA su tutti i componenti; etichette ARIA su tabelle risultati, input file e pulsanti icona; navigazione tastiera completa inclusi drag-and-drop; link "Salta al contenuto"; quality gate Lighthouse a11y integrato in CI.
 4. **i18n base**: architettura di traduzione minimale (file JSON `it`/`en` caricato dinamicamente); estrazione di tutte le stringhe UI, etichette esiti e messaggi errore nel bundle traduzioni; selettore lingua con persistenza in `localStorage`; inglese come prima lingua aggiuntiva; fixture e contratti interni restano in italiano.
-5. **Dichiarazione di accessibilità**: documento statico `accessibility.md` con conformità dichiarata, limitazioni note e contatto per segnalazioni.
+5. **Note di accessibilità**: documento statico `accessibility.md` con stato informativo di accessibilità, limitazioni note e contatto per segnalazioni.
 
 ## Milestone `0.6.0`
 

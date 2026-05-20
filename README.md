@@ -106,7 +106,7 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 ## Documentazione
 
 - [Guida utente](docs/user-guide.md)
-- [Dichiarazione di accessibilità](docs/accessibility.md)
+- [Note di accessibilità](docs/accessibility.md)
 - [Sviluppo](docs/development.md)
 - [Product](docs/product.md)
 - [Architettura](docs/architecture.md)

@@ -1,6 +1,8 @@
-# Dichiarazione di accessibilità
+# Note di accessibilità
 
-Questa dichiarazione descrive lo stato di accessibilità della web app `cup-check`, disponibile all'indirizzo <https://ale-saglia.github.io/cup-check/>.
+Questo documento descrive lo stato di accessibilità della web app `cup-check`, disponibile all'indirizzo <https://ale-saglia.github.io/cup-check/>.
+
+Il documento ha scopo informativo e non costituisce una dichiarazione di accessibilità ai sensi del DL 106/2018 o della direttiva UE 2016/2102. `cup-check` è un progetto open source e non è un soggetto obbligato alla pubblicazione tramite il modello e il form AgID.
 
 `cup-check` è una web app statica e local-first per la verifica preliminare di codici CUP e per l'estrazione di CUP da documenti PDF. L'obiettivo del progetto è rendere le funzioni principali utilizzabili anche con tecnologie assistive, navigazione da tastiera e impostazioni browser comuni.
 
@@ -15,7 +17,9 @@ La web app è progettata per essere conforme alle WCAG 2.1 livello AA per le fun
 - estrazione CUP da PDF con testo nativo o OCR locale;
 - cambio lingua italiano/inglese tramite selettore dedicato.
 
-Il quality gate automatico include un controllo Lighthouse accessibility con soglia minima `90`. La baseline locale registrata per la milestone D3 è `100`, ma il controllo automatico non sostituisce una verifica manuale con tastiera e screen reader.
+Il quality gate automatico include un controllo Lighthouse accessibility con soglia minima `90`. La baseline locale registrata per la milestone D3 è `100`.
+
+Lighthouse copre solo un sottoinsieme automatico dei criteri WCAG e non sostituisce un audit AA completo. Le verifiche complete includono anche criteri manuali, come gestione del focus, ordine logico di lettura, comprensibilità dei testi, alternative testuali contestuali, navigazione da tastiera e test con screen reader.
 
 ## Misure Adottate
 
@@ -62,8 +66,8 @@ Nella segnalazione, quando possibile, indicare:
 - passaggi per riprodurre il problema;
 - comportamento atteso.
 
-## Preparazione della dichiarazione
+## Preparazione del documento
 
-Questa dichiarazione è stata preparata per la milestone `0.5.0` sulla base della documentazione tecnica del progetto, dei gate automatici e delle verifiche manuali previste dal piano di migrazione.
+Questo documento è stato preparato per la milestone `0.5.0` sulla base della documentazione tecnica del progetto, dei gate automatici e delle verifiche manuali previste dal piano di migrazione.
 
 Ultimo aggiornamento: 2026-05-19.

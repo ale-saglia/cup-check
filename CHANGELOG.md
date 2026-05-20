@@ -19,7 +19,7 @@
 - Aggiunge `markdownlint` a pre-commit e `svelte-check` a Makefile, CI e pre-commit.
 - Aggiunge gate coverage al pre-push hook e verifica coverage a `check` e `release-check`.
 - Integra Codecov Bundle Analysis e Test Analytics per Python e web.
-- Pubblica la dichiarazione di accessibilità (`docs/accessibility.md`) e aggiunge la sezione compatibilità browser in `docs/technical-spec.md`.
+- Pubblica le note di accessibilità (`docs/accessibility.md`) e aggiunge la sezione compatibilità browser in `docs/technical-spec.md`.
 
 - Aggiunge test acceptance e anteprima con Chromium legacy (v109) tramite VNC per verificare la compatibilità con browser meno recenti.
 - Elimina il falso errore Tesseract `failed to load ita.special-words` che compariva alla prima esecuzione OCR.
