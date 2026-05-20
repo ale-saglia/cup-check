@@ -26,16 +26,16 @@ jobs:
       dataset_tag: ${{ steps.vars.outputs.dataset_tag }}
       snapshot_date: ${{ steps.vars.outputs.snapshot_date }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@v7
+      - uses: astral-sh/setup-uv@94527f2e458b27549849d47d273a16bec83a01e9 # v7
         with:
           enable-cache: true
           cache-dependency-glob: packages/cup_check/uv.lock
 
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
           python-version: "3.12"
 
@@ -66,7 +66,7 @@ jobs:
             "${{ steps.vars.outputs.cup_index_base_url }}"
         working-directory: packages/cup_check
 
-      - uses: actions/upload-artifact@v7
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: dataset-${{ steps.vars.outputs.dataset_tag }}
           path: dist/dataset/
@@ -79,7 +79,7 @@ jobs:
     permissions:
       contents: write
     steps:
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: dataset-${{ needs.build.outputs.dataset_tag }}
           path: dist/dataset/
@@ -114,7 +114,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
 
       - name: Prepare pinned web
         uses: ./.github/actions/prepare-pinned-web
@@ -122,7 +122,7 @@ jobs:
           github-token: ${{ github.token }}
           repository: ${{ github.repository }}
 
-      - uses: actions/download-artifact@v8
+      - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8
         with:
           name: dataset-${{ needs.build.outputs.dataset_tag }}
           path: dist/dataset/
@@ -135,9 +135,9 @@ jobs:
           cp dist/dataset/dataset-manifest.json "dist/pages-root/datasets/${TAG}/dataset-manifest.json"
           cp dist/dataset/cup-index.sqlite.* "dist/pages-root/datasets/${TAG}/"
 
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5
         with:
           path: dist/pages-root
       - id: deployment
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@cd2ce8fcbc39b97be8ca5fce6e763baed58fa128 # v5

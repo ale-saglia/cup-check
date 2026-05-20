@@ -70,13 +70,13 @@ runs:
           --dir "${WEB_ARTIFACT_DIR}"
         tar -xzf "${WEB_ARTIFACT_DIR}/web-dist.tar.gz" -C "${PAGES_ROOT}"
 
-    - uses: actions/checkout@v4
+    - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
       if: steps.web_artifact.outcome == 'failure'
       with:
         ref: ${{ steps.software.outputs.tag }}
         fetch-depth: 0
 
-    - uses: actions/setup-node@v4
+    - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       if: steps.web_artifact.outcome == 'failure'
       with:
         node-version: 22
