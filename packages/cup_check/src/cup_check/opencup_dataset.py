@@ -28,8 +28,6 @@ from typing import Any
 from urllib.request import urlopen
 from zipfile import ZipFile
 
-import yaml
-
 from cup_check.dataset import DatasetCupIndex, DatasetLatest, DatasetManifest, DatasetSchema
 from cup_check.validator import normalize_cup
 
@@ -448,6 +446,13 @@ def _record_from_row(row: dict[str, str | None], schema: dict[str, Any]) -> Proj
 
 
 def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
+    try:
+        import yaml  # noqa: PLC0415
+    except ImportError as exc:
+        raise ImportError(
+            "pyyaml è richiesto per elaborare lo schema dataset. "
+            "Installalo con: pip install 'cup-check[build]'"
+        ) from exc
     if schema_path is not None:
         return yaml.safe_load(Path(schema_path).read_text(encoding="utf-8"))
     return yaml.safe_load(

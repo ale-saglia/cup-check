@@ -556,6 +556,17 @@ def test_source_value_returns_none_for_non_str_non_list_source() -> None:
     assert _source_value({"COL": "valore"}, None) is None
 
 
+def test_iter_project_records_raises_import_error_when_yaml_missing(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    import sys
+
+    monkeypatch.setitem(sys.modules, "yaml", None)  # type: ignore[arg-type]
+    source_zip = write_projects_zip(tmp_path)
+    with pytest.raises(ImportError, match="pip install 'cup-check\\[build\\]'"):
+        tuple(iter_project_records(source_zip))
+
+
 def test_mapped_value_raises_for_unsupported_type() -> None:
     with pytest.raises(ValueError, match="unsupported OpenCUP mapping type: unknown_type"):
         _mapped_value({}, {"type": "unknown_type"})
