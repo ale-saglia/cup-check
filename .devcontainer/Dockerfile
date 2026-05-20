@@ -1,8 +1,8 @@
 FROM mcr.microsoft.com/devcontainers/python:1-3.12-bookworm
 
 ARG NODE_MAJOR=22
-ARG ACTIONLINT_VERSION=1.7.12
-ARG UV_VERSION=0.11.14
+
+COPY .devcontainer/requirements.txt /tmp/devcontainer-requirements.txt
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
@@ -34,20 +34,8 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list /
   && apt-get update \
   && apt-get install -y --no-install-recommends gh nodejs \
   && npm install -g lighthouse \
-  && pip install uv==${UV_VERSION} \
-  && ACTIONLINT_ARCH="$(dpkg --print-architecture)" \
-  && case "$ACTIONLINT_ARCH" in \
-    amd64) ACTIONLINT_ARCH="amd64" ;; \
-    arm64) ACTIONLINT_ARCH="arm64" ;; \
-    *) echo "Unsupported actionlint architecture: $ACTIONLINT_ARCH" >&2; exit 1 ;; \
-  esac \
-  && ACTIONLINT_ASSET="actionlint_${ACTIONLINT_VERSION}_linux_${ACTIONLINT_ARCH}.tar.gz" \
-  && curl -fsSLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/${ACTIONLINT_ASSET}" \
-  && curl -fsSLO "https://github.com/rhysd/actionlint/releases/download/v${ACTIONLINT_VERSION}/actionlint_${ACTIONLINT_VERSION}_checksums.txt" \
-  && grep -F "  ${ACTIONLINT_ASSET}" "actionlint_${ACTIONLINT_VERSION}_checksums.txt" | sha256sum -c - \
-  && tar -xzf "$ACTIONLINT_ASSET" actionlint \
-  && install -m 0755 actionlint /usr/local/bin/actionlint \
-  && rm -f actionlint "$ACTIONLINT_ASSET" "actionlint_${ACTIONLINT_VERSION}_checksums.txt" \
+  && pip install -r /tmp/devcontainer-requirements.txt \
+  && rm /tmp/devcontainer-requirements.txt \
   && ln -sf /usr/bin/chromium /usr/local/bin/google-chrome \
   && ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html \
   && apt-get clean \

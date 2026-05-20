@@ -29,3 +29,9 @@ updates:
       pip-dependencies:
         patterns:
           - "*"
+
+  - package-ecosystem: "pip"
+    directory: "/.devcontainer"
+    schedule:
+      interval: "weekly"
+      day: "monday"
