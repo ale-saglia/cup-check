@@ -17,7 +17,7 @@
   let entries = $state<Entry[]>([]);
   let nextId = $state(0);
   let processing = $state(false);
-  let queue: Entry[] = [];
+  let queue: number[] = [];
   let generation = $state(0);
   let liveAnnouncement = $state('');
   let lastQueueAnnouncement = '';
@@ -30,7 +30,7 @@
   let queueAnnouncement = $derived.by(() => {
     if (entries.length === 0) return '';
     const done = entries.filter((e) => e.status === 'done' || e.status === 'error').length;
-    const active = entries.find((e) => ['parsing', 'ocr'].includes(e.status));
+    const active = entries.find((e) => e.status === 'parsing' || e.status === 'ocr');
     if (active?.status === 'ocr') {
       const progress = active.ocrProgress;
       if (progress?.ocrLoading) return i18n.t('pdf.ocrLoadingFor', { file: active.name });
@@ -78,7 +78,7 @@
       });
     });
     // entries.slice() returns the reactive proxies; mutations via these proxies update the template
-    queue.push(...entries.slice(startIdx));
+    queue.push(...entries.slice(startIdx).map((entry) => entry.id));
     liveAnnouncement = i18n.t('pdf.addedToQueue', { count: files.length });
     drainQueue();
   }
@@ -89,8 +89,9 @@
     const gen = generation;
     try {
       while (queue.length > 0 && gen === generation) {
-        const entry = queue.shift()!;
-        await processEntry(entry);
+        const entryId = queue.shift()!;
+        const entry = findEntry(entryId);
+        if (entry) await processEntry(entry);
       }
     } finally {
       if (gen === generation) processing = false;

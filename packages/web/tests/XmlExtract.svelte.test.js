@@ -59,10 +59,17 @@ beforeEach(() => {
   vi.mocked(storeTransfer).mockReturnValue('test-transfer-id');
   URL.createObjectURL = vi.fn().mockReturnValue('blob:mock');
   URL.revokeObjectURL = vi.fn();
+  const originalCreateElement = document.createElement.bind(document);
+  vi.spyOn(document, 'createElement').mockImplementation((tagName, options) => {
+    const element = originalCreateElement(tagName, options);
+    if (tagName.toLowerCase() === 'a') element.click = vi.fn();
+    return element;
+  });
 });
 
 afterEach(() => {
   cleanup();
+  vi.restoreAllMocks();
   vi.clearAllMocks();
 });
 

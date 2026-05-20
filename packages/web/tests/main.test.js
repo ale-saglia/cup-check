@@ -10,6 +10,8 @@ const flush = async () => {
 // vi.mock is hoisted so the factory survives vi.resetModules() across tests.
 vi.mock('../src/lib/core/parser.js', () => ({ parseFile: vi.fn(), buildParsedRows: vi.fn() }));
 vi.mock('../src/lib/data/dataset-loader.js', () => ({ loadLatestDataset: vi.fn() }));
+const mockGlobalWorkerOptions = { workerSrc: '' };
+vi.mock('pdfjs-dist', () => ({ GlobalWorkerOptions: mockGlobalWorkerOptions }));
 
 const validCup = 'G17H03000130001';
 const missingCup = 'H11B22001230001';

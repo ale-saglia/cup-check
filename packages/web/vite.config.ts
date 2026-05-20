@@ -86,6 +86,10 @@ export default defineConfig({
 });
 
 function readAppVersion() {
+  if (process.env.VITE_APP_VERSION) {
+    return process.env.VITE_APP_VERSION;
+  }
+
   try {
     const tag = execSync('git describe --tags --match v[0-9]* --abbrev=0', {
       cwd: repoRoot,
@@ -96,11 +100,10 @@ function readAppVersion() {
     if (tag) {
       return tag.replace(/^v/, '');
     }
-  } catch (error) {
-    console.warn(
-      `Unable to derive app version from git tags; using ${fallbackVersion}.`,
-      error instanceof Error ? error.message : error,
-    );
+  } catch {
+    if (process.env.NODE_ENV !== 'test') {
+      console.info(`Unable to derive app version from git tags; using ${fallbackVersion}.`);
+    }
   }
 
   return fallbackVersion;
