@@ -11,7 +11,7 @@
 
 **[Web app](https://ale-saglia.github.io/cup-check/)** · [Python package](https://pypi.org/project/cup-check/) · [Documentazione](docs/product.md)
 
-![cup-check — web app](screenshot.png)
+![cup-check — web app](docs/assets/screenshot.png)
 
 Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, un CUP scritto male può bloccare controlli, rallentare pratiche e generare correzioni costose. Verificare manualmente centinaia o migliaia di codici prima di una trasmissione ufficiale e un'attività ripetitiva, lenta e soggetta a errore.
 
