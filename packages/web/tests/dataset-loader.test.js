@@ -156,16 +156,58 @@ describe('discoverLatestDataset', () => {
 });
 
 describe('loadDataset', () => {
-  it('returns the same in-flight promise through loadLatestDataset', async () => {
+  it('shares the same in-flight dataset load through loadLatestDataset', async () => {
     vi.resetModules();
     const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
     const pendingFetch = vi.fn(() => new Promise(() => {}));
 
-    const first = loadLatestDataset({ fetchFn: pendingFetch });
-    const second = loadLatestDataset({ fetchFn: vi.fn() });
+    loadLatestDataset({ fetchFn: pendingFetch });
+    loadLatestDataset({ fetchFn: vi.fn() });
 
-    expect(second).toBe(first);
     expect(pendingFetch).toHaveBeenCalledTimes(1);
+  });
+
+  it('keeps the shared dataset load alive until every caller aborts', async () => {
+    vi.resetModules();
+    const { loadLatestDataset } = await import('../src/lib/data/dataset-loader.js');
+    const sqliteBytes = await buildSqliteFixture();
+    const sha256s = [await computeSha256Hex(sqliteBytes)];
+    let resolveChunk;
+    let chunkSignal;
+    const fetchFn = vi.fn(async (url, init) => {
+      if (String(url) === './dataset-latest.json') return Response.json(latestPointer());
+      if (String(url) === MANIFEST_URL) {
+        return Response.json(
+          makeManifest(sqliteBytes.byteLength, sha256s, { files: ['cup-index.sqlite.000'] }),
+        );
+      }
+      if (String(url) === CHUNK_URL_0) {
+        chunkSignal = init?.signal;
+        return new Promise((resolve) => {
+          resolveChunk = () => resolve(new Response(sqliteBytes));
+        });
+      }
+      return notFound();
+    });
+    const initSql = () => initSqlJs({ locateFile: () => wasmPath });
+    const firstController = new AbortController();
+    const secondController = new AbortController();
+
+    const first = loadLatestDataset({ fetchFn, initSql, signal: firstController.signal });
+    const second = loadLatestDataset({ fetchFn, initSql, signal: secondController.signal });
+    await vi.waitFor(() => expect(chunkSignal).toBeDefined());
+
+    firstController.abort();
+
+    await expect(first).rejects.toThrow(/aborted/i);
+    expect(chunkSignal.aborted).toBe(false);
+
+    resolveChunk();
+    const dataset = await second;
+
+    expect(dataset.hasCup('G17H03000130001')).toBe(true);
+    expect(fetchFn).toHaveBeenCalledTimes(3);
+    dataset.close();
   });
 
   it('clears the cached promise after a failed loadLatestDataset call', async () => {
@@ -181,12 +223,11 @@ describe('loadDataset', () => {
     const first = loadLatestDataset({ fetchFn: firstFetch });
     const sameFailure = loadLatestDataset({ fetchFn: vi.fn() });
 
-    expect(sameFailure).toBe(first);
     await expect(first).rejects.toThrow('first dataset discovery failed');
+    await expect(sameFailure).rejects.toThrow('first dataset discovery failed');
 
     const retry = loadLatestDataset({ fetchFn: retryFetch });
 
-    expect(retry).not.toBe(first);
     await expect(retry).rejects.toThrow('retry dataset discovery failed');
     expect(firstFetch).toHaveBeenCalledTimes(2);
     expect(retryFetch).toHaveBeenCalledTimes(2);

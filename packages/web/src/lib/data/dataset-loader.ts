@@ -22,18 +22,86 @@ interface LoadDatasetOptions {
 }
 
 let datasetPromise: Promise<Dataset> | null = null;
+let datasetController: AbortController | null = null;
+const datasetConsumers = new Set<DatasetConsumer>();
+
+interface DatasetConsumer {
+  onProgress: (progress: DownloadProgress) => void;
+}
 
 export function loadLatestDataset(options: LoadDatasetOptions = {}): Promise<Dataset> {
   if (!datasetPromise) {
-    const pendingDataset = loadDataset(options).catch((error) => {
+    datasetController = new AbortController();
+    const { fetchFn, initSql } = options;
+    const pendingDataset = loadDataset({
+      fetchFn,
+      initSql,
+      signal: datasetController.signal,
+      onProgress: (progress) => {
+        for (const consumer of datasetConsumers) {
+          consumer.onProgress(progress);
+        }
+      },
+    }).catch((error) => {
       if (datasetPromise === pendingDataset) {
         datasetPromise = null;
+        datasetController = null;
+        datasetConsumers.clear();
       }
       throw error;
     });
     datasetPromise = pendingDataset;
   }
-  return datasetPromise;
+
+  return followDatasetPromise(datasetPromise, options);
+}
+
+function followDatasetPromise(promise: Promise<Dataset>, options: LoadDatasetOptions): Promise<Dataset> {
+  const consumer: DatasetConsumer = {
+    onProgress: options.onProgress ?? (() => {}),
+  };
+  datasetConsumers.add(consumer);
+
+  const unregister = () => {
+    datasetConsumers.delete(consumer);
+    if (datasetConsumers.size === 0 && datasetController && !datasetController.signal.aborted) {
+      datasetController.abort();
+    }
+  };
+
+  if (!options.signal) {
+    return promise.finally(unregister);
+  }
+
+  if (options.signal.aborted) {
+    unregister();
+    return Promise.reject(makeAbortError(options.signal.reason));
+  }
+
+  return new Promise<Dataset>((resolve, reject) => {
+    const onAbort = () => {
+      unregister();
+      reject(makeAbortError(options.signal?.reason));
+    };
+    options.signal?.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      (dataset) => {
+        options.signal?.removeEventListener('abort', onAbort);
+        unregister();
+        resolve(dataset);
+      },
+      (error) => {
+        options.signal?.removeEventListener('abort', onAbort);
+        unregister();
+        reject(error);
+      },
+    );
+  });
+}
+
+function makeAbortError(reason?: unknown): DOMException {
+  if (reason instanceof DOMException && reason.name === 'AbortError') return reason;
+  return new DOMException('The operation was aborted.', 'AbortError');
 }
 
 export async function discoverLatestDataset(fetchFn: FetchFn = fetch, signal?: AbortSignal): Promise<DatasetLatestPointer> {
