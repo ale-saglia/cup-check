@@ -138,6 +138,36 @@ def test_open_cup_checker_uses_local_latest_and_manifest_files(tmp_path: Path) -
     assert result.outcome is Outcome.TROVATO_OPENCUP
 
 
+def test_open_cup_checker_rejects_dataset_requiring_newer_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
+    manifest = manifest_for_sqlite(sqlite_path)
+    manifest = DatasetManifest.from_mapping(
+        {**manifest_mapping(manifest), "min_software_version": "99.0.0"}
+    )
+    monkeypatch.setattr(checker_module, "_pkg_version", lambda _: "0.5.0")
+
+    with pytest.raises(ValueError, match="dataset requires cup-check >= 99.0.0"):
+        OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
+
+
+def test_open_cup_checker_accepts_dataset_compatible_with_installed_version(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
+    manifest = manifest_for_sqlite(sqlite_path)
+    monkeypatch.setattr(checker_module, "_pkg_version", lambda _: "0.3.0")
+
+    checker = OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
+    checker.close()
+
+
+def test_version_tuple_rejects_malformed_version() -> None:
+    with pytest.raises(ValueError, match="cannot parse version"):
+        checker_module._version_tuple("not-a-version")
+
+
 def test_open_cup_checker_rejects_unsupported_dataset_table(tmp_path: Path) -> None:
     sqlite_path = write_cup_index(tmp_path, ["G17H03000130001"])
     manifest = manifest_for_sqlite(sqlite_path)

@@ -2,10 +2,12 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 import sqlite3
 import tempfile
 from collections.abc import Iterable
 from dataclasses import replace
+from importlib.metadata import version as _pkg_version
 from pathlib import Path
 from typing import Any
 from urllib.request import urlopen
@@ -20,6 +22,7 @@ from cup_check.models import Outcome, ValidationResult
 from cup_check.validator import validate_format
 
 DEFAULT_LATEST_DATASET_URL = "https://ale-saglia.github.io/cup-check/dataset-latest.json"
+_SEMVER_RE = re.compile(r"^(\d+)\.(\d+)\.(\d+)")
 _DATASET_JSON_TIMEOUT_SECONDS = 30
 _DATASET_CHUNK_TIMEOUT_SECONDS = 300
 
@@ -137,7 +140,20 @@ class OpenCupChecker:
         return cursor.fetchone() is not None
 
 
+def _version_tuple(v: str) -> tuple[int, ...]:
+    m = _SEMVER_RE.match(v)
+    if m is None:
+        raise ValueError(f"cannot parse version: {v!r}")
+    return tuple(int(x) for x in m.groups())
+
+
 def _assert_supported_index(connection: sqlite3.Connection, manifest: DatasetManifest) -> None:
+    installed = _pkg_version("cup-check")
+    if _version_tuple(manifest.min_software_version) > _version_tuple(installed):
+        raise ValueError(
+            f"dataset requires cup-check >= {manifest.min_software_version},"
+            f" installed: {installed}"
+        )
     if manifest.schema.table != "cup_index":
         raise ValueError("unsupported dataset table")
     table = connection.execute(
