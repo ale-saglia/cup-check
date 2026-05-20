@@ -46,6 +46,21 @@ make web-preview-dataset
 
 Vedi [Technical Spec](technical-spec.md#comandi) per la descrizione dettagliata di ciascun comando.
 
+## Checklist release
+
+Prima di taggare una release software `vX.Y.Z`:
+
+1. Esegui `make release-check`.
+2. Genera il draft changelog con `make draft-changelog VERSION=X.Y.Z`.
+3. Rinomina in `CHANGELOG.md` la sezione `## Unreleased` in `## X.Y.Z - YYYY-MM-DD` e rivedi le note.
+4. Aggiorna i riferimenti di versione in `README.md` e `docs/roadmap.md` solo quando la release sta davvero per essere taggata.
+5. Committa la preparazione con firma: `git commit -S -m "chore(release): prepara X.Y.Z"`.
+6. Crea il tag firmato: `git tag -s vX.Y.Z -m "vX.Y.Z"`.
+7. Pusha commit e tag, poi verifica `release-web.yml`, `release-python.yml`, note GitHub non vuote e asset attesi.
+8. Dopo il tag, riapri una sezione `## Unreleased` vuota con un commit separato e firmato.
+
+Per le release dataset, verifica che l'ultima release software abbia `web-dist.tar.gz`, controlla manifest e chunk della release `dataset-YYYY-MM`, e conferma che `dataset-latest.json` punti allo snapshot pubblicato su Pages.
+
 ## Svelte 5 — note e gotcha
 
 ### Identità dei proxy reattivi con `$state`
