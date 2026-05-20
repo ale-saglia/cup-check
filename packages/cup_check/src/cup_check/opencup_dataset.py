@@ -158,7 +158,7 @@ def _download_url_to_path(
                 exc,
             )
             if retry_backoff_seconds > 0:
-                time.sleep(retry_backoff_seconds)
+                time.sleep(retry_backoff_seconds * (2 ** (attempt - 1)))
 
 
 def _copy_download_to_path(
