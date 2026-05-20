@@ -229,11 +229,13 @@ Il tool PDF non introduce nuovi outcome nel validatore formale. Gli esiti restan
 | `ci.yml`               | PR e push su `main`                  | lint, test, build, upload coverage Python e web su Codecov |
 | `release-web.yml`      | push tag `v*`                        | build web statica, deploy Pages e allega `web-dist.tar.gz` alla release |
 | `release-python.yml`   | push tag `v*` o `workflow_dispatch`  | build e publish PyPI                                 |
-| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset e aggiorna Pages dal web pinnato |
+| `release-dataset.yml`  | 5 del mese o `workflow_dispatch`     | scarica OpenCUP, compila asset statici, pubblica release dataset, elimina dataset scaduti e aggiorna Pages dal web pinnato |
 
 La web app resta pinnata alle release software `v*`. Le release dataset possono ridistribuire Pages solo partendo da `web-dist.tar.gz` dell'ultima release `v*` o da un checkout della stessa tag; non pubblicano codice web da `main`. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` servito da Pages e usa la GitHub Releases API solo come fallback di discovery; anche in questo caso il `manifest_url` punta a GitHub Pages per evitare blocchi CORS. Se il dataset non è ancora pubblicato su Pages il lookup degrada in modo cautelativo.
 
 Il download dataset è rafforzato a due livelli: il browser verifica lo SHA-256 di ogni chunk prima di ricomporre lo SQLite e ritenta i chunk falliti; il service worker usa una cache dataset dedicata, separata dalla cache app-shell, con eviction delle release `dataset-YYYY-MM` precedenti. La libreria Python usa timeout espliciti per manifest/latest, chunk dataset già elaborati e download bulk OpenCUP.
+
+Le GitHub Releases dataset hanno retention automatica di 3 mesi configurata da `DATASET_RETENTION_MONTHS` in `release-dataset.yml`; le release e i tag `dataset-YYYY-MM` più vecchi della finestra vengono rimossi dopo la pubblicazione del nuovo dataset.
 
 La build web ricava la versione dal tag software Git più vicino che rispetta `v[0-9]*`, rimuovendo la `v` iniziale per l'UI. Se i tag non sono disponibili, usa il marker non-release `0.0.0-dev` come fallback. La stessa versione alimenta il cache name del service worker.
 

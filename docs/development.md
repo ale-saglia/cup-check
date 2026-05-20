@@ -163,6 +163,11 @@ non stia pubblicando una versione diversa da quella attesa.
    ripubblica lo stesso tag solo dopo aver compreso l'errore: il workflow elimina
    e ricrea la release dataset con lo stesso tag.
 
+Il workflow conserva su GitHub Releases i dataset degli ultimi 3 mesi
+(`DATASET_RETENTION_MONTHS`) e rimuove automaticamente release e tag
+`dataset-YYYY-MM` più vecchi. Pages espone solo il dataset corrente tramite
+`dataset-latest.json` e `datasets/dataset-YYYY-MM/`.
+
 ### Verifiche Post-Release
 
 - Controlla che il badge "Latest release" nel README punti alla nuova release
