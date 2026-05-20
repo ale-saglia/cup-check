@@ -25,6 +25,9 @@ jobs:
   build:
     name: Build dataset
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write
     outputs:
       dataset_tag: ${{ steps.vars.outputs.dataset_tag }}
       snapshot_date: ${{ steps.vars.outputs.snapshot_date }}
@@ -70,6 +73,14 @@ jobs:
             "../../data/OpendataProgetti.zip"
         working-directory: packages/cup_check
 
+      - name: Sign manifest with cosign (keyless OIDC)
+        env:
+          COSIGN_YES: "true"
+        run: |
+          cosign sign-blob \
+            --bundle dist/dataset/dataset-manifest.json.sigstore.json \
+            dist/dataset/dataset-manifest.json
+
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
           name: dataset-${{ steps.vars.outputs.dataset_tag }}
@@ -106,6 +117,7 @@ jobs:
             --notes "Dataset OpenCUP aggiornato al ${SNAPSHOT}." \
             --latest=false \
             dist/dataset/dataset-manifest.json \
+            dist/dataset/dataset-manifest.json.sigstore.json \
             dist/dataset/dataset-latest.json \
             "${CHUNK_FILES[@]}"
 
@@ -176,6 +188,7 @@ jobs:
           mkdir -p "dist/pages-root/datasets/${TAG}"
           cp dist/dataset/dataset-latest.json dist/pages-root/dataset-latest.json
           cp dist/dataset/dataset-manifest.json "dist/pages-root/datasets/${TAG}/dataset-manifest.json"
+          cp dist/dataset/dataset-manifest.json.sigstore.json "dist/pages-root/datasets/${TAG}/dataset-manifest.json.sigstore.json"
           cp dist/dataset/cup-index.sqlite.* "dist/pages-root/datasets/${TAG}/"
 
       - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6

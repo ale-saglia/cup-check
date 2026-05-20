@@ -60,7 +60,7 @@ Browser utente
 Flusso di deploy:
 
 1. `release-web.yml` builda la web app solo su tag software `v*`, deploya Pages e allega `web-dist.tar.gz` alla release software.
-2. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto e pubblica manifest e chunk nella release dataset (`dataset-YYYY-MM`).
+2. `release-dataset.yml` (mensile o manuale) scarica OpenCUP, compila l'indice CUP esatto, firma il manifest con cosign (keyless OIDC) e pubblica manifest, bundle di firma e chunk nella release dataset (`dataset-YYYY-MM`). Vedi [Verifica del manifest](governance.md#verifica-del-manifest).
 3. Lo stesso workflow dataset scarica `web-dist.tar.gz` dall'ultima release `v*` oppure, se manca, ricostruisce la web app facendo checkout di quella tag; poi aggiunge `dataset-latest.json` e `datasets/dataset-YYYY-MM/*` e ridistribuisce Pages.
 4. Il browser scopre dinamicamente l'ultimo dataset da `dataset-latest.json` su Pages, scarica i chunk con verifica SHA-256 per-file e retry, li salva in una cache dataset dedicata distinta dalla cache app-shell, mantiene solo l'ultima release `dataset-YYYY-MM` e poi verifica localmente i CUP unici. La tabella e l'export possono espandere gli stessi risultati sulle righe originali senza ripetere lookup o validazione.
 5. La libreria Python usa `OpenCupChecker` per scaricare e cachare localmente gli stessi asset statici, ricomporre l'indice SQLite e verificare i CUP via `sqlite3`.
