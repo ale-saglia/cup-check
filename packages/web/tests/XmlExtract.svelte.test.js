@@ -440,13 +440,13 @@ describe('XmlExtract: azioni globali', () => {
     expect(container.querySelector('#pdf-export-btn')?.disabled).toBe(true);
   });
 
-  it('i pulsanti Apri/Esporta sono disabilitati se completato ma senza CUP', async () => {
+  it('Apri è disabilitato se completato senza CUP, Esporta è abilitato', async () => {
     vi.mocked(extractCupsFromXmlFile).mockReturnValue(makeExtractResult([]));
     const { container } = render(XmlExtract);
     uploadFiles(container, [makeFile()]);
     await waitDone();
     expect(container.querySelector('#pdf-send-btn')?.disabled).toBe(true);
-    expect(container.querySelector('#pdf-export-btn')?.disabled).toBe(true);
+    expect(container.querySelector('#pdf-export-btn')?.disabled).toBe(false);
   });
 
   it('"Pulisci" non lascia processing bloccato per i file successivi', async () => {

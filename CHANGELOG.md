@@ -21,6 +21,7 @@
 - Integra Codecov Bundle Analysis e Test Analytics per Python e web.
 - Pubblica le note di accessibilità (`docs/accessibility.md`) e aggiunge la sezione compatibilità browser in `docs/technical-spec.md`.
 
+- Arricchisce l'export CSV del tool XML con sette colonne aggiuntive estratte dai metadati FatturaPA: `data_fattura`, `numero_fattura`, `importo_totale` (decimale con virgola), `causale`, `piva_fornitore`, `nome_fornitore`, `cig`. Le stesse colonne sono visibili in anteprima nella tabella prima del download. File XML elaborati correttamente ma privi di CUP generano comunque una riga nel CSV (con campo CUP vuoto), e il pulsante **Esporta CSV** è abilitato non appena almeno un file è stato elaborato, indipendentemente dalla presenza di CUP.
 - Aggiunge test acceptance e anteprima con Chromium legacy (v109) tramite VNC per verificare la compatibilità con browser meno recenti.
 - Elimina il falso errore Tesseract `failed to load ita.special-words` che compariva alla prima esecuzione OCR.
 - Tronca le celle CUP troppo lunghe nella tabella risultati per evitare overflow visivo.

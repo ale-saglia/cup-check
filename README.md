@@ -68,7 +68,7 @@ Disponibile nel menu "Strumenti" della web app, il tool estrae CUP da fatture el
 2. Carica uno o più file XML tramite la zona di rilascio o il selettore file.
 3. Il tool cerca prima i campi strutturati (`CodiceCUP` e `AltriDatiGestionali[TipoDato=CUP]`) e usa testo libero (`Causale`, `Descrizione`) come fallback.
 4. Correggi manualmente eventuali CUP letti in modo imperfetto dal testo libero.
-5. Clicca **Apri nel verificatore** per passare l'elenco al verificatore principale, oppure **Esporta CSV** per scaricare il file direttamente.
+5. Clicca **Apri nel verificatore** per passare l'elenco al verificatore principale, oppure **Esporta CSV** per scaricare un file con i dati della fattura (data, numero, importo, causale, fornitore, CIG) oltre ai CUP estratti. File privi di CUP generano comunque una riga nell'export.
 
 L'estrazione avviene interamente nel browser con DOMParser nativo; nessun dato viene trasmesso a server esterni.
 

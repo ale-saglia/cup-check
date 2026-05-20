@@ -82,11 +82,16 @@ Disponibile nel menu **Strumenti** della web app, il tool estrae CUP da file XML
 3. Il tool analizza ogni file con DOMParser nativo:
    - Cerca prima i campi strutturati `CodiceCUP` e `AltriDatiGestionali` con `TipoDato=CUP`.
    - Se non li trova, ricade sul testo libero dei campi `Causale` e `Descrizione`.
-4. La tabella si popola con una riga per ogni coppia *file ↔ CUP*. Per ogni CUP viene mostrata la validazione formale (struttura e checksum), ma non ancora la verifica OpenCUP.
+   - Per ogni file estrae anche i metadati di intestazione: data, numero e importo della fattura, causale, P.IVA e nome del fornitore, CIG.
+4. La tabella si popola con una riga per ogni coppia *file ↔ CUP* e mostra, oltre alla validazione formale, le colonne con i dati della fattura. Per i file elaborati senza CUP viene comunque mostrata una riga con le sole informazioni fattura.
 
 ### Correzione manuale e azioni finali
 
-Le operazioni di correzione, passaggio al verificatore ed export CSV sono identiche al tool PDF. Consulta la sezione [Estrazione CUP Da PDF](#estrazione-cup-da-pdf) per i dettagli.
+Le operazioni di correzione e il passaggio al verificatore sono identiche al tool PDF. Consulta la sezione [Estrazione CUP Da PDF](#estrazione-cup-da-pdf) per i dettagli sull'edit manuale.
+
+- **Apri nel verificatore**: genera un CSV `cup,file_origine` e lo passa al verificatore. Disponibile solo se almeno un CUP è stato estratto.
+- **Esporta CSV**: scarica un file semicolonne con le colonne `cup;file_origine;formato_valido;fonte;manuale;data_fattura;numero_fattura;importo_totale;causale;piva_fornitore;nome_fornitore;cig`. I file privi di CUP generano una riga con campo CUP vuoto. Il pulsante è abilitato non appena almeno un file è stato elaborato.
+- **Pulisci**: azzera tutti i risultati della sessione corrente.
 
 ### Limiti del tool XML
 

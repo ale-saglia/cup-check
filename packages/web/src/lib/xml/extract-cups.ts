@@ -1,5 +1,6 @@
 import { validateCup, isStructurallyPlausible, OUTCOMES } from '../core/validator.js';
 import { extractCupsFromText, type CupCandidate } from '../pdf/extract-cups.js';
+import type { InvoiceData } from '../types.js';
 
 function addCup(counts: Map<string, number>, raw: string): void {
   const value = raw.trim().toUpperCase().replace(/\s+/g, '');
@@ -8,11 +9,7 @@ function addCup(counts: Map<string, number>, raw: string): void {
   counts.set(value, (counts.get(value) ?? 0) + 1);
 }
 
-export function extractCupsFromXml(xmlText: string): CupCandidate[] {
-  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
-
-  if (doc.querySelector('parsererror')) return [];
-
+function extractCupsFromDoc(doc: Document): CupCandidate[] {
   const counts = new Map<string, number>();
 
   // Campi espliciti CodiceCUP presenti in DatiOrdineAcquisto, DatiContratto,
@@ -50,10 +47,48 @@ export function extractCupsFromXml(xmlText: string): CupCandidate[] {
   }));
 }
 
+function extractInvoiceData(doc: Document): InvoiceData {
+  const q = (sel: string) => doc.querySelector(sel)?.textContent?.trim() ?? '';
+
+  const cigs = new Set<string>();
+  for (const el of doc.querySelectorAll('CodiceCIG')) {
+    const v = el.textContent?.trim();
+    if (v) cigs.add(v);
+  }
+
+  const denominazione = q('CedentePrestatore Anagrafica > Denominazione');
+  const nomeFornitore =
+    denominazione ||
+    [q('CedentePrestatore Anagrafica > Nome'), q('CedentePrestatore Anagrafica > Cognome')]
+      .filter(Boolean)
+      .join(' ');
+
+  return {
+    data: q('DatiGeneraliDocumento > Data'),
+    numero: q('DatiGeneraliDocumento > Numero'),
+    importoTotale: q('DatiGeneraliDocumento > ImportoTotaleDocumento'),
+    causale: q('DatiGeneraliDocumento > Causale'),
+    pivaFornitore: q('CedentePrestatore IdFiscaleIVA > IdCodice'),
+    nomeFornitore,
+    cig: [...cigs].join(' '),
+  };
+}
+
+export function extractCupsFromXml(xmlText: string): CupCandidate[] {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) return [];
+  return extractCupsFromDoc(doc);
+}
+
 export function extractCupsFromXmlFile(
   fileName: string,
   xmlText: string,
-): { fileName: string; status: 'ok' | 'no_cup'; cups: CupCandidate[] } {
-  const cups = extractCupsFromXml(xmlText);
-  return { fileName, status: cups.length > 0 ? 'ok' : 'no_cup', cups };
+): { fileName: string; status: 'ok' | 'no_cup'; cups: CupCandidate[]; invoiceData: InvoiceData | null } {
+  const doc = new DOMParser().parseFromString(xmlText, 'application/xml');
+  if (doc.querySelector('parsererror')) {
+    return { fileName, status: 'no_cup', cups: [], invoiceData: null };
+  }
+  const cups = extractCupsFromDoc(doc);
+  const invoiceData = extractInvoiceData(doc);
+  return { fileName, status: cups.length > 0 ? 'ok' : 'no_cup', cups, invoiceData };
 }

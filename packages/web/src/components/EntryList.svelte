@@ -1,9 +1,10 @@
 <script lang="ts">
   import { i18n } from '../i18n/i18n.svelte.js';
-  import type { Entry, Cup } from '../lib/types.js';
+  import type { Entry, Cup, InvoiceData } from '../lib/types.js';
 
   interface Props {
     entries: Entry[];
+    showInvoiceData?: boolean;
     onEdit: (entryId: number, cupId: string) => void;
     onRemove: (entryId: number, cupId: string) => void;
     onAddManual: (entryId: number) => void;
@@ -11,10 +12,17 @@
     onCancelEdit: (entryId: number, cupId: string) => void;
   }
 
-  let { entries, onEdit, onRemove, onAddManual, onSaveEdit, onCancelEdit }: Props = $props();
+  let { entries, showInvoiceData = false, onEdit, onRemove, onAddManual, onSaveEdit, onCancelEdit }: Props = $props();
+
+  // colspan for rows that span all non-File columns (queued/parsing/ocr)
+  let statusFullColspan = $derived(showInvoiceData ? 12 : 5);
 
   function truncateName(name: string, max = 40): string {
     return name.length <= max ? name : `${name.slice(0, max - 1)}…`;
+  }
+
+  function formatImporto(s: string): string {
+    return s.replace('.', ',');
   }
 
   function handleInputKeydown(e: KeyboardEvent, entryId: number, cupId: string) {
@@ -53,6 +61,15 @@
         <th scope="col">{i18n.t('pdf.source')}</th>
         <th scope="col">{i18n.t('pdf.manual')}</th>
         <th scope="col">{i18n.t('pdf.actions')}</th>
+        {#if showInvoiceData}
+          <th scope="col">{i18n.t('xml.colData')}</th>
+          <th scope="col">{i18n.t('xml.colNumero')}</th>
+          <th scope="col">{i18n.t('xml.colImporto')}</th>
+          <th scope="col">{i18n.t('xml.colCausale')}</th>
+          <th scope="col">{i18n.t('xml.colPiva')}</th>
+          <th scope="col">{i18n.t('xml.colFornitore')}</th>
+          <th scope="col">{i18n.t('xml.colCig')}</th>
+        {/if}
       </tr>
     </thead>
     <tbody bind:this={tbodyEl}>
@@ -60,19 +77,19 @@
         {#if entry.status === 'queued'}
           <tr>
             <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
-            <td colspan="5" class="pdf-status-cell"><span class="badge">{i18n.t('pdf.queued')}</span></td>
+            <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge">{i18n.t('pdf.queued')}</span></td>
           </tr>
         {:else if entry.status === 'parsing'}
           <tr>
             <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
-            <td colspan="5" class="pdf-status-cell"><span class="badge">{i18n.t('pdf.readingPdf')}</span></td>
+            <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge">{i18n.t('pdf.readingPdf')}</span></td>
           </tr>
         {:else if entry.status === 'ocr'}
           {@const p = entry.ocrProgress}
           {@const label = p?.ocrLoading ? i18n.t('pdf.ocrLoading') : i18n.t('pdf.ocrPageShort', { page: p?.page ?? 0, total: p?.totalPages ?? 0 })}
           <tr>
             <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
-            <td colspan="5" class="pdf-status-cell"><span class="badge warn">{label}</span></td>
+            <td colspan={statusFullColspan} class="pdf-status-cell"><span class="badge warn">{label}</span></td>
           </tr>
         {:else if entry.status === 'error'}
           <tr>
@@ -87,9 +104,12 @@
                 </button>
               {/if}
             </td>
+            {#if showInvoiceData}
+              {@render invoiceCells(entry.invoiceData)}
+            {/if}
           </tr>
           {#each entry.cups as cup (cup.id)}
-            {@render cupRow(entry.id, entry.name, cup)}
+            {@render cupRow(entry, cup)}
           {/each}
         {:else}
           <!-- status === 'done' -->
@@ -102,10 +122,13 @@
                   {i18n.t('pdf.addCup')}
                 </button>
               </td>
+              {#if showInvoiceData}
+                {@render invoiceCells(entry.invoiceData)}
+              {/if}
             </tr>
           {:else}
             {#each entry.cups as cup (cup.id)}
-              {@render cupRow(entry.id, entry.name, cup)}
+              {@render cupRow(entry, cup)}
             {/each}
           {/if}
         {/if}
@@ -114,9 +137,19 @@
   </table>
 </div>
 
-{#snippet cupRow(entryId: number, name: string, cup: Cup)}
+{#snippet invoiceCells(inv: InvoiceData | null | undefined)}
+  <td>{inv?.data ?? ''}</td>
+  <td>{inv?.numero ?? ''}</td>
+  <td>{inv ? formatImporto(inv.importoTotale) : ''}</td>
+  <td title={inv?.causale ?? ''}>{inv ? truncateName(inv.causale, 30) : ''}</td>
+  <td>{inv?.pivaFornitore ?? ''}</td>
+  <td title={inv?.nomeFornitore ?? ''}>{inv ? truncateName(inv.nomeFornitore, 30) : ''}</td>
+  <td>{inv?.cig ?? ''}</td>
+{/snippet}
+
+{#snippet cupRow(entry: Entry, cup: Cup)}
   <tr>
-    <td><span class="detail-cell" title={name}>{truncateName(name)}</span></td>
+    <td><span class="detail-cell" title={entry.name}>{truncateName(entry.name)}</span></td>
     {#if cup.editing}
       <td colspan="2">
         <input
@@ -126,8 +159,8 @@
           maxlength="15"
           data-editing
           aria-label={i18n.t('pdf.cupValue')}
-          onkeydown={(e) => handleInputKeydown(e, entryId, cup.id)}
-          onblur={(e) => handleInputBlur(e, entryId, cup.id)}
+          onkeydown={(e) => handleInputKeydown(e, entry.id, cup.id)}
+          onblur={(e) => handleInputBlur(e, entry.id, cup.id)}
           onmousedown={(e) => {
             const target = e.relatedTarget as Element | null;
             if (target?.matches('[data-save-edit],[data-cancel-edit]')) e.preventDefault();
@@ -145,16 +178,19 @@
             const input = (e.currentTarget as Element)
               .closest('tr')
               ?.querySelector<HTMLInputElement>('input[data-editing]');
-            onSaveEdit(entryId, cup.id, input?.value ?? '');
+            onSaveEdit(entry.id, cup.id, input?.value ?? '');
           }}
         >{i18n.t('pdf.save')}</button>
         <button
           class="link-button"
           type="button"
           data-cancel-edit
-          onclick={() => onCancelEdit(entryId, cup.id)}
+          onclick={() => onCancelEdit(entry.id, cup.id)}
         >{i18n.t('pdf.cancelEdit')}</button>
       </td>
+      {#if showInvoiceData}
+        {@render invoiceCells(entry.invoiceData)}
+      {/if}
     {:else}
       <td><code class="cup-cell">{cup.value}</code></td>
       <td>
@@ -165,11 +201,14 @@
       <td>{cup.source ?? ''}</td>
       <td>{#if cup.manual}<span class="badge warn">{i18n.t('pdf.manualBadge')}</span>{/if}</td>
       <td>
-        <button class="link-button" type="button" onclick={() => onEdit(entryId, cup.id)}>{i18n.t('pdf.edit')}
+        <button class="link-button" type="button" onclick={() => onEdit(entry.id, cup.id)}>{i18n.t('pdf.edit')}
         </button>
-        <button class="link-button" type="button" onclick={() => onRemove(entryId, cup.id)}>{i18n.t('pdf.remove')}
+        <button class="link-button" type="button" onclick={() => onRemove(entry.id, cup.id)}>{i18n.t('pdf.remove')}
         </button>
       </td>
+      {#if showInvoiceData}
+        {@render invoiceCells(entry.invoiceData)}
+      {/if}
     {/if}
   </tr>
 {/snippet}

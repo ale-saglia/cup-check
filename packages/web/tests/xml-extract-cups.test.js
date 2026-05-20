@@ -159,3 +159,89 @@ describe('extractCupsFromXmlFile', () => {
     expect(r.cups).toHaveLength(0);
   });
 });
+
+describe('extractCupsFromXmlFile — invoiceData', () => {
+  it('restituisce i dati fattura se presenti', () => {
+    const xml = `<?xml version="1.0"?>
+      <FatturaElettronica>
+        <FatturaElettronicaHeader>
+          <CedentePrestatore>
+            <DatiAnagrafici>
+              <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>12345678901</IdCodice></IdFiscaleIVA>
+              <Anagrafica><Denominazione>Fornitore Test S.r.l.</Denominazione></Anagrafica>
+            </DatiAnagrafici>
+          </CedentePrestatore>
+        </FatturaElettronicaHeader>
+        <FatturaElettronicaBody>
+          <DatiGenerali>
+            <DatiGeneraliDocumento>
+              <TipoDocumento>TD01</TipoDocumento>
+              <Data>2025-06-15</Data>
+              <Numero>42/A</Numero>
+              <ImportoTotaleDocumento>5000.00</ImportoTotaleDocumento>
+              <Causale>Prestazioni servizi</Causale>
+            </DatiGeneraliDocumento>
+            <DatiOrdineAcquisto>
+              <CodiceCIG>CIG123456789</CodiceCIG>
+            </DatiOrdineAcquisto>
+          </DatiGenerali>
+        </FatturaElettronicaBody>
+      </FatturaElettronica>`;
+    const r = extractCupsFromXmlFile('fattura.xml', xml);
+    expect(r.invoiceData).not.toBeNull();
+    expect(r.invoiceData?.data).toBe('2025-06-15');
+    expect(r.invoiceData?.numero).toBe('42/A');
+    expect(r.invoiceData?.importoTotale).toBe('5000.00');
+    expect(r.invoiceData?.causale).toBe('Prestazioni servizi');
+    expect(r.invoiceData?.pivaFornitore).toBe('12345678901');
+    expect(r.invoiceData?.nomeFornitore).toBe('Fornitore Test S.r.l.');
+    expect(r.invoiceData?.cig).toBe('CIG123456789');
+  });
+
+  it('nomeFornitore da Nome+Cognome se Denominazione assente', () => {
+    const xml = `<?xml version="1.0"?>
+      <F>
+        <CedentePrestatore>
+          <DatiAnagrafici>
+            <IdFiscaleIVA><IdPaese>IT</IdPaese><IdCodice>RSSMRA80A01H501Z</IdCodice></IdFiscaleIVA>
+            <Anagrafica><Nome>Mario</Nome><Cognome>Rossi</Cognome></Anagrafica>
+          </DatiAnagrafici>
+        </CedentePrestatore>
+      </F>`;
+    const r = extractCupsFromXmlFile('persona.xml', xml);
+    expect(r.invoiceData?.nomeFornitore).toBe('Mario Rossi');
+  });
+
+  it('CIG multipli uniti con spazio', () => {
+    const xml = `<?xml version="1.0"?>
+      <F>
+        <DatiOrdineAcquisto><CodiceCIG>CIG111</CodiceCIG></DatiOrdineAcquisto>
+        <DatiContratto><CodiceCIG>CIG222</CodiceCIG></DatiContratto>
+      </F>`;
+    const r = extractCupsFromXmlFile('multi-cig.xml', xml);
+    expect(r.invoiceData?.cig).toBe('CIG111 CIG222');
+  });
+
+  it('CIG duplicati vengono deduplicati', () => {
+    const xml = `<?xml version="1.0"?>
+      <F>
+        <CodiceCIG>CIG111</CodiceCIG>
+        <CodiceCIG>CIG111</CodiceCIG>
+      </F>`;
+    const r = extractCupsFromXmlFile('dup-cig.xml', xml);
+    expect(r.invoiceData?.cig).toBe('CIG111');
+  });
+
+  it('campi stringa vuota se i tag non sono presenti', () => {
+    const xml = `<?xml version="1.0"?><F><CodiceCUP>G17H03000130001</CodiceCUP></F>`;
+    const r = extractCupsFromXmlFile('minimal.xml', xml);
+    expect(r.invoiceData).not.toBeNull();
+    expect(r.invoiceData?.numero).toBe('');
+    expect(r.invoiceData?.cig).toBe('');
+  });
+
+  it('restituisce null per invoiceData su XML malformato', () => {
+    const r = extractCupsFromXmlFile('bad.xml', 'non xml <<');
+    expect(r.invoiceData).toBeNull();
+  });
+});

@@ -79,9 +79,11 @@ describe('buildVerificatoreCsv', () => {
 });
 
 describe('buildExportCsv', () => {
-  it('produce header con colonne semicolon', () => {
+  it('produce header con tutte le colonne', () => {
     const csv = buildExportCsv([makeEntry()]);
-    expect(csv).toContain('cup;file_origine;formato_valido;fonte;manuale');
+    expect(csv).toContain(
+      'cup;file_origine;formato_valido;fonte;manuale;data_fattura;numero_fattura;importo_totale;causale;piva_fornitore;nome_fornitore;cig',
+    );
   });
 
   it('formato_valido SI/NO', () => {
@@ -104,8 +106,8 @@ describe('buildExportCsv', () => {
     });
     const csv = buildExportCsv([validEntry, invalidEntry]);
     const lines = csv.split('\n');
-    expect(lines[1]).toContain(';SI;');
-    expect(lines[2]).toContain(';NO;');
+    expect(lines[1].split(';')[2]).toBe('SI');
+    expect(lines[2].split(';')[2]).toBe('NO');
   });
 
   it('manuale SI/NO', () => {
@@ -128,8 +130,8 @@ describe('buildExportCsv', () => {
     });
     const csv = buildExportCsv([manuale, auto]);
     const lines = csv.split('\n');
-    expect(lines[1].endsWith(';SI')).toBe(true);
-    expect(lines[2].endsWith(';NO')).toBe(true);
+    expect(lines[1].split(';')[4]).toBe('SI');
+    expect(lines[2].split(';')[4]).toBe('NO');
   });
 
   it('csvSemi: escape di punto-e-virgola nel nome file', () => {
@@ -167,5 +169,52 @@ describe('buildExportCsv', () => {
   it('inizia con il BOM UTF-8', () => {
     const csv = buildExportCsv([makeEntry()]);
     expect(csv.charCodeAt(0)).toBe(0xfeff);
+  });
+
+  it('entry done senza CUP emette riga con cup vuoto e file_origine', () => {
+    const entry = makeEntry({ cups: [], status: 'done' });
+    const csv = buildExportCsv([entry]);
+    const lines = csv.split('\n');
+    expect(lines).toHaveLength(2); // header + 1 riga senza cup
+    const fields = lines[1].split(';');
+    expect(fields[0]).toBe('');
+    expect(fields[1]).toBe('fattura.pdf');
+  });
+
+  it('entry error senza CUP non emette righe', () => {
+    const entry = makeEntry({ cups: [], status: 'error' });
+    const csv = buildExportCsv([entry]);
+    const lines = csv.split('\n');
+    expect(lines).toHaveLength(1); // solo header
+  });
+
+  it('include dati fattura se invoiceData è presente', () => {
+    const entry = makeEntry({
+      invoiceData: {
+        data: '2025-12-22',
+        numero: '259/B',
+        importoTotale: '1064653.34',
+        causale: 'Causale test',
+        pivaFornitore: '09740180014',
+        nomeFornitore: 'S.C.R. PIEMONTE S.p.A.',
+        cig: 'CIG123456789',
+      },
+    });
+    const csv = buildExportCsv([entry]);
+    const fields = csv.split('\n')[1].split(';');
+    expect(fields[5]).toBe('2025-12-22');
+    expect(fields[6]).toBe('259/B');
+    expect(fields[7]).toBe('1064653,34');
+    expect(fields[8]).toBe('Causale test');
+    expect(fields[9]).toBe('09740180014');
+    expect(fields[11]).toBe('CIG123456789');
+  });
+
+  it('campi fattura vuoti se invoiceData è assente', () => {
+    const entry = makeEntry();
+    const csv = buildExportCsv([entry]);
+    const fields = csv.split('\n')[1].split(';');
+    expect(fields[5]).toBe('');
+    expect(fields[11]).toBe('');
   });
 });

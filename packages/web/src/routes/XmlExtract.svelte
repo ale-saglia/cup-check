@@ -84,6 +84,7 @@
 
       entry.status = 'done';
       entry.source = 'xml';
+      entry.invoiceData = extracted.invoiceData;
       entry.cups = extracted.cups.map(
         (cup, i): Cup => ({
           id: `${entry.id}-${i}`,
@@ -253,6 +254,7 @@
       <QueueControls
         {hasCups}
         {hasDone}
+        exportNeedsCups={false}
         onSend={handleSend}
         onExport={handleExport}
         onClear={handleClear}
@@ -261,6 +263,7 @@
 
     <EntryList
       {entries}
+      showInvoiceData={true}
       onEdit={handleEdit}
       onRemove={handleRemove}
       onAddManual={handleAddManual}

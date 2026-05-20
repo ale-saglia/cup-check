@@ -87,6 +87,16 @@ export interface DownloadProgress {
 
 // ── PdfExtract types ──────────────────────────────────────────────────────────
 
+export interface InvoiceData {
+  data: string;
+  numero: string;
+  importoTotale: string;
+  causale: string;
+  pivaFornitore: string;
+  nomeFornitore: string;
+  cig: string;
+}
+
 export type EntryStatus = 'queued' | 'parsing' | 'ocr' | 'done' | 'error';
 export type CupSource = 'text' | 'ocr' | 'xml' | 'manuale';
 
@@ -114,4 +124,5 @@ export interface Entry {
   cups: Cup[];
   ocrProgress: OcrProgress | null;
   error: string | null;
+  invoiceData?: InvoiceData | null;
 }

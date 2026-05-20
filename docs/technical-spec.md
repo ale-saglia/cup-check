@@ -220,6 +220,8 @@ Comportamento:
 - possibilità di inserire o correggere manualmente un CUP, marcando il risultato come manuale;
 - export CSV `file ↔ CUP` e passaggio al verificatore come file sintetico con colonne `cup,file_origine`.
 
+Il tool XML condivide lo stesso flusso di edit e passaggio al verificatore. L'export CSV esteso aggiunge sette colonne FatturaPA oltre alle colonne CUP: `data_fattura`, `numero_fattura`, `importo_totale` (decimale con virgola), `causale`, `piva_fornitore`, `nome_fornitore`, `cig`. File elaborati senza CUP generano una riga con campo CUP vuoto; il pulsante **Esporta CSV** è abilitato non appena almeno un file è stato processato.
+
 Il tool PDF non introduce nuovi outcome nel validatore formale. Gli esiti restano quelli del contratto esistente; eventuali informazioni di origine (`testo`, `ocr`, `manuale`) sono metadati di UI/export.
 
 ## Workflow
