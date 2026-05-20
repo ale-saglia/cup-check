@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sqlite3
+import tempfile
 from collections.abc import Iterable
 from dataclasses import replace
 from pathlib import Path
@@ -186,7 +187,10 @@ def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path, *, opener=u
     if _valid_cached_index(sqlite_path, manifest):
         return sqlite_path
 
-    tmp_path = sqlite_path.with_suffix(".sqlite.tmp")
+    with tempfile.NamedTemporaryFile(
+        dir=dataset_dir, delete=False, suffix=".sqlite.tmp"
+    ) as tmp_file:
+        tmp_path = Path(tmp_file.name)
     _download_index(manifest, tmp_path, opener=opener)
     tmp_path.replace(sqlite_path)
     return sqlite_path
