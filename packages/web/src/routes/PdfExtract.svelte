@@ -275,7 +275,7 @@
   ondragleave={handleDragLeave}
   ondrop={handleDrop}
 >
-  <label>
+  <label class="pdf-dropzone-label">
     <input
       id="pdf-file-input"
       type="file"

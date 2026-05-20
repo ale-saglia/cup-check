@@ -215,6 +215,11 @@ describe('main', () => {
       .find((button) => button.textContent?.includes('Conferma importazione'))
       ?.click();
     await flush();
+    document.querySelector('#group-same-cups').checked = true;
+    document
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    await flush();
 
     expect(document.querySelector('#summary').textContent).toContain('3 CUP unici da 3 righe');
   });
@@ -229,6 +234,11 @@ describe('main', () => {
     Array.from(document.querySelectorAll('button'))
       .find((button) => button.textContent?.includes('Conferma importazione'))
       ?.click();
+    await flush();
+    document.querySelector('#group-same-cups').checked = true;
+    document
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     await flush();
 
     expect(document.querySelector('#summary').textContent).toContain('2 CUP unici da 2 righe');

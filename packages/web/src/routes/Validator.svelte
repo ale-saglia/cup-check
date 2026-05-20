@@ -35,7 +35,7 @@
   let query = $state('');
   let fileName = $state('report');
   let displayFileName = $state<string | null>(null);
-  let groupSameCups = $state(true);
+  let groupSameCups = $state(false);
 
   // Panel visibility / collapse state
   let filePanelCollapsed = $state(false);
@@ -77,6 +77,7 @@
   );
 
   let visibleResults = $derived(displayResults(results, groupSameCups) as UniqueResult[]);
+  let importedRowsByRow = $derived(new Map(importedRows.map((r) => [r.row, r])));
 
   let summaryData = $derived.by(() => {
     if (results.length === 0) return null;
@@ -337,7 +338,7 @@
     query = '';
     fileName = 'report';
     displayFileName = null;
-    groupSameCups = true;
+    groupSameCups = false;
     textCupCount = null;
     filePanelCollapsed = false;
     textPanelCollapsed = false;
@@ -372,8 +373,8 @@
 
   function originRowsForResult(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): ImportedCupRow[] {
     if (importedRows.length === 0) return [];
-    const rows = new Set(result.inputRows ?? [result.inputRow]);
-    return importedRows.filter((row) => rows.has(row.row));
+    const rowNums = result.inputRows ?? [result.inputRow];
+    return rowNums.map((n) => (n !== null ? importedRowsByRow.get(n) : undefined)).filter((r): r is ImportedCupRow => r !== undefined);
   }
 
   function sourceRowsForResult(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): string[] {

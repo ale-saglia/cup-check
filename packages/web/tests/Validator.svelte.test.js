@@ -168,6 +168,11 @@ describe('Validator', () => {
     await waitFor(() => {
       expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
     });
+    container.querySelector('#group-same-cups').checked = true;
+    container
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
     expect(container.querySelector('#preview-panel')?.classList.contains('hidden')).toBe(false);
     expect(container.querySelector('#preview-panel')?.classList.contains('collapsed')).toBe(true);
     expect(container.querySelector('#summary')?.textContent).toContain('1 CUP unici da 1 righe');
@@ -229,6 +234,11 @@ describe('Validator', () => {
     await waitFor(() => {
       expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
     });
+    container.querySelector('#group-same-cups').checked = true;
+    container
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
     expect(container.querySelector('.source-button')?.textContent).toBe('2++');
     container.querySelector('.source-button')?.click();
     flushSync();
@@ -300,6 +310,11 @@ describe('Validator', () => {
     await waitFor(() => {
       expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
     });
+    container.querySelector('#group-same-cups').checked = true;
+    container
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
     expect(container.querySelector('.source-button')?.textContent).toBe('2++');
     container.querySelector('.source-button')?.click();
     flushSync();
@@ -356,6 +371,11 @@ describe('Validator', () => {
     await waitFor(() => {
       expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
     });
+    container.querySelector('#group-same-cups').checked = true;
+    container
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
+    flushSync();
     expect(container.querySelector('#summary')?.textContent).toContain('1 CUP unici da 1 righe');
     expect(container.querySelector('.source-button')?.textContent).toBe('2');
   });
@@ -396,6 +416,9 @@ describe('Validator', () => {
     container.querySelector('#preview-toggle')?.click();
     flushSync();
     container.querySelector('#check-button')?.click();
+    const groupToggle = container.querySelector('#group-same-cups');
+    groupToggle.checked = true;
+    groupToggle.dispatchEvent(new Event('change', { bubbles: true }));
     await waitFor(() => expect(container.querySelector('.source-button')?.textContent).toBe('2++'));
     container.querySelector('.source-button')?.click();
     flushSync();
@@ -449,6 +472,11 @@ describe('Validator', () => {
     await waitFor(() => {
       expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
     });
+    flushSync();
+    container.querySelector('#group-same-cups').checked = true;
+    container
+      .querySelector('#group-same-cups')
+      .dispatchEvent(new Event('change', { bubbles: true }));
     flushSync();
 
     expect(container.querySelector('#batch-progress')).toBeNull();

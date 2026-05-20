@@ -59,7 +59,10 @@ try {
   );
   assert(result.previewImageCount === 0, 'payload HTML renderizzato come immagine in anteprima');
   assert(result.summary.includes(`${ROW_COUNT} righe`), `riepilogo inatteso: ${result.summary}`);
-  assert(result.groupToggleDefault, 'il toggle raggruppa CUP uguali non è attivo di default');
+  assert(
+    !result.groupToggleDefault,
+    'il toggle raggruppa CUP uguali è attivo di default (dovrebbe essere disattivato)',
+  );
   assert(
     result.ungroupedSummary.includes(`${ROW_COUNT} righe verificate`),
     `riepilogo non raggruppato inatteso: ${result.ungroupedSummary}`,
@@ -95,7 +98,7 @@ try {
     'export XLSX multi-scheda senza scheda origine attesa',
   );
   assert(
-    result.d2.mixedSummary.includes('2 CUP unici da 2 righe') &&
+    result.d2.mixedSummary.includes('2 righe verificate') &&
       result.d2.mixedPreview.includes('misto.csv') &&
       result.d2.mixedPreview.includes('misto.xlsx'),
     `upload misto inatteso: ${JSON.stringify(result.d2)}`,
