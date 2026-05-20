@@ -31,7 +31,16 @@
   let hasMultipleSheets = $derived((source.parsed.sheetNames?.length ?? 0) > 1);
   let isEmptySource = $derived(source.parsed.headers.length === 0);
   let sheetLabel = $derived(source.sheetName ? ` - ${i18n.t('source.sheetMeta', { sheet: source.sheetName })}` : '');
+  let sheetSelectValue = $derived(source.sheetName ?? '');
   let rowLabel = $derived(i18n.t('source.rowsData', { count: source.parsed.rows.length }));
+  let headers = $derived(
+    source.parsed.headers.map((header, index) => ({
+      value: String(index),
+      label: header || i18n.t('source.column', { number: index + 1 }),
+      raw: header,
+      index,
+    })),
+  );
   let headerMeta = $derived(
     source.parsed.headerDetectedAutomatically === source.headerPresent
       ? source.headerPresent
@@ -41,6 +50,7 @@
         ? i18n.t('source.headerManualYes')
         : i18n.t('source.headerManualNo'),
   );
+  let metaText = $derived(`${rowLabel}${sheetLabel} - ${headerMeta}`);
 </script>
 
 <div class="import-source-preview" aria-labelledby={`import-source-${source.id}`}>
@@ -54,7 +64,7 @@
         class:visually-hidden={!showFileName}
         title={source.fileName}
       >{source.fileName}</h3>
-      <p class="import-source-meta">{rowLabel}{sheetLabel} - {headerMeta}</p>
+      <p class="import-source-meta">{metaText}</p>
     </div>
     <div class="import-source-actions">
       <label class="toggle import-include-toggle">
@@ -76,13 +86,13 @@
   <!-- Row 2: sheet selector (left) + header toggle (right) -->
   <div class="import-source-row">
     <label class="import-sheet-select" class:hidden={!hasMultipleSheets}>{i18n.t('source.excelSheet')}
-      <select
-        id={`sheet-select-${htmlId}`}
-        disabled={disabled || !hasMultipleSheets}
-        value={source.sheetName ?? ''}
-        onchange={(event) => onSheetChange((event.target as HTMLSelectElement).value)}
-      >
-        {#each (source.parsed.sheetNames ?? []) as sheetName (sheetName)}
+        <select
+          id={`sheet-select-${htmlId}`}
+          disabled={disabled || !hasMultipleSheets}
+          value={sheetSelectValue}
+          onchange={(event) => onSheetChange((event.target as HTMLSelectElement).value)}
+        >
+        {#each source.parsed.sheetNames ?? [] as sheetName (sheetName)}
           <option value={sheetName}>{sheetName}</option>
         {/each}
       </select>
@@ -111,8 +121,8 @@
         value={String(selectedColumnIndex)}
         onchange={(event) => onColumnChange(Number((event.target as HTMLSelectElement).value))}
       >
-        {#each source.parsed.headers as header, index (index)}
-          <option value={String(index)}>{header || i18n.t('source.column', { number: index + 1 })}</option>
+        {#each headers as header (header.index)}
+          <option value={header.value}>{header.label}</option>
         {/each}
       </select>
     </label>
@@ -123,8 +133,8 @@
         <thead>
           <tr>
             <th>{i18n.t('source.row')}</th>
-            {#each source.parsed.headers as header, index (index)}
-              <th>{header || i18n.t('source.column', { number: index + 1 })}</th>
+            {#each headers as header (header.index)}
+              <th>{header.label}</th>
             {/each}
           </tr>
         </thead>

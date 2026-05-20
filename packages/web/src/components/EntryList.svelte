@@ -41,21 +41,25 @@
 
   // Focus the editing input only when a new cup enters editing mode, not on every entries mutation.
   let tbodyEl: HTMLTableSectionElement;
-  let lastActivatedId: string | null = null;
+  let lastActivatedId: string | undefined;
   $effect(() => {
     void entries;
     const active = tbodyEl?.querySelector<HTMLInputElement>('input[data-editing]');
     if (active) {
-      const id = active.dataset.cupId ?? null;
+      const id = active.dataset.cupId;
       if (id !== lastActivatedId) {
         lastActivatedId = id;
         active.focus();
         if (active.value) active.select();
       }
     } else {
-      lastActivatedId = null;
+      lastActivatedId = undefined;
     }
   });
+
+  function errorText(error: string | null | undefined): string {
+    return error ?? '';
+  }
 </script>
 
 <div class="table-wrap">
@@ -102,7 +106,7 @@
           <tr>
             {@render fileCell(entry)}
             <td colspan="4" class="pdf-status-cell">
-              <span class="badge bad">{i18n.t('pdf.error')}</span> {entry.error ?? ''}
+              <span class="badge bad">{i18n.t('pdf.error')}</span> {errorText(entry.error)}
             </td>
             <td>
               {#if entry.cups.length === 0}

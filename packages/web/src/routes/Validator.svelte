@@ -16,6 +16,12 @@
   import { buildCsvReport, opencupUrlForResult, resultDetail } from '../lib/core/report.js';
   import { downloadBlob } from '../lib/core/download.js';
   import { displayResults, resultRowsLabel } from '../lib/core/results.js';
+  import {
+    batchProgressLabel as buildBatchProgressLabel,
+    sourceButtonLabel as buildSourceButtonLabel,
+    sourceDetailTable as buildSourceDetailTable,
+    sourceSummary as buildSourceSummary,
+  } from '../lib/core/validator-view-model.js';
   import { textInputLines } from '../text-input.js';
   import { OUTCOMES, summarizeResults } from '../lib/core/validator.js';
   import { validateRows, type BatchInputRow, type BatchProgress } from '../lib/core/validation-worker.js';
@@ -133,10 +139,7 @@
   let renderedResults = $derived(filteredResults.slice(0, MAX_RENDERED_RESULT_ROWS));
 
   let batchProgressLabel = $derived.by(() => {
-    if (!batchProgress) return '';
-    if (batchProgress.phase === 'lookup') return i18n.t('validator.progressLookup');
-    if (batchProgress.phase === 'complete') return '';
-    return batchUsedWorker ? i18n.t('validator.progressWorker') : i18n.t('validator.progressInline');
+    return buildBatchProgressLabel(batchProgress, batchUsedWorker, i18n.t.bind(i18n));
   });
 
   $effect(() => {
@@ -375,108 +378,18 @@
     detailDialogEl.showModal();
   }
 
-  function originRowsForResult(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): ImportedCupRow[] {
-    if (importedRows.length === 0) return [];
-    const rowNums = result.inputRows ?? [result.inputRow];
-    return rowNums.map((n) => (n !== null ? importedRowsByRow.get(n) : undefined)).filter((r): r is ImportedCupRow => r !== undefined);
-  }
-
-  function sourceRowsForResult(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): string[] {
-    const originRows = originRowsForResult(result);
-    if (originRows.length === 0) {
-      return (result.inputRows ?? [result.inputRow]).map((row) => String(row ?? ''));
-    }
-
-    return originRows.map((row) => String(row.sourceRowNumber));
-  }
-
   function sourceButtonLabel(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): string {
-    const rows = sourceRowsForResult(result);
-    if (rows.length <= 1) return rows[0] ?? '-';
-    return `${rows[0]}++`;
+    return buildSourceButtonLabel(result, importedRowsByRow, importedRows.length > 0);
   }
 
   function sourceSummary(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>): string {
-    const originRows = originRowsForResult(result);
-    if (originRows.length === 0) return resultRowsLabel(result);
-
-    return originRows
-      .map((row) => {
-        if (row.schedaOrigine) {
-          return i18n.t('validator.sourceSummarySheet', { row: row.sourceRowNumber, file: row.fileOrigine, sheet: row.schedaOrigine, column: row.colonnaOrigine });
-        }
-        return i18n.t('validator.sourceSummaryNoSheet', { row: row.sourceRowNumber, file: row.fileOrigine, column: row.colonnaOrigine });
-      })
-      .join(' ');
+    return buildSourceSummary(result, importedRowsByRow, importedRows.length > 0, i18n.t.bind(i18n));
   }
 
   function sourceDetailTable(
     result: Pick<UniqueResult, 'inputRows' | 'inputRow'>,
   ): { columns: string[]; rows: { label: string; values: string[] }[] } {
-    const originRows = originRowsForResult(result);
-
-    if (originRows.length === 0) {
-      return {
-        columns: ['-'],
-        rows: [
-          { label: i18n.t('validator.sheet'), values: ['-'] },
-          { label: i18n.t('validator.column'), values: ['-'] },
-          { label: sourceRowsForResult(result).length === 1 ? i18n.t('validator.row') : i18n.t('validator.rowPlural'), values: [sourceRowsForResult(result).join(', ')] },
-        ],
-      };
-    }
-
-    const groups = sourceGroups(originRows);
-
-    return {
-      columns: groups.map((group) => group.fileName),
-      rows: [
-        { label: i18n.t('validator.sheet'), values: groups.map((group) => group.sheetName ?? '-') },
-        {
-          label: i18n.t('validator.column'),
-          values: groups.map((group) =>
-            uniqueSourceValues(group.rows.map((row) => row.colonnaOrigine)),
-          ),
-        },
-        {
-          label: sourceRowsForResult(result).length === 1 ? i18n.t('validator.row') : i18n.t('validator.rowPlural'),
-          values: groups.map((group) =>
-            uniqueSourceValues(group.rows.map((row) => String(row.sourceRowNumber))),
-          ),
-        },
-      ],
-    };
-  }
-
-  function sourceGroups(originRows: ImportedCupRow[]): Array<{
-    key: string;
-    fileName: string;
-    sheetName?: string;
-    rows: ImportedCupRow[];
-  }> {
-    const groups: Array<{ key: string; fileName: string; sheetName?: string; rows: ImportedCupRow[] }> = [];
-
-    for (const row of originRows) {
-      const key = `${row.fileOrigine}\u0000${row.schedaOrigine ?? ''}`;
-      const existing = groups.find((group) => group.key === key);
-      if (existing) {
-        existing.rows.push(row);
-        continue;
-      }
-      groups.push({
-        key,
-        fileName: row.fileOrigine,
-        ...(row.schedaOrigine ? { sheetName: row.schedaOrigine } : {}),
-        rows: [row],
-      });
-    }
-
-    return groups;
-  }
-
-  function uniqueSourceValues(values: Array<string | undefined>): string {
-    const unique = [...new Set(values.filter((value): value is string => Boolean(value)))];
-    return unique.length > 0 ? unique.join(', ') : '-';
+    return buildSourceDetailTable(result, importedRowsByRow, importedRows.length > 0, i18n.t.bind(i18n));
   }
 
   function openSourceDialog(result: Pick<UniqueResult, 'inputRows' | 'inputRow'>) {

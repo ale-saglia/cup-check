@@ -580,6 +580,22 @@ describe('Validator', () => {
     expect(container.querySelectorAll('#results-table tbody tr')).toHaveLength(3);
   });
 
+  it('mostra il riepilogo da verificare quando il dataset non è disponibile', async () => {
+    vi.mocked(loadLatestDataset).mockResolvedValue(null);
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const { container } = render(Validator);
+    const textarea = container.querySelector('#cup-textarea');
+    textarea.value = 'G17H03000130001';
+    container.querySelector('#text-check-button').click();
+
+    await waitFor(() => {
+      expect(container.querySelector('#results-panel')?.classList.contains('hidden')).toBe(false);
+    });
+
+    expect(container.querySelector('#summary')?.textContent).toContain('1 da verificare');
+  });
+
   it('mostra avanzamento, errore e fallback quando il dataset non si carica', async () => {
     let onProgress;
     vi.mocked(loadLatestDataset).mockImplementation(({ onProgress: progress }) => {
@@ -664,5 +680,24 @@ describe('Validator', () => {
       .querySelector('#detail-dialog')
       .dispatchEvent(new MouseEvent('click', { bubbles: true }));
     expect(close).toHaveBeenCalledTimes(2);
+  });
+
+  it('non chiude i dialog descrittivi quando si clicca sul contenuto interno', () => {
+    const close = vi.fn();
+    HTMLDialogElement.prototype.showModal = vi.fn();
+    HTMLDialogElement.prototype.close = close;
+
+    vi.mocked(loadLatestDataset).mockResolvedValue({ manifest: null, hasCup: () => false });
+    vi.mocked(consumeTransfer).mockReturnValue(null);
+
+    const { container } = render(Validator);
+    container
+      .querySelector('#limits-dialog div')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+    container
+      .querySelector('#detail-dialog form')
+      ?.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+
+    expect(close).not.toHaveBeenCalled();
   });
 });
