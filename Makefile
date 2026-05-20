@@ -105,50 +105,36 @@ NOVNC_PATH       := /vnc.html?resize=scale
 VNC_PREVIEW_PORT := 4174
 VNC_RESOLUTION   := 1920x1080x24
 
+define _vnc_chrome_legacy_run
+@command -v Xvfb       >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+@command -v x11vnc     >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
+@command -v websockify >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y novnc"; exit 1; }
+@command -v openbox    >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y openbox"; exit 1; }
+trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
+LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
+printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
+Xvfb $(VNC_DISPLAY) -screen 0 $(VNC_RESOLUTION) 2>/dev/null & \
+sleep 0.3; \
+DISPLAY=$(VNC_DISPLAY) openbox --config-file /dev/null 2>/dev/null & \
+cd $(WEB_DIR) && npm run preview -- --port $(VNC_PREVIEW_PORT) & \
+until curl -sf http://127.0.0.1:$(VNC_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
+DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
+  "http://127.0.0.1:$(VNC_PREVIEW_PORT)" 2>/dev/null & \
+env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
+until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
+websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
+printf '\033[36mApri nel browser: http://localhost:%s%s\033[0m\n' $(NOVNC_PORT) '$(NOVNC_PATH)'; \
+wait
+endef
+
 .PHONY: web-preview-chrome-legacy
 web-preview-chrome-legacy: web-build ## Builda, lancia Chromium legacy — noVNC browser su :9000, VNC raw su :5900
-	@command -v Xvfb       >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v x11vnc     >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v websockify >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y novnc"; exit 1; }
-	@command -v openbox    >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y openbox"; exit 1; }
-	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
-	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
-	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
-	Xvfb $(VNC_DISPLAY) -screen 0 $(VNC_RESOLUTION) 2>/dev/null & \
-	sleep 0.3; \
-	DISPLAY=$(VNC_DISPLAY) openbox --config-file /dev/null 2>/dev/null & \
-	cd $(WEB_DIR) && npm run preview -- --port $(VNC_PREVIEW_PORT) & \
-	until curl -sf http://127.0.0.1:$(VNC_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
-	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
-	  "http://127.0.0.1:$(VNC_PREVIEW_PORT)" 2>/dev/null & \
-	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
-	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
-	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
-	printf '\033[36mApri nel browser: http://localhost:%s%s\033[0m\n' $(NOVNC_PORT) '$(NOVNC_PATH)'; \
-	wait
+	$(call _vnc_chrome_legacy_run)
 
 .PHONY: web-preview-dataset-chrome-legacy
 web-preview-dataset-chrome-legacy: web-build ## Builda con dataset, lancia Chromium legacy — noVNC browser su :9000, VNC raw su :5900
-	@command -v Xvfb       >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v x11vnc     >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y xvfb x11vnc"; exit 1; }
-	@command -v websockify >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y novnc"; exit 1; }
-	@command -v openbox    >/dev/null 2>&1 || { echo "Installa: sudo apt-get install -y openbox"; exit 1; }
 	node scripts/prepare_web_preview_dataset.mjs
-	trap 'kill $$(jobs -p) 2>/dev/null || true' EXIT; \
-	LEGACY=$$(cd $(WEB_DIR) && $(CHROMIUM_LEGACY_INSTALL)); \
-	printf '\033[36mBrowser: %s\033[0m\n' "$$("$$LEGACY" --version 2>/dev/null)"; \
-	Xvfb $(VNC_DISPLAY) -screen 0 $(VNC_RESOLUTION) 2>/dev/null & \
-	sleep 0.3; \
-	DISPLAY=$(VNC_DISPLAY) openbox --config-file /dev/null 2>/dev/null & \
-	cd $(WEB_DIR) && npm run preview -- --port $(VNC_PREVIEW_PORT) & \
-	until curl -sf http://127.0.0.1:$(VNC_PREVIEW_PORT) >/dev/null 2>&1; do sleep 0.2; done; \
-	DISPLAY=$(VNC_DISPLAY) "$$LEGACY" $(CHROMIUM_LEGACY_FLAGS) \
-	  "http://127.0.0.1:$(VNC_PREVIEW_PORT)" 2>/dev/null & \
-	env -u WAYLAND_DISPLAY DISPLAY=$(VNC_DISPLAY) x11vnc -display $(VNC_DISPLAY) -forever -nopw -rfbport $(VNC_PORT) -quiet & \
-	until (exec 3<>/dev/tcp/127.0.0.1/$(VNC_PORT)) 2>/dev/null; do sleep 0.1; done; \
-	websockify --web /usr/share/novnc/ $(NOVNC_PORT) 127.0.0.1:$(VNC_PORT) >/dev/null 2>&1 & \
-	printf '\033[36mApri nel browser: http://localhost:%s%s\033[0m\n' $(NOVNC_PORT) '$(NOVNC_PATH)'; \
-	wait
+	$(call _vnc_chrome_legacy_run)
 
 .PHONY: web-build
 web-build: ## Genera la build statica web
