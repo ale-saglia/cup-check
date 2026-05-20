@@ -20,6 +20,9 @@ describe('service worker build', () => {
 
   it('usa una cache dedicata per gli asset lazy (pdfjs e tesseract) con strategia cache-first', async () => {
     await withBuiltServiceWorker(async (serviceWorker) => {
+      expect(serviceWorker).not.toContain('cup-check-lazy-v1');
+      expect(serviceWorker).not.toContain('__BUILD_ID__');
+
       const runtime = createServiceWorkerRuntime(serviceWorker, {
         'https://example.test/pdfjs/pdf.worker.min.mjs': new Response('worker js'),
         'https://example.test/tesseract/worker.min.js': new Response('tesseract js'),
@@ -29,6 +32,7 @@ describe('service worker build', () => {
       await runtime.fetch('https://example.test/pdfjs/pdf.worker.min.mjs');
       const lazyCacheName = runtime.cacheNames().find((name) => name.startsWith('cup-check-lazy-'));
       expect(lazyCacheName).toBeTruthy();
+      expect(lazyCacheName).not.toBe('cup-check-lazy-v1');
       expect(runtime.cachedUrls(lazyCacheName)).toContain(
         'https://example.test/pdfjs/pdf.worker.min.mjs',
       );

@@ -1,6 +1,9 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 describe('service worker', () => {
+  const APP_CACHE_NAME = 'cup-check-v__APP_VERSION__-__BUILD_ID__';
+  const LAZY_CACHE_NAME = 'cup-check-lazy-__BUILD_ID__';
+
   let handlers;
   let cachesMock;
   let fetchMock;
@@ -39,7 +42,7 @@ describe('service worker', () => {
     handlers.install({ waitUntil });
     await waitUntil.mock.calls[0][0];
 
-    const appCache = await cachesMock.open('cup-check-v__APP_VERSION__-__BUILD_ID__');
+    const appCache = await cachesMock.open(APP_CACHE_NAME);
     expect(appCache.addAll).toHaveBeenCalledWith([
       './',
       './index.html',
@@ -57,7 +60,7 @@ describe('service worker', () => {
       request('https://example.test/datasets/dataset-2026-04/cup-index.sqlite.000'),
       request('https://example.test/assets/app.js'),
     ]);
-    cachesMock.stores.set('cup-check-v__APP_VERSION__-__BUILD_ID__', appCache);
+    cachesMock.stores.set(APP_CACHE_NAME, appCache);
     const waitUntil = vi.fn();
 
     handlers.activate({ waitUntil });
@@ -95,7 +98,7 @@ describe('service worker', () => {
 
     expect(response.ok).toBe(true);
     await pdfEvent.waitUntil.mock.calls[0][0];
-    expect(cachesMock.open).toHaveBeenCalledWith('cup-check-lazy-v1');
+    expect(cachesMock.open).toHaveBeenCalledWith(LAZY_CACHE_NAME);
   });
 
   it('cache-first returns cached response for lazy assets without network request', async () => {
@@ -103,7 +106,7 @@ describe('service worker', () => {
     const cachedResponse = new Response('cached worker', { status: 200 });
     const lazyCache = makeCache();
     lazyCache.match.mockResolvedValueOnce(cachedResponse);
-    cachesMock.stores.set('cup-check-lazy-v1', lazyCache);
+    cachesMock.stores.set(LAZY_CACHE_NAME, lazyCache);
     const event = {
       request: request('https://example.test/tesseract/worker.min.js'),
       waitUntil: vi.fn(),
@@ -117,19 +120,21 @@ describe('service worker', () => {
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
-  it("activateCaches preserva la cache lazy-assets durante l'attivazione", async () => {
+  it('activateCaches preserva solo la cache lazy-assets della build corrente', async () => {
     await import('../src/sw.js');
     cachesMock.stores.set('old-app-cache', makeCache());
-    cachesMock.stores.set('cup-check-lazy-v1', makeCache());
+    cachesMock.stores.set('cup-check-lazy-oldbuild', makeCache());
+    cachesMock.stores.set(LAZY_CACHE_NAME, makeCache());
     const appCache = makeCache([]);
-    cachesMock.stores.set('cup-check-v__APP_VERSION__-__BUILD_ID__', appCache);
+    cachesMock.stores.set(APP_CACHE_NAME, appCache);
     const waitUntil = vi.fn();
 
     handlers.activate({ waitUntil });
     await waitUntil.mock.calls[0][0];
 
     expect(cachesMock.delete).toHaveBeenCalledWith('old-app-cache');
-    expect(cachesMock.delete).not.toHaveBeenCalledWith('cup-check-lazy-v1');
+    expect(cachesMock.delete).toHaveBeenCalledWith('cup-check-lazy-oldbuild');
+    expect(cachesMock.delete).not.toHaveBeenCalledWith(LAZY_CACHE_NAME);
   });
 
   it('uses network-first caching for app and dataset requests', async () => {
@@ -153,7 +158,7 @@ describe('service worker', () => {
     appCache.match
       .mockResolvedValueOnce(new Response('cached:https://example.test/index.html'))
       .mockResolvedValueOnce(null);
-    cachesMock.stores.set('cup-check-v__APP_VERSION__-__BUILD_ID__', appCache);
+    cachesMock.stores.set(APP_CACHE_NAME, appCache);
     fetchMock.mockResolvedValueOnce(new Response('no', { status: 503 }));
     const failedEvent = {
       request: request('https://example.test/index.html'),
@@ -201,7 +206,7 @@ describe('service worker', () => {
 
     expect(response.ok).toBe(true);
     await event.waitUntil.mock.calls[0][0];
-    expect(cachesMock.open).toHaveBeenCalledWith('cup-check-v__APP_VERSION__-__BUILD_ID__');
+    expect(cachesMock.open).toHaveBeenCalledWith(APP_CACHE_NAME);
   });
 
   it('cacheFirst returns non-ok response without caching it', async () => {

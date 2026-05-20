@@ -1,6 +1,6 @@
 const CACHE_NAME = 'cup-check-v__APP_VERSION__-__BUILD_ID__';
 const DATASET_CACHE_NAME = 'cup-check-dataset-v1';
-const LAZY_ASSETS_CACHE_NAME = 'cup-check-lazy-v1';
+const LAZY_ASSETS_CACHE_NAME = 'cup-check-lazy-__BUILD_ID__';
 const DATASET_TAG_PATTERN = /dataset-\d{4}-\d{2}/;
 const APP_SHELL = ['./', './index.html', './manifest.webmanifest', './favicon.svg'];
 // eslint-disable-next-line no-undef -- injected by the Vite service worker plugin.
