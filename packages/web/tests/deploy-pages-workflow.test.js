@@ -9,14 +9,20 @@ const preparePinnedWebActionPath = path.join(
   repoRoot,
   '.github/actions/prepare-pinned-web/action.yml',
 );
+const releaseWebWorkflowPath = path.join(repoRoot, '.github/workflows/release-web.yml');
+const releasePythonWorkflowPath = path.join(repoRoot, '.github/workflows/release-python.yml');
+
+function loadYaml(filePath) {
+  return yaml.load(fs.readFileSync(filePath, 'utf8'));
+}
 
 function workflowSteps() {
-  const workflow = yaml.load(fs.readFileSync(workflowPath, 'utf8'));
+  const workflow = loadYaml(workflowPath);
   return workflow.jobs.deploy.steps;
 }
 
 function preparePinnedWebAction() {
-  return yaml.load(fs.readFileSync(preparePinnedWebActionPath, 'utf8'));
+  return loadYaml(preparePinnedWebActionPath);
 }
 
 function releaseDownloadCommand(runScript, pattern) {
@@ -54,5 +60,15 @@ describe('deploy-pages workflow', () => {
     expect(buildStep.env.SOURCE_DIR).toBe('${{ github.workspace }}/${{ inputs.source-dir }}');
     expect(buildStep.run).toContain('cd "${SOURCE_DIR}/packages/web"');
     expect(buildStep.run).not.toContain('cd "${GITHUB_WORKSPACE}/packages/web"');
+  });
+
+  it('serializza le release software per workflow e ref', () => {
+    const releaseWeb = loadYaml(releaseWebWorkflowPath);
+    const releasePython = loadYaml(releasePythonWorkflowPath);
+
+    for (const workflow of [releaseWeb, releasePython]) {
+      expect(workflow.concurrency.group).toBe('release-${{ github.workflow }}-${{ github.ref }}');
+      expect(workflow.concurrency['cancel-in-progress']).toBe(false);
+    }
   });
 });
