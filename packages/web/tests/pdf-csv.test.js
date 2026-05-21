@@ -61,12 +61,12 @@ describe('buildVerificatoreCsv', () => {
 
   it('csvComma: prefisso apostrofo per formule nel nome file', () => {
     const csv = buildVerificatoreCsv([makeEntry({ name: '=formula.pdf' })]);
-    expect(csv).toContain("'=formula.pdf");
+    expect(csv).toContain('"\'=formula.pdf"');
   });
 
   it('csvComma: prefisso apostrofo per + nel nome file', () => {
     const csv = buildVerificatoreCsv([makeEntry({ name: '+bonus.pdf' })]);
-    expect(csv).toContain("'+bonus.pdf");
+    expect(csv).toContain('"\'+bonus.pdf"');
   });
 
   it('csvComma: nessun escaping per nome file normale', () => {
@@ -143,12 +143,12 @@ describe('buildExportCsv', () => {
 
   it('csvSemi: prefisso apostrofo per formule nel nome file', () => {
     const csv = buildExportCsv([makeEntry({ name: '-formula.pdf' })]);
-    expect(csv).toContain("'-formula.pdf");
+    expect(csv).toContain('"\'-formula.pdf"');
   });
 
   it('csvSemi: prefisso apostrofo per @ nel nome file', () => {
     const csv = buildExportCsv([makeEntry({ name: '@note.pdf' })]);
-    expect(csv).toContain("'@note.pdf");
+    expect(csv).toContain('"\'@note.pdf"');
   });
 
   it('csvSemi: formula + punto-e-virgola → apostrofo E quoting', () => {

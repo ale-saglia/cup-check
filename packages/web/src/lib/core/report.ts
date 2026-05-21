@@ -2,8 +2,11 @@ import type { Rule, Warning, UniqueResult } from '../types.js';
 import type { ImportedCupRow } from './import-plan.js';
 import { OUTCOMES, RULE_DESCRIPTIONS, WARNING_DESCRIPTIONS } from './validator.js';
 import { resultRowsLabel } from './results.js';
+import { csvCell } from './csv.js';
 
-export function resultDetail(result: Pick<UniqueResult, 'warnings' | 'failedRules' | 'outcome'>): string {
+export function resultDetail(
+  result: Pick<UniqueResult, 'warnings' | 'failedRules' | 'outcome'>,
+): string {
   const warnings = result.warnings?.length
     ? ` Avvisi non bloccanti: ${result.warnings.map(formatWarning).join('; ')}`
     : '';
@@ -43,7 +46,10 @@ export function opencupUrlForResult(result: Pick<UniqueResult, 'normalizedValue'
   return opencupUrl(result.normalizedValue);
 }
 
-export function buildCsvReport(results: UniqueResult[], importedRows: ImportedCupRow[] = []): string {
+export function buildCsvReport(
+  results: UniqueResult[],
+  importedRows: ImportedCupRow[] = [],
+): string {
   const hasOrigin = importedRows.length > 0;
   const headers = [
     'righe_originali',
@@ -68,7 +74,9 @@ export function buildCsvReport(results: UniqueResult[], importedRows: ImportedCu
       ];
 
       if (rowIndex) {
-        const inputRows = (result.inputRows ?? [result.inputRow]).filter((r): r is number => r !== null);
+        const inputRows = (result.inputRows ?? [result.inputRow]).filter(
+          (r): r is number => r !== null,
+        );
         const origins = inputRows.flatMap((row) => {
           const found = rowIndex.get(row);
           return found ? [found] : [];
@@ -81,7 +89,7 @@ export function buildCsvReport(results: UniqueResult[], importedRows: ImportedCu
         );
       }
 
-      return cells.map(csvCell).join(';');
+      return cells.map((value) => csvCell(value)).join(';');
     }),
   ];
 
@@ -91,24 +99,4 @@ export function buildCsvReport(results: UniqueResult[], importedRows: ImportedCu
 function uniqueJoin(values: string[]): string {
   const unique = [...new Set(values.filter((v) => v.trim() !== ''))];
   return unique.join(', ');
-}
-
-function csvCell(value: string): string {
-  const text = protectCsvFormula(value);
-
-  if (/[;"\n\r]/.test(text)) {
-    return `"${text.replaceAll('"', '""')}"`;
-  }
-
-  return text;
-}
-
-function protectCsvFormula(text: string): string {
-  if (/^[=+\-@]/.test(text)) {
-    // A leading apostrophe prevents formula execution in Excel/Sheets and is ignored as a text prefix;
-    // unlike a tab, it does not risk being treated as a field separator by TSV-aware parsers.
-    return `'${text}`;
-  }
-
-  return text;
 }

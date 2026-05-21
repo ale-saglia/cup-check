@@ -100,7 +100,7 @@ describe('resultDetail', () => {
       },
     ]);
 
-    expect(csv).toContain("'=1+1;'+SUM(1,1);'-FORMULA;");
+    expect(csv).toContain(`"'=1+1";"'+SUM(1,1)";"'-FORMULA";`);
     expect(csv).toContain('Avvisi non bloccanti: @WARNING - avviso non documentato');
   });
 
