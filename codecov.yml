@@ -19,6 +19,9 @@ coverage:
         # "auto" segnala regressioni nel diff senza bloccare su gap pre-esistenti.
         target: auto
 
+ignore:
+  - "packages/cup_check/tests/**"
+
 flags:
   python:
     paths:
