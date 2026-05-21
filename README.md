@@ -123,6 +123,12 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 
 Il progetto accetta contributi coerenti con la roadmap e con i vincoli di governance. Vedi [CONTRIBUTING.md](CONTRIBUTING.md) per processo, convenzioni e regola fixture-first.
 
+## Qualità e Tracciabilità
+
+Lo sviluppo segue un processo esplicito di qualità e tracciabilità, supportato anche da strumenti moderni di automazione e assistenza, inclusi assistenti AI: decisioni di prodotto e architettura sono documentate negli [ADR](docs/adr/), i comportamenti del validatore partono dai fixture normativi e ogni modifica rilevante passa da test e CI.
+
+`AGENTS.md` rende pubbliche le regole operative per gli agenti di coding che collaborano sul repository, in particolare i vincoli sul validatore formale, sul web package statico e sulla separazione tra controlli locali e verifica remota opzionale.
+
 ## Licenza
 
 EUPL-1.2. Vedi `LICENSE`.
