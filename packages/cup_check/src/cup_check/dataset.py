@@ -9,6 +9,10 @@ from typing import Any
 _DATASET_TAG_RE = re.compile(r"^dataset-\d{4}-\d{2}$")
 
 
+class ManifestError(ValueError):
+    """Errore nella struttura o nel contenuto di un manifest dataset."""
+
+
 @dataclass(frozen=True)
 class DatasetSchema:
     table: str
@@ -81,11 +85,13 @@ class DatasetManifest:
             or not files
             or not all(isinstance(file, str) for file in files)
         ):
-            raise ValueError("cup_index.files must be a non-empty list of strings")
+            msg = "cup_index.files must be a non-empty list of strings"
+            raise ManifestError(msg)
 
         dataset_tag = _string(value["dataset_tag"], "dataset_tag")
         if not _DATASET_TAG_RE.match(dataset_tag):
-            raise ValueError("dataset_tag must match dataset-YYYY-MM")
+            msg = "dataset_tag must match dataset-YYYY-MM"
+            raise ManifestError(msg)
 
         return cls(
             schema_version=_integer(value["schema_version"], "schema_version"),
@@ -144,24 +150,28 @@ def load_dataset_latest(path: str | Path) -> DatasetLatest:
 def _require_keys(value: dict[str, Any], keys: set[str]) -> None:
     missing_keys = sorted(keys - value.keys())
     if missing_keys:
-        raise ValueError(f"dataset manifest is missing keys: {', '.join(missing_keys)}")
+        msg = f"dataset manifest is missing keys: {', '.join(missing_keys)}"
+        raise ManifestError(msg)
 
 
 def _mapping(value: Any, field_name: str) -> dict[str, Any]:
     if not isinstance(value, dict):
-        raise ValueError(f"{field_name} must be an object")
+        msg = f"{field_name} must be an object"
+        raise TypeError(msg)
     return value
 
 
 def _string(value: Any, field_name: str) -> str:
     if not isinstance(value, str) or value == "":
-        raise ValueError(f"{field_name} must be a non-empty string")
+        msg = f"{field_name} must be a non-empty string"
+        raise ManifestError(msg)
     return value
 
 
 def _integer(value: Any, field_name: str) -> int:
     if not isinstance(value, int) or value < 0:
-        raise ValueError(f"{field_name} must be a non-negative integer")
+        msg = f"{field_name} must be a non-negative integer"
+        raise ManifestError(msg)
     return value
 
 
@@ -169,5 +179,6 @@ def _string_tuple(value: Any, field_name: str) -> tuple[str, ...]:
     if not isinstance(value, list) or not all(
         isinstance(item, str) and item != "" for item in value
     ):
-        raise ValueError(f"{field_name} must be a list of non-empty strings")
+        msg = f"{field_name} must be a list of non-empty strings"
+        raise ManifestError(msg)
     return tuple(value)

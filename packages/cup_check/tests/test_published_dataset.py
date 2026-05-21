@@ -39,7 +39,7 @@ _RETRY_STATUSES = {503, 429}
 def _urlopen_with_retry(request: Request, retries: int = 3, backoff: float = 2.0):
     for attempt in range(retries):
         try:
-            return urlopen(request, timeout=_HTTP_TIMEOUT)
+            return urlopen(request, timeout=_HTTP_TIMEOUT)  # noqa: S310
         except HTTPError as exc:
             if exc.code not in _RETRY_STATUSES or attempt == retries - 1:
                 raise
@@ -49,18 +49,18 @@ def _urlopen_with_retry(request: Request, retries: int = 3, backoff: float = 2.0
 def _discover_latest_tag(timeout: int = 10) -> str | None:
     """Return the most recent dataset-YYYY-MM tag from GitHub, or None."""
     try:
-        req = Request(
+        req = Request(  # noqa: S310
             _GITHUB_RELEASES_URL,
             headers={"User-Agent": "cup-check-integration-tests/1"},
         )
-        with urlopen(req, timeout=timeout) as resp:
+        with urlopen(req, timeout=timeout) as resp:  # noqa: S310
             releases = json.loads(resp.read())
         tags = sorted(
             (r["tag_name"] for r in releases if _DATASET_TAG_RE.match(r.get("tag_name", ""))),
             reverse=True,
         )
         return tags[0] if tags else None
-    except Exception:  # noqa: BLE001
+    except (OSError, ValueError, KeyError):
         return None
 
 
@@ -85,7 +85,7 @@ pytestmark = [
 
 @pytest.fixture(scope="module")
 def manifest() -> DatasetManifest:
-    with urlopen(_MANIFEST_URL) as response:
+    with urlopen(_MANIFEST_URL) as response:  # noqa: S310
         return DatasetManifest.from_mapping(json.loads(response.read()))
 
 
@@ -116,7 +116,7 @@ def test_manifest_total_size_is_consistent(manifest: DatasetManifest) -> None:
 def test_all_chunks_are_reachable(manifest: DatasetManifest) -> None:
     for file_name in manifest.cup_index.files:
         url = f"{manifest.cup_index.base_url}/{file_name}"
-        request = Request(url, headers={"Range": "bytes=0-15"})
+        request = Request(url, headers={"Range": "bytes=0-15"})  # noqa: S310
         with _urlopen_with_retry(request) as response:
             assert response.status in (200, 206), f"{file_name}: HTTP {response.status}"
             assert len(response.read()) == len(SQLITE_MAGIC)
@@ -125,7 +125,7 @@ def test_all_chunks_are_reachable(manifest: DatasetManifest) -> None:
 def test_first_chunk_has_sqlite_magic(manifest: DatasetManifest) -> None:
     first_chunk = manifest.cup_index.files[0]
     url = f"{manifest.cup_index.base_url}/{first_chunk}"
-    request = Request(url, headers={"Range": "bytes=0-15"})
+    request = Request(url, headers={"Range": "bytes=0-15"})  # noqa: S310
     with _urlopen_with_retry(request) as response:
         header = response.read()
     assert header == SQLITE_MAGIC

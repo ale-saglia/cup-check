@@ -98,7 +98,7 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path) -> N
 def test_open_cup_checker_falls_back_when_latest_download_fails() -> None:
     def failing_urlopen(url: str, *, timeout: float | None = None):
         assert timeout == 30
-        raise OSError(f"{url}: offline")
+        raise OSError(f"{url}: offline")  # noqa: TRY003
 
     checker = OpenCupChecker.from_latest(
         "https://example.test/dataset-latest.json", opener=failing_urlopen
@@ -195,7 +195,7 @@ def test_json_from_url_requires_object_payload() -> None:
         assert timeout == 30
         return BytesResponse(b"[]")
 
-    with pytest.raises(ValueError, match="dataset json response must be an object"):
+    with pytest.raises(TypeError, match="dataset json response must be an object"):
         checker_module._json_from_url(
             "https://example.test/dataset-latest.json", opener=fake_urlopen
         )

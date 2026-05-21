@@ -76,6 +76,10 @@ _SUPPORTED_SCHEMA_TYPES = frozenset(
 LOGGER = logging.getLogger(__name__)
 
 
+class SchemaError(ValueError):
+    """Errore nella struttura o nel contenuto dello schema OpenCUP."""
+
+
 @dataclass(frozen=True)
 class BuildDatasetResult:
     sqlite_path: Path
@@ -158,11 +162,14 @@ def _download_url_to_path(
     opener=urlopen,
 ) -> None:
     if on_progress is not None and progress_interval_bytes <= 0:
-        raise ValueError("progress_interval_bytes must be positive")
+        msg = "progress_interval_bytes must be positive"
+        raise ValueError(msg)
     if retries < 1:
-        raise ValueError("retries must be positive")
+        msg = "retries must be positive"
+        raise ValueError(msg)
     if retry_backoff_seconds < 0:
-        raise ValueError("retry_backoff_seconds must be non-negative")
+        msg = "retry_backoff_seconds must be non-negative"
+        raise ValueError(msg)
 
     for attempt in range(1, retries + 1):  # pragma: no branch
         try:
@@ -410,7 +417,8 @@ def chunk_file(
     chunk_size_bytes: int,
 ) -> tuple[Path, ...]:
     if chunk_size_bytes <= 0:
-        raise ValueError("chunk_size_bytes must be positive")
+        msg = "chunk_size_bytes must be positive"
+        raise ValueError(msg)
 
     source = Path(source_path)
     output = Path(output_dir)
@@ -481,10 +489,11 @@ def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
     try:
         import yaml
     except ImportError as exc:
-        raise ImportError(
+        msg = (
             "pyyaml è richiesto per elaborare lo schema dataset. "
             "Installalo con: pip install 'cup-check[build]'"
-        ) from exc
+        )
+        raise ImportError(msg) from exc
     if schema_path is not None:
         raw_schema = yaml.safe_load(Path(schema_path).read_text(encoding="utf-8"))
     else:
@@ -496,17 +505,21 @@ def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
 
 def _validate_schema(value: object) -> dict[str, Any]:
     if not isinstance(value, dict):
-        raise ValueError("OpenCUP schema must be a mapping")
+        msg = "OpenCUP schema must be a mapping"
+        raise TypeError(msg)
 
     schema_version = value.get("schema_version")
     if not isinstance(schema_version, int) or isinstance(schema_version, bool):
-        raise ValueError("OpenCUP schema schema_version must be an integer")
+        msg = "OpenCUP schema schema_version must be an integer"
+        raise TypeError(msg)
     if schema_version != _SCHEMA_VERSION:
-        raise ValueError(f"OpenCUP schema schema_version must be {_SCHEMA_VERSION}")
+        msg = f"OpenCUP schema schema_version must be {_SCHEMA_VERSION}"
+        raise SchemaError(msg)
 
     columns = value.get("columns")
     if not isinstance(columns, list) or not columns:
-        raise ValueError("OpenCUP schema columns must be a non-empty list")
+        msg = "OpenCUP schema columns must be a non-empty list"
+        raise SchemaError(msg)
 
     targets: set[str] = set()
     for index, column in enumerate(columns):
@@ -514,9 +527,8 @@ def _validate_schema(value: object) -> dict[str, Any]:
 
     missing_targets = sorted(_REQUIRED_SCHEMA_TARGETS - targets)
     if missing_targets:
-        raise ValueError(
-            "OpenCUP schema missing required target(s): " + ", ".join(missing_targets)
-        )
+        msg = "OpenCUP schema missing required target(s): " + ", ".join(missing_targets)
+        raise SchemaError(msg)
 
     return value
 
@@ -524,15 +536,18 @@ def _validate_schema(value: object) -> dict[str, Any]:
 def _validate_schema_column(column: object, index: int, targets: set[str]) -> None:
     context = f"OpenCUP schema columns[{index}]"
     if not isinstance(column, Mapping):
-        raise ValueError(f"{context} must be a mapping")
+        msg = f"{context} must be a mapping"
+        raise TypeError(msg)
 
     target = _schema_string(column.get("target"), f"{context}.target")
     value_type = _schema_string(column.get("type"), f"{context}.type")
 
     if value_type not in _SUPPORTED_SCHEMA_TYPES:
-        raise ValueError(f"{context}.type is unsupported: {value_type}")
+        msg = f"{context}.type is unsupported: {value_type}"
+        raise SchemaError(msg)
     if "source" not in column:
-        raise ValueError(f"{context}.source is required")
+        msg = f"{context}.source is required"
+        raise SchemaError(msg)
     _validate_schema_source(column["source"], f"{context}.source")
     if value_type == "bool_equals":
         _validate_schema_string_list(column.get("true_values"), f"{context}.true_values")
@@ -542,7 +557,8 @@ def _validate_schema_column(column: object, index: int, targets: set[str]) -> No
 
 def _schema_string(value: object, field_name: str) -> str:
     if not isinstance(value, str) or not value:
-        raise ValueError(f"{field_name} must be a non-empty string")
+        msg = f"{field_name} must be a non-empty string"
+        raise SchemaError(msg)
     return value
 
 
@@ -551,13 +567,15 @@ def _validate_schema_source(value: object, field_name: str) -> None:
         return
     if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
         return
-    raise ValueError(f"{field_name} must be a non-empty string or list of strings")
+    msg = f"{field_name} must be a non-empty string or list of strings"
+    raise SchemaError(msg)
 
 
 def _validate_schema_string_list(value: object, field_name: str) -> None:
     if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
         return
-    raise ValueError(f"{field_name} must be a non-empty list of strings")
+    msg = f"{field_name} must be a non-empty list of strings"
+    raise SchemaError(msg)
 
 
 def _mapped_record_values(row: dict[str, str | None], schema: dict[str, Any]) -> dict[str, Any]:
@@ -591,7 +609,8 @@ def _mapped_value(row: dict[str, str | None], column: dict[str, Any]) -> object:
     if value_type == "first_date":
         return _first_date(row, source)
 
-    raise ValueError(f"unsupported OpenCUP mapping type: {value_type}")
+    msg = f"unsupported OpenCUP mapping type: {value_type}"
+    raise SchemaError(msg)
 
 
 def _source_value(row: dict[str, str | None], source: object) -> str | None:

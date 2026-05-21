@@ -7,6 +7,7 @@ from cup_check.dataset import (
     DatasetLatest,
     DatasetManifest,
     DatasetSchema,
+    ManifestError,
     load_dataset_latest,
     load_dataset_manifest,
 )
@@ -19,6 +20,7 @@ __all__ = [
     "DatasetLatest",
     "DatasetManifest",
     "DatasetSchema",
+    "ManifestError",
     "OpenCupChecker",
     "Outcome",
     "Rule",

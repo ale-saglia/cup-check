@@ -22,7 +22,8 @@ def validate_format(
     current_year: int | None = None,
 ) -> ValidationResult:
     if current_year is not None and current_year < 0:
-        raise ValueError("current_year must be non-negative")
+        msg = "current_year must be non-negative"
+        raise ValueError(msg)
     raw_value = str("" if value is None else value)
     trimmed_value = raw_value.strip()
     normalized_value = normalize_cup(raw_value)

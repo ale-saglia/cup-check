@@ -251,7 +251,7 @@ def test_download_projects_zip_skips_existing_destination(tmp_path: Path) -> Non
     destination.write_bytes(b"cached-dataset")
 
     def fake_urlopen(source_url: str, *, timeout: float | None = None):
-        raise AssertionError("download should be skipped")
+        raise AssertionError("download should be skipped")  # noqa: TRY003
 
     result = download_projects_zip(
         destination,
@@ -352,7 +352,7 @@ def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch
         assert source_url == "https://example.test/opencup.zip"
         assert timeout == 123
         if attempts == 1:
-            raise OSError("temporary network failure")
+            raise OSError("temporary network failure")  # noqa: TRY003
         return Response()
 
     monkeypatch.setattr(opencup_dataset.time, "sleep", sleep_calls.append)
@@ -392,7 +392,7 @@ def test_download_projects_zip_retries_exponential_backoff(tmp_path: Path, monke
         nonlocal attempts
         attempts += 1
         if attempts <= 3:
-            raise OSError("temporary failure")
+            raise OSError("temporary failure")  # noqa: TRY003
         return Response()
 
     monkeypatch.setattr(opencup_dataset.time, "sleep", sleep_calls.append)
@@ -415,7 +415,7 @@ def test_download_projects_zip_raises_after_retry_exhaustion(tmp_path: Path) -> 
     def fake_urlopen(source_url: str, *, timeout: float | None = None):
         nonlocal attempts
         attempts += 1
-        raise OSError("network unavailable")
+        raise OSError("network unavailable")  # noqa: TRY003
 
     with pytest.raises(OSError, match="network unavailable"):
         download_projects_zip(
@@ -595,7 +595,7 @@ def test_load_schema_rejects_empty_yaml(tmp_path: Path) -> None:
     schema_path = tmp_path / "empty-schema.yaml"
     schema_path.write_text("", encoding="utf-8")
 
-    with pytest.raises(ValueError, match="OpenCUP schema must be a mapping"):
+    with pytest.raises(TypeError, match="OpenCUP schema must be a mapping"):
         _load_schema(schema_path)
 
 
@@ -609,7 +609,7 @@ def test_load_schema_rejects_unsupported_schema_version(tmp_path: Path) -> None:
 def test_load_schema_rejects_non_integer_schema_version(tmp_path: Path) -> None:
     schema_path = write_custom_schema(tmp_path, overrides=['schema_version: "1"'])
 
-    with pytest.raises(ValueError, match="schema_version must be an integer"):
+    with pytest.raises(TypeError, match="schema_version must be an integer"):
         _load_schema(schema_path)
 
 
@@ -624,7 +624,7 @@ def test_load_schema_rejects_empty_columns(tmp_path: Path) -> None:
 def test_load_schema_rejects_non_mapping_column(tmp_path: Path) -> None:
     schema_path = write_custom_schema(tmp_path, column_lines=["  - non-mapping-column"])
 
-    with pytest.raises(ValueError, match=r"columns\[0\] must be a mapping"):
+    with pytest.raises(TypeError, match=r"columns\[0\] must be a mapping"):
         _load_schema(schema_path)
 
 

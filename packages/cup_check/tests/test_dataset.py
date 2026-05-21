@@ -110,7 +110,7 @@ def test_manifest_requires_object_fields() -> None:
     value = manifest_mapping()
     value["schema"] = "cups"
 
-    with pytest.raises(ValueError, match="schema must be an object"):
+    with pytest.raises(TypeError, match="schema must be an object"):
         DatasetManifest.from_mapping(value)
 
 
