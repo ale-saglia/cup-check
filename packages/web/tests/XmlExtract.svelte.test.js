@@ -8,6 +8,11 @@ vi.mock('../src/lib/xml/extract-cups.js', () => ({ extractCupsFromXmlFile: vi.fn
 vi.mock('../src/router.js', () => ({ navigate: vi.fn() }));
 vi.mock('../src/lib/data/transfer.js', () => ({ storeTransfer: vi.fn() }));
 vi.mock('../src/lib/core/validator.js', () => ({
+  normalizeCup: vi.fn((value) =>
+    String(value ?? '')
+      .trim()
+      .toUpperCase(),
+  ),
   validateCup: vi.fn().mockReturnValue({ outcome: 'FORMATO_VALIDO_DA_VERIFICARE' }),
   OUTCOMES: { INVALID: 'INVALIDO_FORMATO' },
 }));

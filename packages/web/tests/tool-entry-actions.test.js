@@ -95,10 +95,19 @@ describe('tool entry actions', () => {
     saveCupEdit(list, 2, '2-0', VALID_CUP);
     expect(list[1].cups[0].value).toBe('123');
 
-    saveCupEdit(list, 1, '1-0', ' g17h03000130001 extra ');
+    saveCupEdit(list, 1, '1-0', ' g17h03000130001 ');
     expect(list[0].cups[0]).toMatchObject({
       value: 'G17H03000130001',
       formalValid: true,
+      manual: true,
+      editing: false,
+    });
+
+    list[0].cups[0].editing = true;
+    saveCupEdit(list, 1, '1-0', ' g17h03000130001 extra ');
+    expect(list[0].cups[0]).toMatchObject({
+      value: 'G17H03000130001 EXTRA',
+      formalValid: false,
       manual: true,
       editing: false,
     });

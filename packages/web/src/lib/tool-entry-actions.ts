@@ -1,5 +1,5 @@
 import type { Cup, Entry } from './types.js';
-import { OUTCOMES, validateCup } from './core/validator.js';
+import { OUTCOMES, normalizeCup, validateCup } from './core/validator.js';
 
 export function findEntry(entries: Entry[], entryId: number): Entry | null {
   return entries.find((entry) => entry.id === entryId) ?? null;
@@ -43,7 +43,7 @@ export function saveCupEdit(
   const cup = findCup(entries, entryId, cupId);
   if (!cup || !cup.editing) return;
   const entry = findEntry(entries, entryId)!;
-  const normalized = rawValue.trim().toUpperCase().replace(/[^A-Z0-9]/g, '').slice(0, 15);
+  const normalized = normalizeCup(rawValue);
   if (normalized === '' && cup.manual) {
     entry.cups = entry.cups.filter((candidate) => candidate.id !== cupId);
   } else if (normalized.length > 0) {
