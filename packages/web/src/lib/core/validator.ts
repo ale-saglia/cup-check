@@ -16,6 +16,17 @@ export const RULES = {
   FOURTH_POSITION: 'R5' as Rule,
 };
 
+const RULE_PATTERNS = {
+  // Python: _ALLOWED_CHARS
+  allowedChars: /^[A-Z0-9]*$/,
+  // Python: _FIRST_POSITION
+  firstPosition: /^[A-Z]/,
+  // Python: _TWO_DIGIT_YEAR
+  twoDigitYear: /^\d{2}$/,
+  // Python: normalized_value[3] range check
+  fourthPosition: /^[A-Z]$/,
+} as const;
+
 export const RULE_DESCRIPTIONS: Record<Rule, string> = {
   R0: 'riga o cella CUP vuota',
   R1: 'lunghezza diversa da 15 caratteri dopo trim',
@@ -71,11 +82,11 @@ export function validateCup(
     failedRules.push(RULES.LENGTH);
   }
 
-  if (!/^[A-Z0-9]*$/.test(normalizedValue)) {
+  if (!RULE_PATTERNS.allowedChars.test(normalizedValue)) {
     failedRules.push(RULES.CHARSET);
   }
 
-  if (!/^[A-Z]/.test(normalizedValue)) {
+  if (!RULE_PATTERNS.firstPosition.test(normalizedValue)) {
     failedRules.push(RULES.FIRST_POSITION);
   }
 
@@ -83,11 +94,11 @@ export function validateCup(
   const year = Number.parseInt(yearToken, 10);
   // Il formato CUP espone l'anno con due sole cifre: R4 lo confronta quindi
   // con le due cifre finali dell'anno corrente, preservando questo limite intrinseco.
-  if (!/^\d{2}$/.test(yearToken) || year > currentTwoDigitYear) {
+  if (!RULE_PATTERNS.twoDigitYear.test(yearToken) || year > currentTwoDigitYear) {
     failedRules.push(RULES.YEAR);
   }
 
-  if (!/^[A-Z]$/.test(normalizedValue.charAt(3))) {
+  if (!RULE_PATTERNS.fourthPosition.test(normalizedValue.charAt(3))) {
     failedRules.push(RULES.FOURTH_POSITION);
   }
 
