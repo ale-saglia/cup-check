@@ -1,0 +1,34 @@
+import fs from 'node:fs';
+import path from 'node:path';
+import yaml from 'js-yaml';
+import { describe, expect, it } from 'vitest';
+
+const repoRoot = path.resolve(import.meta.dirname, '../../..');
+const workflowPath = path.join(repoRoot, '.github/workflows/deploy-pages.yml');
+
+function workflowSteps() {
+  const workflow = yaml.load(fs.readFileSync(workflowPath, 'utf8'));
+  return workflow.jobs.deploy.steps;
+}
+
+function releaseDownloadCommand(runScript, pattern) {
+  return runScript
+    .split(/(?=gh release download)/)
+    .find((command) => command.includes(`--pattern "${pattern}"`));
+}
+
+describe('deploy-pages workflow', () => {
+  it('pubblica su Pages anche il bundle sigstore del manifest dataset', () => {
+    const downloadStep = workflowSteps().find(
+      (step) => step.name === 'Download latest dataset files',
+    );
+    const signatureDownload = releaseDownloadCommand(
+      downloadStep.run,
+      'dataset-manifest.json.sigstore.json',
+    );
+
+    expect(downloadStep).toBeDefined();
+    expect(downloadStep.run).toContain('--pattern "dataset-manifest.json"');
+    expect(signatureDownload).toContain('--dir "dist/pages-root/datasets/${TAG}"');
+  });
+});
