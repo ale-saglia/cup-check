@@ -125,6 +125,21 @@ describe('i18n', () => {
     vi.unstubAllGlobals();
   });
 
+  it('usa FALLBACK_LOCALE quando localStorage.getItem lancia SecurityError', async () => {
+    vi.resetModules();
+    vi.stubGlobal('localStorage', {
+      getItem: vi.fn(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      }),
+      setItem: vi.fn(),
+    });
+
+    const { i18n: freshI18n } = await import('../src/i18n/i18n.svelte.js');
+
+    expect(freshI18n.locale).toBe('it');
+    vi.unstubAllGlobals();
+  });
+
   it('non persiste la lingua quando localStorage non è disponibile (persistLocale)', async () => {
     vi.stubGlobal('localStorage', undefined);
 
@@ -134,6 +149,21 @@ describe('i18n', () => {
 
     vi.unstubAllGlobals();
     await i18n.setLocale('it');
+  });
+
+  it('non fallisce quando localStorage.setItem lancia SecurityError', async () => {
+    const storage = {
+      getItem: vi.fn(() => null),
+      setItem: vi.fn(() => {
+        throw new DOMException('blocked', 'SecurityError');
+      }),
+    };
+    vi.stubGlobal('localStorage', storage);
+
+    await expect(i18n.setLocale('it')).resolves.toBeUndefined();
+    expect(i18n.locale).toBe('it');
+
+    vi.unstubAllGlobals();
   });
 
   it('lo switcher cambia lingua dal select nativo', async () => {

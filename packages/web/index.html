@@ -13,7 +13,12 @@
     <title>cup-check</title>
     <script>
       (function () {
-        var lang = localStorage.getItem('cup-check:language');
+        var lang;
+        try {
+          lang = localStorage.getItem('cup-check:language');
+        } catch (error) {
+          return;
+        }
         if (lang === 'en' || lang === 'it') document.documentElement.lang = lang;
       })();
     </script>

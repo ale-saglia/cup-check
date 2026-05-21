@@ -70,13 +70,22 @@ export async function setLocale(nextLocale: Locale): Promise<void> {
 
 function initialLocale(): Locale {
   if (typeof localStorage === 'undefined') return FALLBACK_LOCALE;
-  const stored = localStorage.getItem(STORAGE_KEY);
+  let stored: string | null;
+  try {
+    stored = localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return FALLBACK_LOCALE;
+  }
   return isLocale(stored) ? stored : FALLBACK_LOCALE;
 }
 
 function persistLocale(nextLocale: Locale): void {
   if (typeof localStorage === 'undefined') return;
-  localStorage.setItem(STORAGE_KEY, nextLocale);
+  try {
+    localStorage.setItem(STORAGE_KEY, nextLocale);
+  } catch {
+    // La persistenza lingua è best-effort: Safari private mode può bloccare localStorage.
+  }
 }
 
 function isLocale(value: unknown): value is Locale {
