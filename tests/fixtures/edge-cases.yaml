@@ -30,6 +30,14 @@
     failed_rules: []
     warnings: [N1, N2]
 
+- id: edge-internal-whitespace
+  description: 'CUP con spazio interno segnalato come normalizzazione sospetta'
+  input: 'G17H03 000130001'
+  expected:
+    outcome: INVALIDO_FORMATO
+    failed_rules: [R1, R2]
+    warnings: [N3]
+
 - id: edge-empty
   description: 'Valore vuoto'
   input: ''

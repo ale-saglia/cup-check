@@ -28,11 +28,13 @@ export const RULE_DESCRIPTIONS: Record<Rule, string> = {
 export const WARNINGS = {
   TRIMMED: 'N1' as Warning,
   UPPERCASED: 'N2' as Warning,
+  INTERNAL_WHITESPACE: 'N3' as Warning,
 };
 
 export const WARNING_DESCRIPTIONS: Record<Warning, string> = {
   N1: 'spazi bianchi rimossi dal CUP',
   N2: 'lettere convertite in maiuscolo',
+  N3: 'spazi bianchi interni presenti nel CUP',
 };
 
 export function normalizeCup(value: unknown): string {
@@ -107,6 +109,7 @@ function normalizationWarnings(
   return [
     rawValue !== trimmedValue ? WARNINGS.TRIMMED : null,
     trimmedValue !== normalizedValue ? WARNINGS.UPPERCASED : null,
+    /\s/.test(trimmedValue) ? WARNINGS.INTERNAL_WHITESPACE : null,
   ].filter((w): w is Warning => w !== null);
 }
 

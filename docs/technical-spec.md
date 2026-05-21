@@ -154,6 +154,7 @@ Avvisi non bloccanti:
 | ------ | --------- |
 | `N1`   | spazi bianchi rimossi dal CUP |
 | `N2`   | lettere convertite in maiuscolo |
+| `N3`   | spazi bianchi interni presenti nel CUP |
 
 I fixture in `tests/fixtures/*.yaml` sono la specifica funzionale normativa.
 
@@ -171,7 +172,7 @@ Outcome    = INVALIDO_FORMATO
            | NON_TROVATO_REMOTO_DA_VERIFICARE     -- CUP non trovato dalla fonte remota
            | VERIFICA_REMOTA_NON_DISPONIBILE      -- provider remoto assente o non configurato
 FailedRule = R0 | R1 | R2 | R3 | R4 | R5
-Warning    = N1 | N2
+Warning    = N1 | N2 | N3
 
 ValidationResult = {
   inputRow: int | null,

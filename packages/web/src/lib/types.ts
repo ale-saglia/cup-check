@@ -10,7 +10,7 @@ export type Outcome =
 
 export type Rule = 'R0' | 'R1' | 'R2' | 'R3' | 'R4' | 'R5';
 
-export type Warning = 'N1' | 'N2';
+export type Warning = 'N1' | 'N2' | 'N3';
 
 export interface ValidationResult {
   inputRow: number | null;
