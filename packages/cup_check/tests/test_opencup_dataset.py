@@ -15,6 +15,7 @@ from cup_check.dataset import load_dataset_latest, load_dataset_manifest
 from cup_check.opencup_dataset import (
     _first_date,
     _joined_text,
+    _load_schema,
     _mapped_value,
     _source_value,
     _text_in_values,
@@ -552,6 +553,109 @@ def test_project_records_accept_custom_schema_path(tmp_path: Path) -> None:
     assert rows == [("H11B22001230001", None)]
 
 
+def test_load_schema_rejects_empty_yaml(tmp_path: Path) -> None:
+    schema_path = tmp_path / "empty-schema.yaml"
+    schema_path.write_text("", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="OpenCUP schema must be a mapping"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_unsupported_schema_version(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(tmp_path, overrides=["schema_version: 2"])
+
+    with pytest.raises(ValueError, match="schema_version must be 1"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_non_integer_schema_version(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(tmp_path, overrides=['schema_version: "1"'])
+
+    with pytest.raises(ValueError, match="schema_version must be an integer"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_empty_columns(tmp_path: Path) -> None:
+    schema_path = tmp_path / "custom-schema.yaml"
+    schema_path.write_text("schema_version: 1\ncolumns: []\n", encoding="utf-8")
+
+    with pytest.raises(ValueError, match="columns must be a non-empty list"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_non_mapping_column(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(tmp_path, column_lines=["  - non-mapping-column"])
+
+    with pytest.raises(ValueError, match=r"columns\[0\] must be a mapping"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_column_missing_required_key(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=[
+            '  - {target: cup, source: CODICE_CUP}',
+            '  - {target: natura, source: TIPO, type: category}',
+        ],
+    )
+
+    with pytest.raises(ValueError, match=r"columns\[0\]\.type must be a non-empty string"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_unsupported_column_type(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=['  - {target: cup, source: CODICE_CUP, type: unsupported}'],
+    )
+
+    with pytest.raises(ValueError, match=r"columns\[0\]\.type is unsupported: unsupported"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_column_without_source(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=['  - {target: cup, type: cup}'],
+    )
+
+    with pytest.raises(ValueError, match=r"columns\[0\]\.source is required"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_invalid_column_source(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=['  - {target: cup, source: [], type: cup}'],
+    )
+
+    with pytest.raises(ValueError, match=r"columns\[0\]\.source must be"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_invalid_bool_values(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=['  - {target: attivo, source: STATO, type: bool_equals, true_values: []}'],
+    )
+
+    with pytest.raises(ValueError, match=r"columns\[0\]\.true_values must be"):
+        _load_schema(schema_path)
+
+
+def test_load_schema_rejects_missing_required_target(tmp_path: Path) -> None:
+    schema_path = write_custom_schema(
+        tmp_path,
+        column_lines=[
+            '  - {target: cup, source: CODICE_CUP, type: cup}',
+            '  - {target: natura, source: TIPO, type: category}',
+        ],
+    )
+
+    with pytest.raises(ValueError, match="missing required target"):
+        _load_schema(schema_path)
+
+
 def test_source_value_returns_none_for_non_str_non_list_source() -> None:
     assert _source_value({"COL": "valore"}, None) is None
 
@@ -585,6 +689,33 @@ def test_first_date_with_scalar_source() -> None:
 def test_text_in_values_with_non_list_candidates() -> None:
     assert _text_in_values("ATTIVO", ("ATTIVO",)) is False
     assert _text_in_values("ATTIVO", None) is False
+
+
+def write_custom_schema(
+    tmp_path: Path,
+    *,
+    overrides: list[str] | None = None,
+    column_lines: list[str] | None = None,
+) -> Path:
+    schema_path = tmp_path / "custom-schema.yaml"
+    lines = overrides or ["schema_version: 1"]
+    lines += ["columns:"]
+    lines += column_lines or [
+        '  - {target: cup, source: CODICE_CUP, type: cup}',
+        '  - {target: natura, source: TIPO, type: category}',
+        '  - {target: year_suffix, source: CODICE_CUP, type: cup_year_suffix}',
+        '  - {target: piva_cf_titolare, source: TITOLARE, type: optional_text}',
+        '  - {target: piva_cf_beneficiario, source: BENEFICIARIO, type: optional_text}',
+        '  - {target: costo_progetto_cents, source: COSTO, type: money_cents}',
+        '  - {target: finanziamento_progetto_cents, source: FINANZIAMENTO, type: money_cents}',
+        '  - {target: descrizione_full, source: DESCRIZIONE, type: joined_text}',
+        '  - {target: attivo, source: STATO, type: bool_equals, true_values: [APERTO]}',
+        '  - {target: data_chiusura_revoca, source: CHIUSURA, type: date}',
+        '  - {target: cup_master, source: MASTER, type: optional_cup}',
+        '  - {target: updated_on, source: AGGIORNATO, type: first_date}',
+    ]
+    schema_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+    return schema_path
 
 
 def write_projects_zip(tmp_path: Path) -> Path:

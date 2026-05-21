@@ -17,7 +17,7 @@ import logging
 import sqlite3
 import time
 import warnings
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Mapping
 from contextlib import contextmanager
 from dataclasses import asdict, dataclass
 from datetime import UTC, date, datetime
@@ -42,6 +42,37 @@ OPENCUP_DOWNLOAD_RETRY_BACKOFF_SECONDS = 2.0
 _DOWNLOAD_BLOCK_SIZE_BYTES = 1024 * 1024
 
 _INSERT_SQL = "INSERT OR IGNORE INTO cup_index (cup, detail_chunk) VALUES (?, NULL)"
+_SCHEMA_VERSION = 1
+_REQUIRED_SCHEMA_TARGETS = frozenset(
+    {
+        "cup",
+        "natura",
+        "year_suffix",
+        "piva_cf_titolare",
+        "piva_cf_beneficiario",
+        "costo_progetto_cents",
+        "finanziamento_progetto_cents",
+        "descrizione_full",
+        "attivo",
+        "data_chiusura_revoca",
+        "cup_master",
+        "updated_on",
+    }
+)
+_SUPPORTED_SCHEMA_TYPES = frozenset(
+    {
+        "bool_equals",
+        "category",
+        "cup",
+        "cup_year_suffix",
+        "date",
+        "first_date",
+        "joined_text",
+        "money_cents",
+        "optional_cup",
+        "optional_text",
+    }
+)
 LOGGER = logging.getLogger(__name__)
 
 
@@ -454,10 +485,78 @@ def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
             "Installalo con: pip install 'cup-check[build]'"
         ) from exc
     if schema_path is not None:
-        return yaml.safe_load(Path(schema_path).read_text(encoding="utf-8"))
-    return yaml.safe_load(
-        files("cup_check").joinpath(OPENCUP_DATASET_SCHEMA).read_text(encoding="utf-8")
-    )
+        raw_schema = yaml.safe_load(Path(schema_path).read_text(encoding="utf-8"))
+    else:
+        raw_schema = yaml.safe_load(
+            files("cup_check").joinpath(OPENCUP_DATASET_SCHEMA).read_text(encoding="utf-8")
+        )
+    return _validate_schema(raw_schema)
+
+
+def _validate_schema(value: object) -> dict[str, Any]:
+    if not isinstance(value, dict):
+        raise ValueError("OpenCUP schema must be a mapping")
+
+    schema_version = value.get("schema_version")
+    if not isinstance(schema_version, int) or isinstance(schema_version, bool):
+        raise ValueError("OpenCUP schema schema_version must be an integer")
+    if schema_version != _SCHEMA_VERSION:
+        raise ValueError(f"OpenCUP schema schema_version must be {_SCHEMA_VERSION}")
+
+    columns = value.get("columns")
+    if not isinstance(columns, list) or not columns:
+        raise ValueError("OpenCUP schema columns must be a non-empty list")
+
+    targets: set[str] = set()
+    for index, column in enumerate(columns):
+        _validate_schema_column(column, index, targets)
+
+    missing_targets = sorted(_REQUIRED_SCHEMA_TARGETS - targets)
+    if missing_targets:
+        raise ValueError(
+            "OpenCUP schema missing required target(s): " + ", ".join(missing_targets)
+        )
+
+    return value
+
+
+def _validate_schema_column(column: object, index: int, targets: set[str]) -> None:
+    context = f"OpenCUP schema columns[{index}]"
+    if not isinstance(column, Mapping):
+        raise ValueError(f"{context} must be a mapping")
+
+    target = _schema_string(column.get("target"), f"{context}.target")
+    value_type = _schema_string(column.get("type"), f"{context}.type")
+
+    if value_type not in _SUPPORTED_SCHEMA_TYPES:
+        raise ValueError(f"{context}.type is unsupported: {value_type}")
+    if "source" not in column:
+        raise ValueError(f"{context}.source is required")
+    _validate_schema_source(column["source"], f"{context}.source")
+    if value_type == "bool_equals":
+        _validate_schema_string_list(column.get("true_values"), f"{context}.true_values")
+
+    targets.add(target)
+
+
+def _schema_string(value: object, field_name: str) -> str:
+    if not isinstance(value, str) or not value:
+        raise ValueError(f"{field_name} must be a non-empty string")
+    return value
+
+
+def _validate_schema_source(value: object, field_name: str) -> None:
+    if isinstance(value, str) and value:
+        return
+    if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
+        return
+    raise ValueError(f"{field_name} must be a non-empty string or list of strings")
+
+
+def _validate_schema_string_list(value: object, field_name: str) -> None:
+    if isinstance(value, list) and value and all(isinstance(item, str) and item for item in value):
+        return
+    raise ValueError(f"{field_name} must be a non-empty list of strings")
 
 
 def _mapped_record_values(row: dict[str, str | None], schema: dict[str, Any]) -> dict[str, Any]:
