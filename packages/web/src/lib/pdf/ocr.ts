@@ -1,4 +1,5 @@
 import type { Worker } from 'tesseract.js';
+import { loadPdfjs } from './extract-text.js';
 
 interface OcrProgressEvent {
   fileName: string;
@@ -46,7 +47,7 @@ export async function ocrPdf(
   file: File,
   { onProgress }: { onProgress?: (progress: OcrProgressEvent) => void } = {},
 ): Promise<{ pages: string[] }> {
-  const { getDocument } = await import('pdfjs-dist');
+  const { getDocument } = await loadPdfjs();
   const arrayBuffer = await file.arrayBuffer();
   const doc = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
   const totalPages = doc.numPages;

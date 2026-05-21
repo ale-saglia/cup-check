@@ -1,10 +1,11 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import { getDocument } from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
 import { createWorker } from 'tesseract.js';
 
 vi.mock('pdfjs-dist', () => ({
+  GlobalWorkerOptions: { workerSrc: '' },
   getDocument: vi.fn(),
 }));
 
@@ -39,9 +40,26 @@ async function loadOcr() {
 
 beforeEach(() => {
   vi.clearAllMocks();
+  GlobalWorkerOptions.workerSrc = '';
 });
 
 describe('ocrPdf', () => {
+  it('configura il worker pdf.js prima di aprire il documento anche se chiamato standalone', async () => {
+    const doc = makeDoc(1);
+    getDocument.mockImplementation(() => {
+      expect(GlobalWorkerOptions.workerSrc).toBe(
+        new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href,
+      );
+      return { promise: Promise.resolve(doc) };
+    });
+    createWorker.mockResolvedValue(makeWorker());
+
+    const { ocrPdf } = await loadOcr();
+    await ocrPdf(fakeFile);
+
+    expect(GlobalWorkerOptions.workerSrc).toContain('pdfjs/pdf.worker.min.mjs');
+  });
+
   it('crea il worker al primo utilizzo e restituisce il testo delle pagine', async () => {
     const doc = makeDoc(2);
     getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
