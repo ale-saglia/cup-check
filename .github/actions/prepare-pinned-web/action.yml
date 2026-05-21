@@ -16,6 +16,10 @@ inputs:
     description: Directory used to download the release web artifact.
     required: false
     default: dist/web
+  source-dir:
+    description: Directory used for the fallback checkout when the web artifact is unavailable.
+    required: false
+    default: .pinned-web-src
 
 outputs:
   software-tag:
@@ -75,21 +79,23 @@ runs:
       with:
         ref: ${{ steps.software.outputs.tag }}
         fetch-depth: 0
+        path: ${{ inputs.source-dir }}
 
     - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
       if: steps.web_artifact.outcome == 'failure'
       with:
         node-version: 22
         cache: npm
-        cache-dependency-path: packages/web/package-lock.json
+        cache-dependency-path: ${{ inputs.source-dir }}/packages/web/package-lock.json
 
     - name: Build pinned web from software tag
       if: steps.web_artifact.outcome == 'failure'
       shell: bash
       env:
         PAGES_ROOT: ${{ github.workspace }}/${{ inputs.pages-root }}
+        SOURCE_DIR: ${{ github.workspace }}/${{ inputs.source-dir }}
       run: |
-        cd "${GITHUB_WORKSPACE}/packages/web"
+        cd "${SOURCE_DIR}/packages/web"
         npm ci
         npm run build
         mkdir -p "${PAGES_ROOT}"
