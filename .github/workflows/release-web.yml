@@ -26,6 +26,15 @@ jobs:
           cache-dependency-path: packages/web/package-lock.json
       - run: npm ci
       - run: npm run build
+      - name: Generate web SBOM
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.24.0
+        with:
+          path: packages/web
+          format: cyclonedx-json
+          output-file: web-sbom.cdx.json
+          artifact-name: web-sbom
+          upload-artifact: false
+          upload-release-assets: false
       - name: Pack pinned web artifact
         run: tar -czf ../../web-dist.tar.gz -C dist .
       - name: Attach pinned web artifact to release
@@ -45,6 +54,6 @@ jobs:
               --repo "${{ github.repository }}" \
               --title "$VERSION" \
               --notes "$NOTES"
-          gh release upload "$VERSION" ../../web-dist.tar.gz \
+          gh release upload "$VERSION" ../../web-dist.tar.gz ../../web-sbom.cdx.json \
             --repo "${{ github.repository }}" \
             --clobber

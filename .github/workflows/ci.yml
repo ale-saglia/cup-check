@@ -13,6 +13,16 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 jobs:
+  dependency-review:
+    name: Dependency review
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/dependency-review-action@a1d282b36b6f3519aa1f3fc636f609c47dddb294 # v5.0.0
+        with:
+          fail-on-severity: high
+
   web:
     name: Web lint, test, build
     runs-on: ubuntu-latest
@@ -131,6 +141,6 @@ jobs:
           cache-dependency-glob: packages/cup_check/uv.lock
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
       - run: uv sync --dev --locked
       - run: INTEGRATION_TESTS=1 uv run pytest -m integration --override-ini="addopts="
