@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   addManualCup,
+  clearAllEditing,
   cancelCupEdit,
   editCup,
   findCup,
@@ -52,6 +53,15 @@ describe('tool entry actions', () => {
     expect(findCup(list, 1, '1-0')?.value).toBe(VALID_CUP);
     expect(findCup(list, 1, 'missing')).toBeNull();
     expect(findCup(list, 99, '1-0')).toBeNull();
+  });
+
+  it('azzera tutte le edit attive', () => {
+    const list = entries();
+    list[1].cups[0].editing = true;
+
+    clearAllEditing(list);
+
+    expect(list.flatMap((entry) => entry.cups).every((cup) => !cup.editing)).toBe(true);
   });
 
   it('attiva una sola edit e ignora cup assenti', () => {

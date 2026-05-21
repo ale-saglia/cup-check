@@ -9,8 +9,12 @@ export function findCup(entries: Entry[], entryId: number, cupId: string): Cup |
   return findEntry(entries, entryId)?.cups.find((cup) => cup.id === cupId) ?? null;
 }
 
-export function editCup(entries: Entry[], entryId: number, cupId: string): void {
+export function clearAllEditing(entries: Entry[]): void {
   entries.forEach((entry) => entry.cups.forEach((cup) => { cup.editing = false; }));
+}
+
+export function editCup(entries: Entry[], entryId: number, cupId: string): void {
+  clearAllEditing(entries);
   const cup = findCup(entries, entryId, cupId);
   if (cup) cup.editing = true;
 }
@@ -23,7 +27,7 @@ export function removeCup(entries: Entry[], entryId: number, cupId: string): voi
 export function addManualCup(entries: Entry[], entryId: number, cupId: string): void {
   const entry = findEntry(entries, entryId);
   if (!entry) return;
-  entries.forEach((candidate) => candidate.cups.forEach((cup) => { cup.editing = false; }));
+  clearAllEditing(entries);
   entry.cups.push({
     id: cupId,
     value: '',
