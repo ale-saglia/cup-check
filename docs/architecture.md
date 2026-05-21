@@ -114,6 +114,40 @@ Componenti principali aggiunti o aggiornati in `0.4.0`:
 - `packages/web/src/pdf/extract-cups.js` — normalizzazione alfanumerica del testo estratto, regex globale per CUP spezzati su token multipli e validazione formale.
 - `packages/web/src/state.js` — stato condiviso tra le viste; espone `pendingFile` per il trasferimento CSV dal tool PDF al verificatore.
 
+## Architettura 0.5.0
+
+La release `0.5.0` completa la migrazione del frontend da vanilla JS a TypeScript + Svelte 5, aggiunge un secondo tool documentale e porta la validazione batch su un thread separato:
+
+```text
+GitHub Pages
+  └─ HTML + TypeScript + Svelte 5 + Service Worker
+        │
+        ▼
+Browser utente
+  ├─ #/             verificatore CUP (import multi-file CSV/XLSX)
+  ├─ #/pdf-extract  estrazione CUP da fatture PDF
+  └─ #/xml-extract  estrazione CUP da fatture XML FatturaPA
+        └─ DOMParser nativo, campi strutturati CodiceCUP/AltriDatiGestionali,
+           fallback su testo libero (Causale, Descrizione)
+```
+
+Il verificatore accetta più file in un unico drag-and-drop. Ogni sorgente mantiene i metadati di origine (`file_origine`, `scheda_origine`, `riga_origine`, `colonna_origine`) fino all'export CSV. Il wizard di importazione guida alla selezione della colonna CUP per ogni file e permette di includere o escludere singole sorgenti.
+
+Per batch superiori a 100.000 righe la validazione viene spostata in un `ValidationWorker` dedicato. Il lookup OpenCUP avviene sempre sul main thread tramite protocollo `lookup-request`/`lookup-result`, evitando di trasferire il dataset al worker. Il main thread resta reattivo durante l'elaborazione; un `AbortController` permette di annullare il batch in corso, anche su `onDestroy` della vista.
+
+Il dataset SQLite viene ora tenuto in `CacheStorage` con invalidazione per hash SHA-256: il manifest viene sempre scaricato dalla rete, il suo `cup_index.sha256` viene confrontato con l'hash del file in cache — il download avviene solo se diverso. Se la rete non è disponibile e la cache contiene dati validi il dataset viene servito offline senza errore.
+
+Componenti principali aggiunti o aggiornati in `0.5.0`:
+
+- `packages/web/src/routes/XmlExtract.svelte` — tool `#/xml-extract`; parsing FatturaPA con DOMParser nativo, estrazione campi strutturati e fallback testo libero, correzione manuale, export CSV.
+- `packages/web/src/workers/validation-worker.ts` — logica di validazione e lookup in thread separato; streaming progressivo dei risultati; supporto `AbortSignal`.
+- `packages/web/src/workers/validator.worker.ts` — entry point del Worker; gestisce il protocollo `lookup-request`/`lookup-result` con il main thread.
+- `packages/web/src/components/ImportWizard.svelte` — wizard modale per import multi-file; selezione colonna per sorgente, toggle includi/escludi, preview righe.
+- `packages/web/src/components/ProgressBar.svelte` — barra di avanzamento per batch in corso, con pulsante Annulla.
+- `packages/web/src/lib/core/import-plan.ts` — piano di importazione multi-file; normalizzazione intestazioni, rilevamento automatico colonna CUP, produzione righe con metadati origine.
+- `packages/web/src/lib/data/dataset-loader.ts` — catena di fetch con `AbortSignal`, cache `CacheStorage` con invalidazione SHA-256, fallback offline.
+- `packages/web/src/i18n/` — architettura i18n minimale con file JSON `it`/`en` caricati dinamicamente; selettore lingua con persistenza `localStorage`.
+
 ## Architettura Coerenza Atto
 
 La milestone di coerenza atto, spostata dopo `0.4.0`, separa il dataset in due livelli:

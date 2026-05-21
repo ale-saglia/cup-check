@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## 0.5.0 - 2026-05-21
 
 - Completa la migrazione del frontend a TypeScript + Svelte 5 (milestone 0.5.0): riorganizzazione di `src/` in `lib/core`, `lib/data`, `lib/pdf`, conversione dei moduli da JS a TS, vite.config e ESLint migrati, `Validator.svelte` come nuovo entry point Svelte 5 montato via `mount()`. La migrazione copre fasi A1–C6 con coverage completa.
 - Aggiunge il tool **Estrai CUP da fatture elettroniche XML** (route `#/xml-extract`): legge file FatturaPA con DOMParser nativo, cerca prima i campi strutturati (`CodiceCUP`, `AltriDatiGestionali[TipoDato=CUP]`) e ricade sul testo libero (`Causale`, `Descrizione`) come fallback. Condivide con il tool PDF il flusso di correzione manuale, il passaggio al verificatore e l'export CSV.

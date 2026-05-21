@@ -19,7 +19,7 @@ Nella rendicontazione di progetti pubblici, fondi PNRR e programmi finanziati, u
 
 Il progetto mantiene una postura cautelativa: distingue il formato valido dalla verifica di esistenza, usa un dataset OpenCUP statico e versionato quando disponibile, e non presenta mai il risultato come certificazione autoritativa.
 
-`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico è disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non è disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`. Da `0.4.0` la web app include anche un tool per estrarre CUP da fatture PDF, con testo nativo e OCR locale in italiano come fallback per documenti scansionati.
+`cup-check` include una web app statica per controllare liste di CUP direttamente nel browser e una libreria Python importabile per usare lo stesso validatore in script, pipeline e applicazioni. La verifica controlla il formato (regole `R0`-`R5`) e, quando il dataset OpenCUP statico è disponibile, la presenza del CUP nel mirror pubblicato. Se il dataset non è disponibile, un CUP formalmente valido resta `FORMATO_VALIDO_DA_VERIFICARE`. Da `0.4.0` la web app include anche un tool per estrarre CUP da fatture PDF, con testo nativo e OCR locale in italiano come fallback per documenti scansionati. Da `0.5.0` include il tool di estrazione da fatture XML FatturaPA, l'import multi-file nel verificatore con tracciabilità dell'origine, e la validazione batch di oltre 100.000 righe tramite Web Worker dedicato.
 
 ## English Abstract
 
@@ -29,11 +29,11 @@ The project is designed for zero operational cost, browser-side processing, audi
 
 ## Stato
 
-**Versione corrente: 0.4.1** — web app statica, package Python `cup-check` su PyPI, tool di estrazione CUP da PDF e da fatture XML FatturaPA.
+**Versione corrente: 0.5.0** — web app statica (TypeScript + Svelte 5), package Python `cup-check` su PyPI, tool di estrazione CUP da PDF e da fatture XML FatturaPA, import multi-file, accessibilità WCAG AA, batch >100k con Web Worker, i18n italiano/inglese.
 
 Il dataset OpenCUP statico è uno snapshot mensile; il numero di CUP indicizzati è riportato nel `dataset-manifest.json` della release corrente.
 
-**Roadmap**: `0.4.1` rilasciata · `0.5.0` in sviluppo (frontend TypeScript + Svelte 5, import multi-file, accessibilità WCAG AA, batch >100k con Web Worker, i18n) · [dettaglio completo](docs/roadmap.md).
+**Roadmap**: `0.5.0` rilasciata · `0.6.0` in sviluppo (coerenza atto: cross-check CUP con dati atto, dataset dettagli chunked) · [dettaglio completo](docs/roadmap.md).
 
 ## Cosa Fa
 
