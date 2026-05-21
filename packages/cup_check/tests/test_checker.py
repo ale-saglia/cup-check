@@ -256,6 +256,37 @@ def test_download_index_removes_partial_file_on_sha_mismatch(tmp_path: Path) -> 
     assert not destination.exists()
 
 
+def test_download_index_raises_on_per_chunk_sha_mismatch(tmp_path: Path) -> None:
+    payload = b"sqlite"
+    manifest = DatasetManifest.from_mapping(
+        {
+            **manifest_mapping(manifest_for_chunks(
+                base_url="https://example.test/dataset",
+                files=("cup-index.sqlite.000",),
+                sqlite_bytes=payload,
+            )),
+            "cup_index": {
+                "base_url": "https://example.test/dataset",
+                "files": ["cup-index.sqlite.000"],
+                "chunk_size_bytes": len(payload),
+                "total_size_bytes": len(payload),
+                "sha256": hashlib.sha256(payload).hexdigest(),
+                "files_sha256": [hashlib.sha256(b"wrong").hexdigest()],
+            },
+        }
+    )
+
+    def fake_urlopen(url: str, *, timeout: float | None = None):
+        return BytesResponse(payload)
+
+    destination = tmp_path / "cup-index.sqlite.tmp"
+
+    with pytest.raises(ValueError, match=r"sha256 mismatch for chunk cup-index\.sqlite\.000"):
+        checker_module._download_index(manifest, destination, opener=fake_urlopen)
+
+    assert not destination.exists()
+
+
 def test_default_cache_root_uses_user_cache_directory() -> None:
     assert checker_module._cache_root(None) == Path.home() / ".cache" / "cup-check"
 
