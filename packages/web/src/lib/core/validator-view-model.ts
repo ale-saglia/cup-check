@@ -5,6 +5,7 @@ import { resultRowsLabel } from './results.js';
 
 type Translate = (key: string, values?: Record<string, string | number>) => string;
 type ResultSource = Pick<UniqueResult, 'inputRows' | 'inputRow'>;
+type SourceGroup = { key: string; fileName: string; sheetName?: string; rows: ImportedCupRow[] };
 
 export function batchProgressLabel(
   batchProgress: BatchProgress | null,
@@ -126,30 +127,25 @@ export function sourceDetailTable(
   };
 }
 
-export function sourceGroups(originRows: ImportedCupRow[]): Array<{
-  key: string;
-  fileName: string;
-  sheetName?: string;
-  rows: ImportedCupRow[];
-}> {
-  const groups: Array<{ key: string; fileName: string; sheetName?: string; rows: ImportedCupRow[] }> = [];
+export function sourceGroups(originRows: ImportedCupRow[]): SourceGroup[] {
+  const groupsByKey = new Map<string, SourceGroup>();
 
   for (const row of originRows) {
     const key = `${row.fileOrigine}\u0000${row.schedaOrigine ?? ''}`;
-    const existing = groups.find((group) => group.key === key);
-    if (existing) {
-      existing.rows.push(row);
-      continue;
+    let existing = groupsByKey.get(key);
+    if (!existing) {
+      existing = {
+        key,
+        fileName: row.fileOrigine,
+        ...(row.schedaOrigine ? { sheetName: row.schedaOrigine } : {}),
+        rows: [],
+      };
+      groupsByKey.set(key, existing);
     }
-    groups.push({
-      key,
-      fileName: row.fileOrigine,
-      ...(row.schedaOrigine ? { sheetName: row.schedaOrigine } : {}),
-      rows: [row],
-    });
+    existing.rows.push(row);
   }
 
-  return groups;
+  return [...groupsByKey.values()];
 }
 
 export function uniqueSourceValues(values: Array<string | undefined>): string {
