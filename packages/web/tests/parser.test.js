@@ -127,6 +127,22 @@ describe('parseFile', () => {
     expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: [longNote] }]);
   });
 
+  it('keeps valid UTF-8 text in large single-column CSV files', async () => {
+    const header = 'Codice Unità Progetto '.repeat(55);
+    const value = 'G17H03000130001';
+    const file = new File([`${header}\n${value}`], 'single-column-utf8.csv', {
+      type: 'text/csv',
+    });
+
+    const parsed = await parseFile(file);
+
+    expect(parsed.headerPresent).toBe(true);
+    expect(parsed.headers).toEqual([header]);
+    expect(parsed.headers[0]).toContain('Unità');
+    expect(parsed.headers[0]).not.toContain('UnitÃ');
+    expect(parsed.rows).toEqual([{ originalRowNumber: 2, cells: [value] }]);
+  });
+
   it('parses CSV without header', async () => {
     const file = new File(['G17H03000130001\nA58C15000390001'], 'cups.csv', {
       type: 'text/csv',

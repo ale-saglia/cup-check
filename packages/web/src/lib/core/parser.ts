@@ -66,7 +66,7 @@ async function parseCsv(file: File, columnLabel?: ColumnLabelFormatter): Promise
   const utf8Text = decodeCsv(buffer, 'utf-8');
   const utf8Rows = await parseCsvText(utf8Text);
 
-  if (!shouldRetryWithWindows1252(file, utf8Text, utf8Rows)) {
+  if (!shouldRetryWithWindows1252(file, buffer, utf8Text, utf8Rows)) {
     return normalizeRows(utf8Rows, {}, columnLabel);
   }
 
@@ -116,8 +116,19 @@ function parseCsvText(text: string): Promise<string[][]> {
   });
 }
 
-function shouldRetryWithWindows1252(file: File, text: string, rows: string[][]): boolean {
-  return hasReplacementCharacterInPreview(text) || (file.size > 1024 && parsesAsSingleColumn(rows));
+function shouldRetryWithWindows1252(
+  file: File,
+  buffer: ArrayBuffer,
+  text: string,
+  rows: string[][],
+): boolean {
+  if (hasReplacementCharacterInPreview(text)) return true;
+  return (
+    file.size > 1024 &&
+    hasNonAsciiByte(buffer) &&
+    !hasValidUtf8Encoding(buffer) &&
+    parsesAsSingleColumn(rows)
+  );
 }
 
 function hasReplacementCharacterInPreview(text: string): boolean {
@@ -127,4 +138,17 @@ function hasReplacementCharacterInPreview(text: string): boolean {
 function parsesAsSingleColumn(rows: string[][]): boolean {
   const meaningfulRows = rows.filter((row) => row.some((cell) => cell.trim() !== ''));
   return meaningfulRows.length > 0 && meaningfulRows.every((row) => row.length <= 1);
+}
+
+function hasNonAsciiByte(buffer: ArrayBuffer): boolean {
+  return new Uint8Array(buffer).some((byte) => byte > 0x7f);
+}
+
+function hasValidUtf8Encoding(buffer: ArrayBuffer): boolean {
+  try {
+    new TextDecoder('utf-8', { fatal: true }).decode(buffer);
+    return true;
+  } catch {
+    return false;
+  }
 }
