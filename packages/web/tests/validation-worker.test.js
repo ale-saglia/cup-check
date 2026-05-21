@@ -308,6 +308,26 @@ describe('validateRows', () => {
     ]);
   });
 
+  it('usa automaticamente il worker oltre 100000 righe', async () => {
+    const worker = new FakeValidationWorker();
+    const rows = Array.from({ length: 100_001 }, (_, index) => ({
+      value: index === 100_000 ? '123' : 'G17H03000130001',
+      row: index + 1,
+    }));
+
+    const result = await validateRows(rows, {
+      workerFactory: () => worker,
+    });
+
+    expect(result.usedWorker).toBe(true);
+    expect(result.sourceRowCount).toBe(100_001);
+    expect(worker.terminate).toHaveBeenCalledOnce();
+    expect(result.results.map((r) => [r.normalizedValue, r.occurrenceCount])).toEqual([
+      ['G17H03000130001', 100_000],
+      ['123', 1],
+    ]);
+  });
+
   it('risponde alle richieste lookup del worker anche senza dataset', async () => {
     const worker = new FakeValidationWorker();
 
