@@ -71,4 +71,11 @@ describe('deploy-pages workflow', () => {
       expect(workflow.concurrency['cancel-in-progress']).toBe(false);
     }
   });
+
+  it('limita i permessi write della release web al job che pubblica', () => {
+    const releaseWeb = loadYaml(releaseWebWorkflowPath);
+
+    expect(releaseWeb.permissions.contents).toBe('read');
+    expect(releaseWeb.jobs.release.permissions.contents).toBe('write');
+  });
 });
