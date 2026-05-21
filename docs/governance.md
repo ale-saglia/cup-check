@@ -85,6 +85,8 @@ cosign verify-blob \
 
 ## Release
 
+La checklist operativa completa è in [Processo di release](release-process.md).
+
 - Software: tag `v*`, SemVer.
 - Dataset: tag `dataset-YYYY-MM`, indipendente dalle release software.
 - `release-web.yml` deploya GitHub Pages quando viene pushato un tag `v*`.

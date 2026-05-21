@@ -108,6 +108,7 @@ Per attestare l'esistenza di un progetto resta necessario il Sistema CUP o il po
 - [Guida utente](docs/user-guide.md)
 - [Note di accessibilità](docs/accessibility.md)
 - [Sviluppo](docs/development.md)
+- [Processo di release](docs/release-process.md)
 - [Product](docs/product.md)
 - [Architettura](docs/architecture.md)
 - [Specifiche tecniche](docs/technical-spec.md)
