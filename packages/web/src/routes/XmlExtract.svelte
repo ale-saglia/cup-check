@@ -92,7 +92,6 @@
         (cup, i): Cup => ({
           id: `${entry.id}-${i}`,
           value: cup.value,
-          formalValid: cup.formalValid,
           source: 'xml',
           manual: false,
           editing: false,

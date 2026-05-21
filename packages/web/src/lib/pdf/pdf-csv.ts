@@ -1,4 +1,5 @@
 import type { Entry } from '../types.js';
+import { isFormallyValid } from '../core/cup.js';
 
 function safeCell(s: string): string {
   return /^[=+\-@]/.test(s) ? `'${s}` : s;
@@ -53,7 +54,7 @@ export function buildExportCsv(entries: Entry[]): string {
     } else {
       for (const cup of entry.cups) {
         rows.push(
-          [cup.value, entry.name, cup.formalValid ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
+          [cup.value, entry.name, isFormallyValid(cup) ? 'SI' : 'NO', cup.source ?? '', cup.manual ? 'SI' : 'NO']
             .map(csvSemi)
             .concat(invCells)
             .join(';'),

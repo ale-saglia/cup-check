@@ -10,9 +10,7 @@ function makeEntry(overrides = {}) {
     name: 'fattura.pdf',
     status: 'done',
     source: 'text',
-    cups: [
-      { id: '0-0', value: CUP, formalValid: true, source: 'text', manual: false, editing: false },
-    ],
+    cups: [{ id: '0-0', value: CUP, source: 'text', manual: false, editing: false }],
     ocrProgress: null,
     error: null,
     ...overrides,
@@ -93,16 +91,13 @@ describe('buildExportCsv', () => {
 
   it('formato_valido SI/NO', () => {
     const validEntry = makeEntry({
-      cups: [
-        { id: '0-0', value: CUP, formalValid: true, source: 'text', manual: false, editing: false },
-      ],
+      cups: [{ id: '0-0', value: CUP, source: 'text', manual: false, editing: false }],
     });
     const invalidEntry = makeEntry({
       cups: [
         {
           id: '0-0',
           value: 'INVALID123456789',
-          formalValid: false,
           source: 'text',
           manual: false,
           editing: false,
@@ -121,7 +116,6 @@ describe('buildExportCsv', () => {
         {
           id: '0-0',
           value: CUP,
-          formalValid: true,
           source: 'manuale',
           manual: true,
           editing: false,
@@ -129,9 +123,7 @@ describe('buildExportCsv', () => {
       ],
     });
     const auto = makeEntry({
-      cups: [
-        { id: '0-1', value: CUP, formalValid: true, source: 'text', manual: false, editing: false },
-      ],
+      cups: [{ id: '0-1', value: CUP, source: 'text', manual: false, editing: false }],
     });
     const csv = buildExportCsv([manuale, auto]);
     const lines = csv.split('\n');
@@ -166,9 +158,7 @@ describe('buildExportCsv', () => {
 
   it('source null → stringa vuota nella colonna fonte', () => {
     const entry = makeEntry({
-      cups: [
-        { id: '0-0', value: CUP, formalValid: true, source: null, manual: false, editing: false },
-      ],
+      cups: [{ id: '0-0', value: CUP, source: null, manual: false, editing: false }],
     });
     const csv = buildExportCsv([entry]);
     const dataLine = csv.split('\n')[1];

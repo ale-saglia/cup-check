@@ -21,7 +21,6 @@ function entries() {
         {
           id: '1-0',
           value: VALID_CUP,
-          formalValid: true,
           source: 'text',
           manual: false,
           editing: true,
@@ -36,7 +35,6 @@ function entries() {
         {
           id: '2-0',
           value: '123',
-          formalValid: false,
           source: 'manuale',
           manual: true,
           editing: false,
@@ -98,7 +96,6 @@ describe('tool entry actions', () => {
     saveCupEdit(list, 1, '1-0', ' g17h03000130001 ');
     expect(list[0].cups[0]).toMatchObject({
       value: 'G17H03000130001',
-      formalValid: true,
       manual: true,
       editing: false,
     });
@@ -107,7 +104,6 @@ describe('tool entry actions', () => {
     saveCupEdit(list, 1, '1-0', ' g17h03000130001 extra ');
     expect(list[0].cups[0]).toMatchObject({
       value: 'G17H03000130001 EXTRA',
-      formalValid: false,
       manual: true,
       editing: false,
     });

@@ -109,7 +109,6 @@ export interface OcrProgress {
 export interface Cup {
   id: string;
   value: string;
-  formalValid: boolean;
   source: CupSource;
   manual: boolean;
   editing: boolean;

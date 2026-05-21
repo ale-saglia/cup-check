@@ -1,5 +1,5 @@
 import type { Cup, Entry } from './types.js';
-import { OUTCOMES, normalizeCup, validateCup } from './core/validator.js';
+import { normalizeCup } from './core/validator.js';
 
 export function findEntry(entries: Entry[], entryId: number): Entry | null {
   return entries.find((entry) => entry.id === entryId) ?? null;
@@ -27,7 +27,6 @@ export function addManualCup(entries: Entry[], entryId: number, cupId: string): 
   entry.cups.push({
     id: cupId,
     value: '',
-    formalValid: false,
     source: 'manuale',
     manual: true,
     editing: true,
@@ -48,7 +47,6 @@ export function saveCupEdit(
     entry.cups = entry.cups.filter((candidate) => candidate.id !== cupId);
   } else if (normalized.length > 0) {
     cup.value = normalized;
-    cup.formalValid = validateCup(normalized).outcome !== OUTCOMES.INVALID;
     cup.manual = true;
     cup.editing = false;
   } else {

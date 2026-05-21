@@ -117,10 +117,9 @@
       entry.status = 'done';
       entry.source = source;
       entry.cups = extracted.cups.map(
-        (cup: { value: string; formalValid: boolean }, i: number): Cup => ({
+        (cup: { value: string }, i: number): Cup => ({
           id: `${entry.id}-${i}`,
           value: cup.value,
-          formalValid: cup.formalValid,
           source,
           manual: false,
           editing: false,

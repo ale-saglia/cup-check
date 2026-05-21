@@ -78,7 +78,6 @@ describe('EntryList', () => {
               {
                 id: '7-0',
                 value: CUP1,
-                formalValid: true,
                 source: null,
                 manual: false,
                 editing: false,
@@ -115,7 +114,6 @@ describe('EntryList', () => {
               {
                 id: '8-0',
                 value: '123',
-                formalValid: false,
                 source: 'manuale',
                 manual: true,
                 editing: false,
@@ -146,7 +144,6 @@ describe('EntryList', () => {
               {
                 id: '9-0',
                 value: CUP2,
-                formalValid: true,
                 source: null,
                 manual: true,
                 editing: true,
@@ -184,7 +181,6 @@ describe('EntryList', () => {
     const cup = {
       id: '9-0',
       value: CUP2,
-      formalValid: true,
       source: null,
       manual: true,
       editing: true,
@@ -221,7 +217,6 @@ describe('EntryList', () => {
               {
                 id: '10-0',
                 value: '',
-                formalValid: false,
                 source: 'manuale',
                 manual: true,
                 editing: true,
@@ -254,7 +249,6 @@ describe('EntryList', () => {
               {
                 id: '11-0',
                 value: CUP1,
-                formalValid: true,
                 source: 'text',
                 manual: false,
                 editing: true,
@@ -316,7 +310,6 @@ describe('EntryList', () => {
               {
                 id: '13-0',
                 value: CUP1,
-                formalValid: true,
                 source: 'text',
                 manual: false,
                 editing: true,

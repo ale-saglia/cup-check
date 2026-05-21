@@ -1,6 +1,7 @@
 <script lang="ts">
   import { i18n } from '../i18n/i18n.svelte.js';
   import type { Entry, Cup, InvoiceData } from '../lib/types.js';
+  import { isFormallyValid } from '../lib/core/cup.js';
 
   interface Props {
     entries: Entry[];
@@ -216,9 +217,11 @@
     {:else}
       <td><code class="cup-cell">{cup.value}</code></td>
       <td>
-        <span class="badge {cup.formalValid ? 'good' : 'bad'}">
-          {cup.formalValid ? i18n.t('pdf.valid') : i18n.t('pdf.invalid')}
-        </span>
+        {#if isFormallyValid(cup)}
+          <span class="badge good">{i18n.t('pdf.valid')}</span>
+        {:else}
+          <span class="badge bad">{i18n.t('pdf.invalid')}</span>
+        {/if}
       </td>
       <td>{cup.source ?? ''}</td>
       <td>{#if cup.manual}<span class="badge warn">{i18n.t('pdf.manualBadge')}</span>{/if}</td>
