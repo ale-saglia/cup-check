@@ -1,5 +1,6 @@
 import { validateCup, isStructurallyPlausible, OUTCOMES } from '../core/validator.js';
 import type { CupSource } from '../types.js';
+import { incrementMapValue } from '../utils.js';
 
 export interface CupCandidate {
   value: string;
@@ -22,13 +23,13 @@ function ocrVariants(value: string): string[] {
 
 function addCandidate(counts: Map<string, number>, value: string, ocrFix: boolean): void {
   if (isStructurallyPlausible(value, { yearLookahead: 15 })) {
-    counts.set(value, (counts.get(value) ?? 0) + 1);
+    incrementMapValue(counts, value);
     return;
   }
   if (ocrFix) {
     for (const v of ocrVariants(value)) {
       if (isStructurallyPlausible(v, { yearLookahead: 15 })) {
-        counts.set(v, (counts.get(v) ?? 0) + 1);
+        incrementMapValue(counts, v);
       }
     }
   }

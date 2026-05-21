@@ -1,12 +1,13 @@
 import { validateCup, isStructurallyPlausible, OUTCOMES } from '../core/validator.js';
 import { extractCupsFromText, type CupCandidate } from '../pdf/extract-cups.js';
 import type { InvoiceData } from '../types.js';
+import { incrementMapValue } from '../utils.js';
 
 function addCup(counts: Map<string, number>, raw: string): void {
   const value = raw.trim().toUpperCase().replace(/\s+/g, '');
   if (!isStructurallyPlausible(value, { yearLookahead: 15 })) return;
   if (validateCup(value).outcome === OUTCOMES.INVALID) return;
-  counts.set(value, (counts.get(value) ?? 0) + 1);
+  incrementMapValue(counts, value);
 }
 
 function extractCupsFromDoc(doc: Document): CupCandidate[] {
