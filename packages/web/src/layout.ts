@@ -55,7 +55,7 @@ export function mountLayout(root: Element = document.querySelector('#app')!): El
             </details>
           </div>
           <div class="nav-links">
-            <a class="project-link" href="https://github.com/ale-saglia/cup-check" target="_blank" rel="noopener noreferrer">cup-check ${PRODUCT_VERSION}</a>
+            <a class="project-link" href="https://github.com/ale-saglia/cup-check/releases/tag/v${PRODUCT_VERSION}" target="_blank" rel="noopener noreferrer">cup-check ${PRODUCT_VERSION}</a>
             <span id="dataset-status-bar" class="dataset-status-bar" role="status" aria-live="polite"></span>
           </div>
         </div>
