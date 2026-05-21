@@ -84,6 +84,17 @@ describe('uniqueResultsByCup', () => {
     expect(uniqueResults).toHaveLength(1);
     expect(uniqueResults[0].warnings).toEqual(['N1']);
   });
+
+  it('deduplica le righe durante l’accumulo mantenendo il conteggio occorrenze', () => {
+    const first = makeResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
+    const second = makeResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
+
+    const uniqueResults = uniqueResultsByCup([first, second]);
+
+    expect(uniqueResults).toHaveLength(1);
+    expect(uniqueResults[0].inputRows).toEqual([2]);
+    expect(uniqueResults[0].occurrenceCount).toBe(2);
+  });
 });
 
 describe('displayResults', () => {

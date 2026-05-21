@@ -1,6 +1,10 @@
 import type { ValidationResult, UniqueResult } from '../types.js';
 import { OUTCOMES } from './validator.js';
 
+type AccumulatedResult = Omit<UniqueResult, 'inputRows'> & {
+  inputRows: Set<ValidationResult['inputRow']>;
+};
+
 export function applyDatasetLookup(
   results: UniqueResult[],
   lookupFn: (cup: string) => boolean,
@@ -17,7 +21,7 @@ export function applyDatasetLookup(
 }
 
 export function uniqueResultsByCup(results: ValidationResult[]): UniqueResult[] {
-  const grouped = new Map<string, UniqueResult>();
+  const grouped = new Map<string, AccumulatedResult>();
 
   results.forEach((result) => {
     const existing = grouped.get(result.normalizedValue);
@@ -25,20 +29,23 @@ export function uniqueResultsByCup(results: ValidationResult[]): UniqueResult[] 
     if (!existing) {
       grouped.set(result.normalizedValue, {
         ...result,
-        inputRows: [result.inputRow],
+        inputRows: new Set([result.inputRow]),
         occurrenceCount: 1,
       });
       return;
     }
 
-    existing.inputRows.push(result.inputRow);
+    existing.inputRows.add(result.inputRow);
     existing.occurrenceCount += 1;
     // A normalized CUP is validated deterministically, so duplicates should produce the same failedRules; keep the merge defensive for future fields.
     existing.failedRules = uniqueValues([...existing.failedRules, ...result.failedRules]);
     existing.warnings = uniqueValues([...(existing.warnings ?? []), ...(result.warnings ?? [])]);
   });
 
-  return [...grouped.values()];
+  return [...grouped.values()].map((result) => ({
+    ...result,
+    inputRows: [...result.inputRows],
+  }));
 }
 
 export function displayResults(results: UniqueResult[], groupSameCups = true): UniqueResult[] {
