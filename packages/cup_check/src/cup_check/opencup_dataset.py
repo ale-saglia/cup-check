@@ -119,7 +119,7 @@ def download_projects_zip(
     progress_interval_bytes: int = OPENCUP_DOWNLOAD_PROGRESS_INTERVAL_BYTES,
     on_progress: Callable[[int], None] | None = None,
     skip_if_exists: bool = False,
-    _opener=urlopen,
+    opener=urlopen,
 ) -> Path:
     """Scarica il dump OpenCUP in ``destination``.
 
@@ -141,7 +141,7 @@ def download_projects_zip(
         retry_backoff_seconds=retry_backoff_seconds,
         progress_interval_bytes=progress_interval_bytes,
         on_progress=on_progress,
-        opener=_opener,
+        opener=opener,
     )
     return destination_path
 
@@ -174,7 +174,6 @@ def _download_url_to_path(
                 on_progress=on_progress,
                 opener=opener,
             )
-            return
         except Exception as exc:
             destination_path.unlink(missing_ok=True)
             if attempt == retries:
@@ -188,6 +187,8 @@ def _download_url_to_path(
             )
             if retry_backoff_seconds > 0:
                 time.sleep(retry_backoff_seconds * (2 ** (attempt - 1)))
+        else:
+            return
 
 
 def _copy_download_to_path(
@@ -244,7 +245,7 @@ def _build_sqlite_from_projects_zip(
     sqlite_output_path = Path(sqlite_path)
     sqlite_output_path.parent.mkdir(parents=True, exist_ok=True)
     natura_categories: list[str] = []
-    natura_indexes: dict[str, int] = {}
+    seen_natura: set[str] = set()
     total_records = 0
     rows: list[tuple[str]] = []
 
@@ -257,8 +258,8 @@ def _build_sqlite_from_projects_zip(
         connection.execute(_create_table_sql("cup_index"))
         for cup, natura in _iter_index_rows(source_zip, schema_path):
             total_records += 1
-            if natura is not None and natura not in natura_indexes:
-                natura_indexes[natura] = len(natura_categories)
+            if natura is not None and natura not in seen_natura:
+                seen_natura.add(natura)
                 natura_categories.append(natura)
             rows.append((cup,))
             if len(rows) >= 10_000:
@@ -478,7 +479,7 @@ def _record_from_row(row: dict[str, str | None], schema: dict[str, Any]) -> Proj
 
 def _load_schema(schema_path: Path | None = None) -> dict[str, Any]:
     try:
-        import yaml  # noqa: PLC0415
+        import yaml
     except ImportError as exc:
         raise ImportError(
             "pyyaml è richiesto per elaborare lo schema dataset. "

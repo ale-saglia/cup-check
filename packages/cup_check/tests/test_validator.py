@@ -61,6 +61,20 @@ def test_warning_types_are_public() -> None:
     assert result.warnings == (Warning.N1, Warning.N2)
 
 
+def test_validate_format_rejects_negative_current_year() -> None:
+    import pytest
+
+    with pytest.raises(ValueError, match="current_year must be non-negative"):
+        validate_format("G17H03000130001", current_year=-1)
+
+
+def test_validate_format_warns_on_internal_nbsp() -> None:
+    cup_with_nbsp = "G17H0\u00a03000130001"  # NBSP (U+00A0) in posizione 5
+    result = validate_format(cup_with_nbsp, current_year=2026)
+
+    assert Warning.N3 in result.warnings
+
+
 def test_validate_format_bytes_fails_on_str_representation() -> None:
     # str(b"G17H03000130001") == "b'G17H03000130001'" — 19 caratteri con virgolette,
     # non un CUP valido. Documentato come comportamento atteso: chi passa bytes

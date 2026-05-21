@@ -164,6 +164,15 @@ python-test: ## Esegue i test pytest del package Python
 python-test-integration: ## Esegue anche i test di integrazione (richiede rete)
 	cd $(PYTHON_DIR) && INTEGRATION_TESTS=1 uv run pytest -m integration --override-ini="addopts="
 
+.PHONY: refresh-python-matrix
+refresh-python-matrix: ## Aggiorna scripts/python-versions-manifest.json dal manifest remoto
+	python3 -c "\
+import json, urllib.request; \
+url='https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json'; \
+data=json.loads(urllib.request.urlopen(url,timeout=30).read()); \
+open('scripts/python-versions-manifest.json','w').write(json.dumps(data,indent=2)+'\n')"
+	@echo "Manifest aggiornato. Commit con: git add scripts/python-versions-manifest.json"
+
 .PHONY: python-build
 python-build: ## Genera sdist e wheel del package Python
 	cd $(PYTHON_DIR) && uv build

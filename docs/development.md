@@ -75,6 +75,22 @@ queue.push(...entries.slice(startIdx));
 
 **Perché:** `proxy()` di Svelte usa `STATE_SYMBOL in value` per riconoscere oggetti già proxati. Un plain `{}` non ha il simbolo, quindi ogni chiamata a `proxy(stessoOggetto)` crea un `Proxy` fresco con la propria `sources` Map interna.
 
+## Matrice Python CI
+
+Il workflow CI testa il package su più versioni Python. La matrice viene generata da
+`scripts/python_matrix.py`, che interroga il [manifest ufficiale di
+`actions/python-versions`](https://raw.githubusercontent.com/actions/python-versions/main/versions-manifest.json)
+con fallback su `scripts/python-versions-manifest.json` (committato, 950 righe circa).
+
+Il file di fallback **non viene aggiornato da Dependabot**; aggiornalo manualmente
+una volta al mese circa o prima di una release:
+
+```bash
+make refresh-python-matrix
+git add scripts/python-versions-manifest.json
+git commit -m "chore: aggiorna fallback matrice versioni Python"
+```
+
 ## Coverage e Codecov
 
 I test Python generano `coverage.xml` tramite `pytest-cov`; i test web generano `coverage/lcov.info` tramite Vitest e `@vitest/coverage-v8`. Entrambi i report sono ignorati da Git e vengono caricati su Codecov dal workflow `ci.yml` usando il secret GitHub Actions `CODECOV_TOKEN`.

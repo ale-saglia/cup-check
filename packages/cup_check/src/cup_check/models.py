@@ -23,6 +23,7 @@ class Rule(StrEnum):
 class Warning(StrEnum):
     N1 = "N1"
     N2 = "N2"
+    N3 = "N3"
 
 
 @dataclass(frozen=True)

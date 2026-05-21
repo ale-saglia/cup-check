@@ -76,12 +76,12 @@ def test_open_cup_checker_downloads_and_reuses_cached_index(tmp_path: Path) -> N
 
     cache_dir = tmp_path / "cache"
     with OpenCupChecker.from_latest(
-        latest_url, cache_dir=cache_dir, _opener=fake_urlopen
+        latest_url, cache_dir=cache_dir, opener=fake_urlopen
     ) as checker:
         assert checker.is_available is True
         assert checker.check("G17H03000130001", current_year=26).outcome is Outcome.TROVATO_OPENCUP
     with OpenCupChecker.from_latest(
-        latest_url, cache_dir=cache_dir, _opener=fake_urlopen
+        latest_url, cache_dir=cache_dir, opener=fake_urlopen
     ) as cached_checker:
         assert cached_checker.is_available is True
 
@@ -101,7 +101,7 @@ def test_open_cup_checker_falls_back_when_latest_download_fails() -> None:
         raise OSError(f"{url}: offline")
 
     checker = OpenCupChecker.from_latest(
-        "https://example.test/dataset-latest.json", _opener=failing_urlopen
+        "https://example.test/dataset-latest.json", opener=failing_urlopen
     )
     result = checker.check("G17H03000130001", current_year=26)
 
@@ -148,7 +148,7 @@ def test_open_cup_checker_rejects_dataset_requiring_newer_version(
     )
     monkeypatch.setattr(checker_module, "_pkg_version", lambda _: "0.5.0")
 
-    with pytest.raises(ValueError, match="dataset requires cup-check >= 99.0.0"):
+    with pytest.raises(ValueError, match=r"dataset requires cup-check >= 99\.0\.0"):
         OpenCupChecker.from_manifest(manifest, sqlite_path=sqlite_path)
 
 

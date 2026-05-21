@@ -60,7 +60,7 @@ def _discover_latest_tag(timeout: int = 10) -> str | None:
             reverse=True,
         )
         return tags[0] if tags else None
-    except Exception:
+    except Exception:  # noqa: BLE001
         return None
 
 

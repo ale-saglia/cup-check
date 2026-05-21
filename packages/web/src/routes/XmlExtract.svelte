@@ -15,6 +15,7 @@
 
   let entries = $state<Entry[]>([]);
   let nextId = $state(0);
+  let nextCupId = $state(0);
   let processing = $state(false);
   let queue: number[] = [];
   let generation = $state(0);
@@ -116,7 +117,7 @@
   }
 
   function handleAddManual(entryId: number) {
-    addManualCup(entries, entryId, `${entryId}-m${nextId++}`);
+    addManualCup(entries, entryId, `${entryId}-m${nextCupId++}`);
   }
 
   function handleSaveEdit(entryId: number, cupId: string, rawValue: string) {

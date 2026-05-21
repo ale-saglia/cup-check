@@ -21,6 +21,8 @@ def validate_format(
     *,
     current_year: int | None = None,
 ) -> ValidationResult:
+    if current_year is not None and current_year < 0:
+        raise ValueError("current_year must be non-negative")
     raw_value = str("" if value is None else value)
     trimmed_value = raw_value.strip()
     normalized_value = normalize_cup(raw_value)
@@ -89,4 +91,6 @@ def _normalization_warnings(
         warnings.append(Warning.N1)
     if trimmed_value != normalized_value:
         warnings.append(Warning.N2)
+    if any(c.isspace() for c in trimmed_value):
+        warnings.append(Warning.N3)
     return tuple(warnings)

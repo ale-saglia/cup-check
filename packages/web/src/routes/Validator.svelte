@@ -153,7 +153,7 @@
 
   // --- Lifecycle ---
 
-  let datasetPromise: Promise<Dataset | null>;
+  let datasetPromise: Promise<Dataset | null> = Promise.resolve(null);
 
   onMount(async () => {
     datasetController = new AbortController();

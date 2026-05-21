@@ -102,7 +102,7 @@ def test_manifest_requires_non_empty_chunk_files() -> None:
         "sha256": "abcd",
     }
 
-    with pytest.raises(ValueError, match="cup_index.files"):
+    with pytest.raises(ValueError, match=r"cup_index\.files"):
         DatasetManifest.from_mapping(value)
 
 

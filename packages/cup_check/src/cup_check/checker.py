@@ -67,7 +67,7 @@ class OpenCupChecker:
         latest_url_or_path: str | Path = DEFAULT_LATEST_DATASET_URL,
         *,
         cache_dir: str | Path | None = None,
-        _opener=urlopen,
+        opener=urlopen,
     ) -> OpenCupChecker:
         """Costruisce un checker usando l'ultimo dataset OpenCUP disponibile.
 
@@ -78,11 +78,11 @@ class OpenCupChecker:
         lasciando i CUP formalmente validi come ``FORMATO_VALIDO_DA_VERIFICARE``.
         """
         try:
-            latest = _load_latest_pointer(latest_url_or_path, opener=_opener)
-            manifest = _load_manifest(latest.manifest_url, opener=_opener)
-            sqlite_path = _ensure_cached_index(manifest, _cache_root(cache_dir), opener=_opener)
+            latest = _load_latest_pointer(latest_url_or_path, opener=opener)
+            manifest = _load_manifest(latest.manifest_url, opener=opener)
+            sqlite_path = _ensure_cached_index(manifest, _cache_root(cache_dir), opener=opener)
             return cls.from_manifest(manifest, sqlite_path=sqlite_path)
-        except Exception as exc:  # noqa: BLE001 - fallback cautelativo richiesto dalla API.
+        except (OSError, ValueError, sqlite3.Error) as exc:
             return cls(None, fallback_reason=str(exc))
 
     @property
@@ -132,7 +132,7 @@ class OpenCupChecker:
         self.close()
 
     def _has_cup(self, cup: str) -> bool:
-        assert self._connection is not None
+        assert self._connection is not None  # noqa: S101
         cursor = self._connection.execute(
             "SELECT 1 FROM cup_index WHERE cup = ? LIMIT 1",
             (cup,),
@@ -213,24 +213,33 @@ def _ensure_cached_index(manifest: DatasetManifest, cache_dir: Path, *, opener=u
 
 
 def _download_index(manifest: DatasetManifest, destination: Path, *, opener=urlopen) -> None:
-    digest = hashlib.sha256()
+    global_digest = hashlib.sha256()
     total_size = 0
+    per_file_sha256 = manifest.cup_index.files_sha256
     try:
         with destination.open("wb") as output:
-            for file_name in manifest.cup_index.files:
+            for file_index, file_name in enumerate(manifest.cup_index.files):
                 url = f"{manifest.cup_index.base_url.rstrip('/')}/{file_name}"
+                chunk_digest = hashlib.sha256()
                 with opener(url, timeout=_DATASET_CHUNK_TIMEOUT_SECONDS) as response:
                     while True:
-                        chunk = response.read(1024 * 1024)
-                        if not chunk:
+                        block = response.read(1024 * 1024)
+                        if not block:
                             break
-                        output.write(chunk)
-                        digest.update(chunk)
-                        total_size += len(chunk)
+                        output.write(block)
+                        chunk_digest.update(block)
+                        global_digest.update(block)
+                        total_size += len(block)
+                if (
+                    per_file_sha256
+                    and file_index < len(per_file_sha256)
+                    and chunk_digest.hexdigest() != per_file_sha256[file_index]
+                ):
+                    raise ValueError(f"sha256 mismatch for chunk {file_name}")
 
         if total_size != manifest.cup_index.total_size_bytes:
             raise ValueError("dataset chunk size mismatch")
-        if digest.hexdigest() != manifest.cup_index.sha256:
+        if global_digest.hexdigest() != manifest.cup_index.sha256:
             raise ValueError("dataset sha256 mismatch")
     except Exception:
         destination.unlink(missing_ok=True)

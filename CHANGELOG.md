@@ -28,6 +28,7 @@
 - Migra `read-excel-file` alla v9.
 - Aggiorna le dipendenze npm e le GitHub Actions tramite Dependabot.
 - I nomi dei file nella tabella di estrazione CUP da PDF e XML sono ora cliccabili: aprono il file caricato in una nuova scheda del browser tramite blob URL, facilitando la verifica del contenuto.
+- Migliora la qualità del codice in seguito alla second-pass code review: verifica SHA per singolo chunk nel download del dataset, validazione di `current_year` nel validator Python, avviso N3 per whitespace interni (NBSP), regole ruff BLE/S/TRY/RUF abilitate, `_opener` rinominato in `opener` nell'API pubblica, `natura_indexes` sostituito con `seen_natura: set`. ([#7](https://github.com/ale-saglia/cup-check/issues/7))
 
 ## 0.4.1 - 2026-05-14
 

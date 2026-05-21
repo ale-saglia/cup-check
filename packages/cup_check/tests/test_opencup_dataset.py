@@ -240,7 +240,7 @@ def test_download_projects_zip_writes_response_body(tmp_path: Path) -> None:
     destination = download_projects_zip(
         tmp_path / "nested" / "OpendataProgetti.zip",
         source_url="https://example.test/opencup.zip",
-        _opener=fake_urlopen,
+        opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"dataset"
@@ -257,7 +257,7 @@ def test_download_projects_zip_skips_existing_destination(tmp_path: Path) -> Non
         destination,
         source_url="https://example.test/opencup.zip",
         skip_if_exists=True,
-        _opener=fake_urlopen,
+        opener=fake_urlopen,
     )
 
     assert result == destination
@@ -289,7 +289,7 @@ def test_download_projects_zip_overwrites_existing_by_default(tmp_path: Path) ->
     download_projects_zip(
         destination,
         source_url="https://example.test/opencup.zip",
-        _opener=fake_urlopen,
+        opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"fresh-dataset"
@@ -322,7 +322,7 @@ def test_download_projects_zip_reports_progress_every_interval(tmp_path: Path) -
         timeout=123,
         progress_interval_bytes=3,
         on_progress=progress_calls.append,
-        _opener=fake_urlopen,
+        opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"aabbbbc"
@@ -363,12 +363,50 @@ def test_download_projects_zip_retries_open_failures(tmp_path: Path, monkeypatch
         timeout=123,
         retries=2,
         retry_backoff_seconds=0.5,
-        _opener=fake_urlopen,
+        opener=fake_urlopen,
     )
 
     assert destination.read_bytes() == b"dataset"
     assert attempts == 2
     assert sleep_calls == [0.5]
+
+
+def test_download_projects_zip_retries_exponential_backoff(tmp_path: Path, monkeypatch) -> None:
+    class Response:
+        def __init__(self):
+            self._content = io.BytesIO(b"dataset")
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, exc_type, exc_value, traceback):
+            return None
+
+        def read(self, size=-1):
+            return self._content.read(size)
+
+    attempts = 0
+    sleep_calls: list[float] = []
+
+    def fake_urlopen(source_url: str, *, timeout: float | None = None):
+        nonlocal attempts
+        attempts += 1
+        if attempts <= 3:
+            raise OSError("temporary failure")
+        return Response()
+
+    monkeypatch.setattr(opencup_dataset.time, "sleep", sleep_calls.append)
+
+    download_projects_zip(
+        tmp_path / "OpendataProgetti.zip",
+        source_url="https://example.test/opencup.zip",
+        retries=4,
+        retry_backoff_seconds=0.5,
+        opener=fake_urlopen,
+    )
+
+    assert attempts == 4
+    assert sleep_calls == [0.5, 1.0, 2.0]
 
 
 def test_download_projects_zip_raises_after_retry_exhaustion(tmp_path: Path) -> None:
@@ -385,7 +423,7 @@ def test_download_projects_zip_raises_after_retry_exhaustion(tmp_path: Path) -> 
             source_url="https://example.test/opencup.zip",
             retries=2,
             retry_backoff_seconds=0,
-            _opener=fake_urlopen,
+            opener=fake_urlopen,
         )
 
     assert attempts == 2
