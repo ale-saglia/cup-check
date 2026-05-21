@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.5.1 - 2026-05-21
+
+- Allinea la web app alla libreria Python sugli avvisi di normalizzazione: anche il frontend segnala `N3` per whitespace interni, mantenendo la parità sui fixture condivisi.
+- Ottimizza il raggruppamento delle sorgenti nel verificatore multi-file, evitando scansioni lineari ripetute sui batch grandi.
+- Riusa la normalizzazione CUP del validatore anche negli edit manuali dei tool PDF/XML, eliminando un secondo percorso divergente.
+- Rafforza le chiavi i18n del validatore con tipi e test dedicati, riducendo il rischio di stringhe mancanti in UI.
+- Migliora la robustezza del percorso batch e dei risultati: test esplicito della soglia Web Worker oltre 100k righe e deduplica più efficiente delle righe associate ai CUP duplicati.
+- Consolida utility interne condivise per reset editing, contatori `Map` ed escape CSV; le celle CSV formula-like vengono ora protette e quotate in modo uniforme negli export.
+- Documenta nel README i gate di qualità e tracciabilità della release.
+
 ## 0.5.0 - 2026-05-21
 
 - Completa la migrazione del frontend a TypeScript + Svelte 5 (milestone 0.5.0): riorganizzazione di `src/` in `lib/core`, `lib/data`, `lib/pdf`, conversione dei moduli da JS a TS, vite.config e ESLint migrati, `Validator.svelte` come nuovo entry point Svelte 5 montato via `mount()`. La migrazione copre fasi A1–C6 con coverage completa.
