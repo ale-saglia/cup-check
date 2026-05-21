@@ -1,9 +1,10 @@
+import type { MessageKey } from '../../i18n/i18n.svelte.js';
 import type { BatchProgress } from './validation-worker.js';
 import type { ImportedCupRow } from './import-plan.js';
 import type { UniqueResult } from '../types.js';
 import { resultRowsLabel } from './results.js';
 
-type Translate = (key: string, values?: Record<string, string | number>) => string;
+type Translate = (key: MessageKey, values?: Record<string, string | number>) => string;
 type ResultSource = Pick<UniqueResult, 'inputRows' | 'inputRow'>;
 type SourceGroup = { key: string; fileName: string; sheetName?: string; rows: ImportedCupRow[] };
 

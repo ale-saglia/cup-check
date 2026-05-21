@@ -1,6 +1,6 @@
 import { tools } from './tools-registry.js';
 import { PRODUCT_VERSION } from './version.js';
-import { i18n } from './i18n/i18n.svelte.js';
+import { i18n, isMessageKey } from './i18n/i18n.svelte.js';
 
 function esc(str: unknown): string {
   return String(str)
@@ -8,6 +8,10 @@ function esc(str: unknown): string {
     .replace(/</g, '&lt;')
     .replace(/>/g, '&gt;')
     .replace(/"/g, '&quot;');
+}
+
+function translateDynamicKey(key: string): string {
+  return isMessageKey(key) ? i18n.t(key) : key;
 }
 
 function buildMenuItems(): string {
@@ -25,11 +29,11 @@ export function refreshLayoutTranslations(root: Element): void {
   if (siteNav) siteNav.setAttribute('aria-label', i18n.t('app.mainNav'));
   root.querySelectorAll('[data-i18n]').forEach((element) => {
     const key = (element as HTMLElement).dataset['i18n'];
-    if (key) (element as HTMLElement).textContent = i18n.t(key);
+    if (key) (element as HTMLElement).textContent = translateDynamicKey(key);
   });
   root.querySelectorAll('[data-i18n-aria-label]').forEach((element) => {
     const key = (element as HTMLElement).dataset['i18nAriaLabel'];
-    if (key) element.setAttribute('aria-label', i18n.t(key));
+    if (key) element.setAttribute('aria-label', translateDynamicKey(key));
   });
   const menuList = root.querySelector<HTMLElement>('.nav-menu-list');
   if (menuList) menuList.innerHTML = buildMenuItems();

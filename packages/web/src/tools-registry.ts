@@ -1,10 +1,12 @@
+import type { MessageKey } from './i18n/i18n.svelte.js';
+
 export interface Tool {
   id: string;
-  labelKey?: string;
+  labelKey?: MessageKey;
   label?: string;
   path: string | null;
   enabled: boolean;
-  descriptionKey: string;
+  descriptionKey?: MessageKey;
 }
 
 export const tools: Tool[] = [
@@ -27,6 +29,5 @@ export const tools: Tool[] = [
     labelKey: 'tool.placeholder.label',
     path: null,
     enabled: false,
-    descriptionKey: '',
   },
 ];

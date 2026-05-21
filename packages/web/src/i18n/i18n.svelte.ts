@@ -2,13 +2,14 @@ import itMessages from './it.json';
 import { isLocalizedError } from '../lib/core/errors.js';
 
 export type Locale = 'it' | 'en';
+export type MessageKey = keyof typeof itMessages & string;
 
-type Messages = Record<string, string>;
+type Messages = Record<MessageKey, string>;
 type MessageLoader = (locale: Locale) => Promise<Messages>;
 
 const STORAGE_KEY = 'cup-check:language';
 const FALLBACK_LOCALE: Locale = 'it';
-const fallbackMessages = itMessages as Messages;
+const fallbackMessages: Messages = itMessages;
 
 const initial = initialLocale();
 let locale = $state<Locale>(FALLBACK_LOCALE);
@@ -18,7 +19,7 @@ let messageLoader: MessageLoader = loadMessages;
 
 void setLocale(initial);
 
-export const languageOptions: Array<{ code: Locale; labelKey: string }> = [
+export const languageOptions: Array<{ code: Locale; labelKey: MessageKey }> = [
   { code: 'it', labelKey: 'language.it' },
   { code: 'en', labelKey: 'language.en' },
 ];
@@ -38,7 +39,7 @@ export const i18n = {
   setLocale,
 };
 
-export function t(key: string, values: Record<string, string | number> = {}): string {
+export function t(key: MessageKey, values: Record<string, string | number> = {}): string {
   const template = messages[key] ?? fallbackMessages[key] ?? key;
   return template.replace(/\{(\w+)\}/g, (_match, name: string) => String(values[name] ?? ''));
 }
@@ -90,6 +91,10 @@ function persistLocale(nextLocale: Locale): void {
 
 function isLocale(value: unknown): value is Locale {
   return value === 'it' || value === 'en';
+}
+
+export function isMessageKey(value: unknown): value is MessageKey {
+  return typeof value === 'string' && value in fallbackMessages;
 }
 
 async function loadMessages(nextLocale: Locale): Promise<Messages> {

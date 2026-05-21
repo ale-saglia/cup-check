@@ -1,3 +1,4 @@
+import type { MessageKey } from '../../i18n/i18n.svelte.js';
 import type { Dataset, UniqueResult } from '../types.js';
 import { LocalizedError } from './errors.js';
 import { applyDatasetLookup, uniqueResultsByCup } from './results.js';
@@ -41,7 +42,7 @@ type WorkerMessage =
   | { type: 'lookup-request'; requestId: number; cups: string[] }
   | { type: 'result-chunk'; results: UniqueResult[] }
   | { type: 'complete'; durationMs: number }
-  | { type: 'error'; message?: string; messageKey?: string };
+  | { type: 'error'; message?: string; messageKey?: MessageKey };
 
 export async function validateRows(
   rows: BatchInputRow[],

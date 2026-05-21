@@ -1,6 +1,8 @@
+import type { MessageKey } from '../../i18n/i18n.svelte.js';
+
 export class LocalizedError extends Error {
   constructor(
-    readonly key: string,
+    readonly key: MessageKey,
     readonly values: Record<string, string | number> = {},
     options: ErrorOptions = {},
   ) {
