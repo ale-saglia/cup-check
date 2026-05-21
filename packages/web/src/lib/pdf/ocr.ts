@@ -1,5 +1,5 @@
 import type { Worker } from 'tesseract.js';
-import { loadPdfjs } from './extract-text.js';
+import { loadPdfjs } from './pdfjs-loader.js';
 
 interface OcrProgressEvent {
   fileName: string;
