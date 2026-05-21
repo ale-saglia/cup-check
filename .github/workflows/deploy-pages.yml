@@ -72,6 +72,10 @@ jobs:
             --dir "dist/pages-root/datasets/${TAG}"
           gh release download "${TAG}" \
             --repo "${{ github.repository }}" \
+            --pattern "dataset-manifest.json.sigstore.json" \
+            --dir "dist/pages-root/datasets/${TAG}"
+          gh release download "${TAG}" \
+            --repo "${{ github.repository }}" \
             --pattern "cup-index.sqlite.*" \
             --dir "dist/pages-root/datasets/${TAG}"
 

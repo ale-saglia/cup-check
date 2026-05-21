@@ -102,12 +102,14 @@ non stia pubblicando una versione diversa da quella attesa.
    `Publish dataset on pinned web`.
 4. Verifica la release GitHub `dataset-YYYY-MM`:
    - `dataset-manifest.json` presente;
+   - `dataset-manifest.json.sigstore.json` presente;
    - `dataset-latest.json` presente;
    - chunk `cup-index.sqlite.*` presenti;
    - release non marcata come latest software.
 5. Verifica Pages:
    - `/dataset-latest.json` punta al nuovo `dataset_tag`;
    - `/datasets/dataset-YYYY-MM/dataset-manifest.json` è raggiungibile;
+   - `/datasets/dataset-YYYY-MM/dataset-manifest.json.sigstore.json` è raggiungibile;
    - i chunk dichiarati dal manifest sono raggiungibili.
 6. Apri la web app pubblicata e controlla che il lookup OpenCUP non degradi a
    `FORMATO_VALIDO_DA_VERIFICARE` per un CUP noto presente nel dataset.
