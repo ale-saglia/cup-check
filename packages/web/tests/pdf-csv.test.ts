@@ -1,13 +1,14 @@
-// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { buildVerificatoreCsv, buildExportCsv } from '../src/lib/pdf/pdf-csv.js';
+import type { Entry } from '../src/lib/types.js';
 
 const CUP = 'G17H03000130001';
 
-function makeEntry(overrides = {}) {
+function makeEntry(overrides: Partial<Entry> = {}): Entry {
   return {
     id: 0,
     file: null,
+    objectUrl: null,
     name: 'fattura.pdf',
     status: 'done',
     source: 'text',
@@ -159,7 +160,7 @@ describe('buildExportCsv', () => {
 
   it('source null → stringa vuota nella colonna fonte', () => {
     const entry = makeEntry({
-      cups: [{ id: '0-0', value: CUP, source: null, manual: false, editing: false }],
+      cups: [{ id: '0-0', value: CUP, source: null, manual: false, editing: false }] as never,
     });
     const csv = buildExportCsv([entry]);
     const dataLine = csv.split('\n')[1];
