@@ -1,7 +1,7 @@
-// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import JSZip from 'jszip';
 import { DOMParser } from '@xmldom/xmldom';
+import type { ImportSource } from '../src/lib/core/import-plan.js';
 import {
   buildBatchRows,
   buildImportedCupRows,
@@ -13,7 +13,12 @@ import {
   updateSourceSheet,
 } from '../src/lib/core/import-plan.js';
 
-globalThis.DOMParser = DOMParser;
+globalThis.DOMParser = DOMParser as unknown as typeof globalThis.DOMParser;
+
+interface WorkbookSheet {
+  name: string;
+  rows: Array<Array<string | number>>;
+}
 
 describe('import-plan', () => {
   it('crea una sorgente per ogni CSV e permette colonne CUP diverse prima della concatenazione', async () => {
@@ -302,7 +307,7 @@ describe('import-plan', () => {
       ...source,
       parsed: { ...source.parsed, rows: [{ originalRowNumber: 2, cells: [null] }] },
       skipMissingCup: false,
-    };
+    } as unknown as ImportSource;
 
     const rows = buildImportedCupRows([sourceWithNullCell]);
     expect(rows[0].value).toBe('');
@@ -371,7 +376,7 @@ describe('import-plan', () => {
   });
 });
 
-async function workbookFileWithSheets(sheets, name = 'cups.xlsx') {
+async function workbookFileWithSheets(sheets: WorkbookSheet[], name = 'cups.xlsx'): Promise<File> {
   const zip = new JSZip();
   const worksheetOverrides = sheets
     .map(
@@ -425,7 +430,7 @@ async function workbookFileWithSheets(sheets, name = 'cups.xlsx') {
   });
 }
 
-function sheetRows(rows) {
+function sheetRows(rows: WorkbookSheet['rows']): string {
   return rows
     .map((row, rowIndex) => {
       const cells = row
@@ -442,7 +447,7 @@ function sheetRows(rows) {
     .join('');
 }
 
-function columnName(number) {
+function columnName(number: number): string {
   let name = '';
   let current = number;
   while (current > 0) {
@@ -453,7 +458,7 @@ function columnName(number) {
   return name;
 }
 
-function escapeXml(value) {
+function escapeXml(value: string | number): string {
   return String(value)
     .replaceAll('&', '&amp;')
     .replaceAll('<', '&lt;')
