@@ -1,8 +1,8 @@
-// @ts-nocheck
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
 import yaml from 'js-yaml';
+import type { Outcome, Rule, ValidationResult, Warning } from '../src/lib/types.js';
 import {
   OUTCOMES,
   isStructurallyPlausible,
@@ -15,9 +15,22 @@ import {
 const fixtureDir = path.resolve(import.meta.dirname, '../../../tests/fixtures');
 const fixtureFiles = ['valid-cases.yaml', 'invalid-cases.yaml', 'edge-cases.yaml'];
 
+interface FixtureCase {
+  id: string;
+  input: unknown;
+  options?: {
+    current_year?: number;
+  };
+  expected: {
+    outcome: Outcome;
+    failed_rules: Rule[];
+    warnings?: Warning[];
+  };
+}
+
 const cases = fixtureFiles.flatMap((fileName) => {
   const filePath = path.join(fixtureDir, fileName);
-  return yaml.load(fs.readFileSync(filePath, 'utf8')).map((testCase) => ({
+  return (yaml.load(fs.readFileSync(filePath, 'utf8')) as FixtureCase[]).map((testCase) => ({
     ...testCase,
     fileName,
   }));
@@ -126,7 +139,10 @@ describe('validateCup', () => {
 
 describe('summarizeResults', () => {
   it('ignores results with unknown outcome values', () => {
-    const results = [{ outcome: OUTCOMES.CHECK }, { outcome: 'UNKNOWN_OUTCOME' }];
+    const results = [{ outcome: OUTCOMES.CHECK }, { outcome: 'UNKNOWN_OUTCOME' }] as Pick<
+      ValidationResult,
+      'outcome'
+    >[];
 
     const summary = summarizeResults(results);
 

@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { describe, expect, it } from 'vitest';
+import type { UniqueResult, ValidationResult } from '../src/lib/types.js';
 import {
   applyDatasetLookup,
   displayResults,
@@ -8,9 +8,11 @@ import {
 } from '../src/lib/core/results.js';
 import { OUTCOMES, validateCup } from '../src/lib/core/validator.js';
 
-function makeResult(overrides = {}) {
+function makeResult(overrides: Partial<UniqueResult> = {}): UniqueResult {
   return {
     inputRow: 1,
+    inputRows: [1],
+    occurrenceCount: 1,
     rawValue: 'A12B23000000001',
     normalizedValue: 'A12B23000000001',
     outcome: OUTCOMES.CHECK,
@@ -18,6 +20,10 @@ function makeResult(overrides = {}) {
     warnings: [],
     ...overrides,
   };
+}
+
+function validationResult(overrides: Partial<ValidationResult> = {}): ValidationResult {
+  return makeResult(overrides) as ValidationResult;
 }
 
 describe('applyDatasetLookup', () => {
@@ -59,8 +65,8 @@ describe('uniqueResultsByCup', () => {
   });
 
   it('merges duplicate CUPs when warnings is undefined on the existing entry', () => {
-    const first = makeResult({ normalizedValue: 'A12B23000000001', warnings: undefined });
-    const second = makeResult({
+    const first = validationResult({ normalizedValue: 'A12B23000000001', warnings: undefined });
+    const second = validationResult({
       normalizedValue: 'A12B23000000001',
       inputRow: 2,
       warnings: ['N1'],
@@ -73,8 +79,8 @@ describe('uniqueResultsByCup', () => {
   });
 
   it('merges duplicate CUPs when warnings is undefined on the incoming result', () => {
-    const first = makeResult({ normalizedValue: 'A12B23000000001', warnings: ['N1'] });
-    const second = makeResult({
+    const first = validationResult({ normalizedValue: 'A12B23000000001', warnings: ['N1'] });
+    const second = validationResult({
       normalizedValue: 'A12B23000000001',
       inputRow: 2,
       warnings: undefined,
@@ -87,8 +93,8 @@ describe('uniqueResultsByCup', () => {
   });
 
   it('deduplica le righe durante l’accumulo mantenendo il conteggio occorrenze', () => {
-    const first = makeResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
-    const second = makeResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
+    const first = validationResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
+    const second = validationResult({ normalizedValue: 'A12B23000000001', inputRow: 2 });
 
     const uniqueResults = uniqueResultsByCup([first, second]);
 
@@ -131,8 +137,11 @@ describe('displayResults', () => {
   it('sorts expanded rows with missing and textual row labels', () => {
     const results = [
       { ...validateCup('A12B23000000001', null, { currentYear: 2026 }), inputRows: [null, '10'] },
-      { ...validateCup('B12B23000000002', '2', { currentYear: 2026 }), inputRows: ['2'] },
-    ];
+      {
+        ...validateCup('B12B23000000002', '2' as unknown as number, { currentYear: 2026 }),
+        inputRows: ['2'],
+      },
+    ] as unknown as UniqueResult[];
 
     expect(displayResults(results, false).map((result) => result.inputRow)).toEqual([
       '2',
@@ -165,7 +174,7 @@ describe('displayResults', () => {
   it('places a null left row after a non-null right row (compareRows left null)', () => {
     const results = [
       makeResult({ normalizedValue: 'A12B23000000001', inputRows: [null] }),
-      makeResult({ normalizedValue: 'B12B23000000002', inputRows: ['1'] }),
+      makeResult({ normalizedValue: 'B12B23000000002', inputRows: ['1'] as never }),
     ];
 
     const expanded = displayResults(results, false);
@@ -176,7 +185,7 @@ describe('displayResults', () => {
 
   it('places a non-null left row before a null right row (compareRows right null)', () => {
     const results = [
-      makeResult({ normalizedValue: 'A12B23000000001', inputRows: ['1'] }),
+      makeResult({ normalizedValue: 'A12B23000000001', inputRows: ['1'] as never }),
       makeResult({ normalizedValue: 'B12B23000000002', inputRows: [null] }),
     ];
 
