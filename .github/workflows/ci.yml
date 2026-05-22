@@ -39,6 +39,7 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run check
+      - run: npm run check:tests
       - run: npm run test:coverage
       - uses: codecov/codecov-action@e79a6962e0d4c0c17b229090214935d2e33f8354 # v6
         if: ${{ !cancelled() && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository) }}

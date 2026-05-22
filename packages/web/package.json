@@ -12,6 +12,7 @@
     "test:acceptance": "node tests/acceptance.mjs",
     "test:lighthouse": "node tests/lighthouse.mjs",
     "check": "svelte-check --tsconfig tsconfig.json",
+    "check:tests": "tsc --noEmit -p tsconfig.test.json",
     "lint": "eslint .",
     "format": "prettier --write . ../../tests/fixtures"
   },

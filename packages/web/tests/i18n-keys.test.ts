@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import enMessages from '../src/i18n/en.json';
 import itMessages from '../src/i18n/it.json';

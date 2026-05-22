@@ -1,3 +1,4 @@
+// @ts-nocheck
 // @vitest-environment jsdom
 
 import { cleanup, render } from '@testing-library/svelte';

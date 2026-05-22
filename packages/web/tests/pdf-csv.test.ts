@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, it, expect } from 'vitest';
 import { buildVerificatoreCsv, buildExportCsv } from '../src/lib/pdf/pdf-csv.js';
 

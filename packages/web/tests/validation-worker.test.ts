@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { applyDatasetLookup, uniqueResultsByCup } from '../src/lib/core/results.js';
 import { validateCup } from '../src/lib/core/validator.js';

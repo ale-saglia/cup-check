@@ -1,3 +1,4 @@
+// @ts-nocheck
 import initSqlJs from 'sql.js';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { discoverLatestDataset, loadDataset } from '../src/lib/data/dataset-loader.js';

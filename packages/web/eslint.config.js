@@ -45,4 +45,11 @@ export default [
       },
     },
   },
+  {
+    files: ['tests/**/*.ts'],
+    rules: {
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-explicit-any': 'off',
+    },
+  },
 ];

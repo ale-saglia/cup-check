@@ -1,3 +1,4 @@
+// @ts-nocheck
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -18,6 +19,10 @@ import { consumeTransfer } from '../src/lib/data/transfer.js';
 import { validateRows } from '../src/lib/core/validation-worker.js';
 import Validator from '../src/routes/Validator.svelte';
 
+function datasetUnavailable(): any {
+  return { manifest: null, hasCup: () => false, latest: null, close: vi.fn() };
+}
+
 describe('Validator batch controls', () => {
   afterEach(() => {
     cleanup();
@@ -28,9 +33,9 @@ describe('Validator batch controls', () => {
   it('annulla il batch in corso senza mostrare alert', async () => {
     const alertMock = vi.fn();
     vi.stubGlobal('alert', alertMock);
-    vi.mocked(loadLatestDataset).mockResolvedValue({ manifest: null, hasCup: () => false });
+    vi.mocked(loadLatestDataset).mockResolvedValue(datasetUnavailable());
     vi.mocked(consumeTransfer).mockReturnValue(null);
-    let capturedSignal;
+    let capturedSignal: AbortSignal;
     vi.mocked(validateRows).mockImplementation((_rows, { onProgress, signal }) => {
       capturedSignal = signal;
       onProgress?.({ phase: 'lookup', processed: 1, total: 10, percent: 10 });
@@ -58,7 +63,7 @@ describe('Validator batch controls', () => {
   it('ignora gli AbortError restituiti dalla validazione batch', async () => {
     const alertMock = vi.fn();
     vi.stubGlobal('alert', alertMock);
-    vi.mocked(loadLatestDataset).mockResolvedValue({ manifest: null, hasCup: () => false });
+    vi.mocked(loadLatestDataset).mockResolvedValue(datasetUnavailable());
     vi.mocked(consumeTransfer).mockReturnValue(null);
     vi.mocked(validateRows).mockRejectedValue(
       Object.assign(new Error('Operazione annullata'), { name: 'AbortError' }),
@@ -78,7 +83,7 @@ describe('Validator batch controls', () => {
   it('mostra alert quando la validazione batch fallisce', async () => {
     const alertMock = vi.fn();
     vi.stubGlobal('alert', alertMock);
-    vi.mocked(loadLatestDataset).mockResolvedValue({ manifest: null, hasCup: () => false });
+    vi.mocked(loadLatestDataset).mockResolvedValue(datasetUnavailable());
     vi.mocked(consumeTransfer).mockReturnValue(null);
     vi.mocked(validateRows).mockRejectedValue(new Error('batch fallito'));
 

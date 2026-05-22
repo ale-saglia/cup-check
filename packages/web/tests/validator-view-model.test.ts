@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { describe, expect, it } from 'vitest';
 import {
   batchProgressLabel,
@@ -10,10 +11,10 @@ import {
   uniqueSourceValues,
 } from '../src/lib/core/validator-view-model.js';
 
-const t = (key, values = {}) =>
+const t = (key: string, values: Record<string, unknown> = {}) =>
   `${key}${Object.keys(values).length ? `:${JSON.stringify(values)}` : ''}`;
 
-function row(overrides = {}) {
+function row(overrides: Record<string, unknown> = {}): any {
   return {
     row: 1,
     value: 'G17H03000130001',

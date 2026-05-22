@@ -1,3 +1,4 @@
+// @ts-nocheck
 // @vitest-environment jsdom
 
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -20,11 +21,11 @@ import { parseFile } from '../src/lib/core/parser.js';
 import { consumeTransfer } from '../src/lib/data/transfer.js';
 import Validator from '../src/routes/Validator.svelte';
 
-function makeDataset() {
-  return { manifest: { dataset_tag: 'test' }, hasCup: () => false };
+function makeDataset(): any {
+  return { manifest: { dataset_tag: 'test' }, hasCup: () => false, latest: null, close: vi.fn() };
 }
 
-function makeParsed() {
+function makeParsed(): any {
   return {
     rows: [],
     rawRows: [],

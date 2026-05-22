@@ -12,7 +12,7 @@ import {
 
 const VALID_CUP = 'G17H03000130001';
 
-function entries() {
+function entries(): any[] {
   return [
     {
       id: 1,

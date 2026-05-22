@@ -27,7 +27,7 @@ repos:
         entry: packages/web/node_modules/.bin/prettier --write
         language: system
         files: ^(packages/web/|tests/fixtures/)
-        types_or: [css, html, javascript, json, markdown, yaml]
+        types_or: [css, html, javascript, json, markdown, ts, tsx, yaml]
 
       - id: svelte-check
         name: svelte-check
@@ -35,6 +35,14 @@ repos:
         language: system
         files: ^packages/web/.*\.(ts|svelte)$
         pass_filenames: false
+
+      - id: web-test-types
+        name: web test type-check
+        entry: bash -c 'cd packages/web && npm run check:tests'
+        language: system
+        files: ^packages/web/.*\.(ts|svelte)$
+        pass_filenames: false
+        stages: [pre-commit, pre-push]
 
       - id: web-coverage
         name: web coverage
