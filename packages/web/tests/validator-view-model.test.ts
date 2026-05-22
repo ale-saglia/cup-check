@@ -1,5 +1,5 @@
-// @ts-nocheck
 import { describe, expect, it } from 'vitest';
+import type { MessageKey } from '../src/i18n/i18n.svelte.js';
 import {
   batchProgressLabel,
   originRowsForResult,
@@ -10,11 +10,19 @@ import {
   sourceSummary,
   uniqueSourceValues,
 } from '../src/lib/core/validator-view-model.js';
+import type { ImportedCupRow } from '../src/lib/core/import-plan.js';
+import type { UniqueResult } from '../src/lib/types.js';
 
-const t = (key: string, values: Record<string, unknown> = {}) =>
+type ResultSource = Pick<UniqueResult, 'inputRow' | 'inputRows'>;
+
+const t = (key: MessageKey, values: Record<string, string | number> = {}) =>
   `${key}${Object.keys(values).length ? `:${JSON.stringify(values)}` : ''}`;
 
-function row(overrides: Record<string, unknown> = {}): any {
+function result(overrides: Partial<ResultSource>): ResultSource {
+  return overrides as ResultSource;
+}
+
+function row(overrides: Partial<ImportedCupRow> = {}): ImportedCupRow {
   return {
     row: 1,
     value: 'G17H03000130001',
@@ -44,17 +52,16 @@ describe('validator view model', () => {
   });
 
   it('restituisce righe sorgente fallback quando non ci sono righe importate', () => {
-    const importedRowsByRow = new Map();
+    const importedRowsByRow = new Map<number, ImportedCupRow>();
 
-    expect(originRowsForResult({ inputRows: [1] }, importedRowsByRow, false)).toEqual([]);
-    expect(sourceRowsForResult({ inputRows: [1, null] }, importedRowsByRow, false)).toEqual([
-      '1',
-      '',
-    ]);
-    expect(sourceRowsForResult({ inputRow: null }, importedRowsByRow, false)).toEqual(['']);
-    expect(sourceButtonLabel({ inputRow: null }, importedRowsByRow, false)).toBe('');
-    expect(sourceButtonLabel({ inputRows: [] }, importedRowsByRow, false)).toBe('-');
-    expect(sourceSummary({ inputRows: [1, 2] }, importedRowsByRow, false, t)).toBe('1, 2');
+    expect(originRowsForResult(result({ inputRows: [1] }), importedRowsByRow, false)).toEqual([]);
+    expect(sourceRowsForResult(result({ inputRows: [1, null] }), importedRowsByRow, false)).toEqual(
+      ['1', ''],
+    );
+    expect(sourceRowsForResult(result({ inputRow: null }), importedRowsByRow, false)).toEqual(['']);
+    expect(sourceButtonLabel(result({ inputRow: null }), importedRowsByRow, false)).toBe('');
+    expect(sourceButtonLabel(result({ inputRows: [] }), importedRowsByRow, false)).toBe('-');
+    expect(sourceSummary(result({ inputRows: [1, 2] }), importedRowsByRow, false, t)).toBe('1, 2');
   });
 
   it('costruisce riepiloghi e dialog fonte da righe importate', () => {
@@ -71,18 +78,22 @@ describe('validator view model', () => {
     ];
     const byRow = new Map(rows.map((item) => [item.row, item]));
 
-    expect(originRowsForResult({ inputRows: [1, 99, null, 3] }, byRow, true)).toEqual([
+    expect(originRowsForResult(result({ inputRows: [1, 99, null, 3] }), byRow, true)).toEqual([
       rows[0],
       rows[2],
     ]);
-    expect(originRowsForResult({ inputRow: 1 }, byRow, true)).toEqual([rows[0]]);
-    expect(sourceRowsForResult({ inputRows: [1, 2, 3] }, byRow, true)).toEqual(['2', '3', '4']);
-    expect(sourceButtonLabel({ inputRows: [1, 2] }, byRow, true)).toBe('2++');
-    expect(sourceSummary({ inputRows: [1, 3] }, byRow, true, t)).toBe(
+    expect(originRowsForResult(result({ inputRow: 1 }), byRow, true)).toEqual([rows[0]]);
+    expect(sourceRowsForResult(result({ inputRows: [1, 2, 3] }), byRow, true)).toEqual([
+      '2',
+      '3',
+      '4',
+    ]);
+    expect(sourceButtonLabel(result({ inputRows: [1, 2] }), byRow, true)).toBe('2++');
+    expect(sourceSummary(result({ inputRows: [1, 3] }), byRow, true, t)).toBe(
       'validator.sourceSummaryNoSheet:{"row":2,"file":"a.csv","column":"CUP"} validator.sourceSummarySheet:{"row":4,"file":"b.xlsx","sheet":"Foglio 1","column":"Codice CUP"}',
     );
 
-    expect(sourceDetailTable({ inputRows: [1, 2, 3] }, byRow, true, t)).toEqual({
+    expect(sourceDetailTable(result({ inputRows: [1, 2, 3] }), byRow, true, t)).toEqual({
       columns: ['a.csv', 'b.xlsx'],
       rows: [
         { label: 'validator.sheet', values: ['-', 'Foglio 1'] },
@@ -93,7 +104,7 @@ describe('validator view model', () => {
   });
 
   it('costruisce dialog fonte fallback senza righe importate', () => {
-    expect(sourceDetailTable({ inputRows: [1, 2] }, new Map(), false, t)).toEqual({
+    expect(sourceDetailTable(result({ inputRows: [1, 2] }), new Map(), false, t)).toEqual({
       columns: ['-'],
       rows: [
         { label: 'validator.sheet', values: ['-'] },
@@ -101,7 +112,7 @@ describe('validator view model', () => {
         { label: 'validator.rowPlural', values: ['1, 2'] },
       ],
     });
-    expect(sourceDetailTable({ inputRow: 1 }, new Map(), false, t).rows[2].label).toBe(
+    expect(sourceDetailTable(result({ inputRow: 1 }), new Map(), false, t).rows[2].label).toBe(
       'validator.row',
     );
   });

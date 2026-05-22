@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { Entry } from '../src/lib/types.js';
 import {
   addManualCup,
   clearAllEditing,
@@ -12,12 +13,15 @@ import {
 
 const VALID_CUP = 'G17H03000130001';
 
-function entries(): any[] {
+function entries(): Entry[] {
   return [
     {
       id: 1,
+      file: null,
+      objectUrl: null,
       name: 'uno.pdf',
       status: 'done',
+      source: 'text',
       cups: [
         {
           id: '1-0',
@@ -27,11 +31,16 @@ function entries(): any[] {
           editing: true,
         },
       ],
+      ocrProgress: null,
+      error: null,
     },
     {
       id: 2,
+      file: null,
+      objectUrl: null,
       name: 'due.pdf',
       status: 'done',
+      source: 'text',
       cups: [
         {
           id: '2-0',
@@ -41,6 +50,8 @@ function entries(): any[] {
           editing: false,
         },
       ],
+      ocrProgress: null,
+      error: null,
     },
   ];
 }
