@@ -51,7 +51,7 @@ describe('ocrPdf', () => {
       expect(GlobalWorkerOptions.workerSrc).toBe(
         new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href,
       );
-      return { promise: Promise.resolve(doc) };
+      return { promise: Promise.resolve(doc), destroy: vi.fn().mockResolvedValue(undefined) };
     });
     createWorker.mockResolvedValue(makeWorker());
 
@@ -63,7 +63,10 @@ describe('ocrPdf', () => {
 
   it('crea il worker al primo utilizzo e restituisce il testo delle pagine', async () => {
     const doc = makeDoc(2);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const worker = makeWorker('testo estratto');
     createWorker.mockResolvedValue(worker);
 
@@ -80,12 +83,15 @@ describe('ocrPdf', () => {
     expect(worker.recognize).toHaveBeenCalledTimes(2);
     expect(result.pages).toHaveLength(2);
     expect(result.pages[0]).toBe('testo estratto');
-    expect(doc.destroy).toHaveBeenCalledOnce();
+    expect(getDocument.mock.results[0].value.destroy).toHaveBeenCalledOnce();
   });
 
   it('riutilizza il worker esistente nelle chiamate successive (singleton)', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const worker = makeWorker();
     createWorker.mockResolvedValue(worker);
 
@@ -99,7 +105,10 @@ describe('ocrPdf', () => {
 
   it('terminateOcrWorker termina il singleton e permette di crearne uno nuovo', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const firstWorker = makeWorker('prima');
     const secondWorker = makeWorker('seconda');
     createWorker.mockResolvedValueOnce(firstWorker).mockResolvedValueOnce(secondWorker);
@@ -122,7 +131,10 @@ describe('ocrPdf', () => {
 
   it('terminateOcrWorker assorbe errori da worker in bootstrap fallito', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockRejectedValue(new Error('worker non disponibile'));
 
     const { ocrPdf, terminateOcrWorker } = await loadOcr();
@@ -134,7 +146,10 @@ describe('ocrPdf', () => {
 
   it('chiama onProgress con ocrLoading=true prima del caricamento worker, poi false', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -148,7 +163,10 @@ describe('ocrPdf', () => {
 
   it('non chiama onProgress con ocrLoading=true se il worker è già caricato', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -162,7 +180,10 @@ describe('ocrPdf', () => {
 
   it('funziona senza callback onProgress (nessuna eccezione)', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -171,7 +192,10 @@ describe('ocrPdf', () => {
 
   it('include fileName e totalPages in ogni callback onProgress', async () => {
     const doc = makeDoc(2);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -189,7 +213,10 @@ describe('ocrPdf', () => {
       getPage: vi.fn().mockResolvedValue({ getViewport, render }),
       destroy: vi.fn().mockResolvedValue(undefined),
     };
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -200,7 +227,10 @@ describe('ocrPdf', () => {
 
   it('passa un HTMLCanvasElement a worker.recognize', async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const worker = makeWorker();
     createWorker.mockResolvedValue(worker);
 
@@ -212,7 +242,10 @@ describe('ocrPdf', () => {
 
   it("restituisce le pagine nell'ordine corretto per documenti multi-pagina", async () => {
     const doc = makeDoc(3);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const worker = {
       recognize: vi
         .fn()
@@ -230,7 +263,10 @@ describe('ocrPdf', () => {
 
   it('onProgress riporta numeri di pagina sequenziali (worker già caricato)', async () => {
     const doc = makeDoc(3);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -243,7 +279,10 @@ describe('ocrPdf', () => {
   });
 
   it("propaga l'errore se getDocument rigetta", async () => {
-    getDocument.mockImplementation(() => ({ promise: Promise.reject(new Error('PDF corrotto')) }));
+    getDocument.mockImplementation(() => ({
+      promise: Promise.reject(new Error('PDF corrotto')),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    }));
     createWorker.mockResolvedValue(makeWorker());
 
     const { ocrPdf } = await loadOcr();
@@ -252,7 +291,10 @@ describe('ocrPdf', () => {
 
   it("propaga l'errore se worker.recognize rigetta", async () => {
     const doc = makeDoc(1);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const worker = { recognize: vi.fn().mockRejectedValue(new Error('OCR fallito')) };
     createWorker.mockResolvedValue(worker);
 

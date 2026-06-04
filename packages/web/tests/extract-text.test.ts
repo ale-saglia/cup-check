@@ -39,7 +39,7 @@ describe('extractPdfText', () => {
       expect(GlobalWorkerOptions.workerSrc).toBe(
         new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href,
       );
-      return { promise: Promise.resolve(doc) };
+      return { promise: Promise.resolve(doc), destroy: vi.fn().mockResolvedValue(undefined) };
     });
 
     await extractPdfText(fakeFile);
@@ -50,7 +50,10 @@ describe('extractPdfText', () => {
   it('estrae testo da un PDF nativo monopagina e segnala needsOcr=false', async () => {
     const text = 'CUP J91B21006430001 progetto infrastruttura comunale finanziato da fondi europei';
     const doc = makeDoc([text]);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
 
     const result = await extractPdfText(fakeFile);
 
@@ -58,12 +61,15 @@ describe('extractPdfText', () => {
     expect(result.pages[0]).toContain('J91B21006430001');
     expect(result.totalChars).toBe(result.pages[0].length);
     expect(result.needsOcr).toBe(false);
-    expect(doc.destroy).toHaveBeenCalledOnce();
+    expect(getDocument.mock.results[0].value.destroy).toHaveBeenCalledOnce();
   });
 
   it('segnala needsOcr=true quando il testo estratto è scarso (<40 caratteri/pagina)', async () => {
     const doc = makeDoc(['x']);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
 
     const result = await extractPdfText(fakeFile);
 
@@ -75,7 +81,10 @@ describe('extractPdfText', () => {
     const p1 = 'Pagina uno con CUP J91B21006430001 e testo aggiuntivo sufficiente verifica';
     const p2 = 'Pagina due con CUP H72B21000150007 e ulteriore contenuto testuale estratto';
     const doc = makeDoc([p1, p2]);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
 
     const result = await extractPdfText(fakeFile);
 
@@ -101,7 +110,10 @@ describe('extractPdfText', () => {
       }),
       destroy: vi.fn().mockResolvedValue(undefined),
     };
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
 
     const result = await extractPdfText(fakeFile);
 
@@ -111,13 +123,19 @@ describe('extractPdfText', () => {
 
   it('riutilizza il modulo pdfjs già caricato nelle chiamate successive (singleton)', async () => {
     const doc1 = makeDoc(['testo sufficiente per non attivare il percorso OCR nel documento uno']);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc1) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc1),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     await extractPdfText(fakeFile);
 
     const doc2 = makeDoc([
       'secondo documento con abbondante testo sufficiente per il test cache singleton',
     ]);
-    getDocument.mockReturnValue({ promise: Promise.resolve(doc2) });
+    getDocument.mockReturnValue({
+      promise: Promise.resolve(doc2),
+      destroy: vi.fn().mockResolvedValue(undefined),
+    });
     const result = await extractPdfText(fakeFile);
 
     expect(getDocument).toHaveBeenCalledTimes(2);
