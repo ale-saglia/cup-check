@@ -24,7 +24,10 @@ function getOcrWorker(): Promise<Worker> {
   if (!_workerPromise) {
     _workerPromise = (async () => {
       const { createWorker } = await import('tesseract.js');
-      return createWorker('ita+eng', 1, tesseractPaths(), { user_words_suffix: '' } as Record<string, string>);
+      return createWorker('ita+eng', 1, tesseractPaths(), { user_words_suffix: '' } as Record<
+        string,
+        string
+      >);
     })();
   }
   return _workerPromise;
@@ -49,35 +52,39 @@ export async function ocrPdf(
 ): Promise<{ pages: string[] }> {
   const { getDocument } = await loadPdfjs();
   const arrayBuffer = await file.arrayBuffer();
-  const doc = await getDocument({ data: new Uint8Array(arrayBuffer) }).promise;
-  const totalPages = doc.numPages;
+  const loadingTask = getDocument({ data: new Uint8Array(arrayBuffer) });
+  try {
+    const doc = await loadingTask.promise;
+    const totalPages = doc.numPages;
 
-  const needsLoad = !_workerPromise;
-  onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: needsLoad });
+    const needsLoad = !_workerPromise;
+    onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: needsLoad });
 
-  const worker = await getOcrWorker();
+    const worker = await getOcrWorker();
 
-  if (needsLoad) {
-    onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: false });
+    if (needsLoad) {
+      onProgress?.({ fileName: file.name, page: 0, totalPages, ocrLoading: false });
+    }
+
+    const pages: string[] = [];
+    for (let i = 1; i <= totalPages; i++) {
+      const page = await doc.getPage(i);
+      const viewport = page.getViewport({ scale: 2.0 });
+      const canvas = document.createElement('canvas');
+      canvas.width = viewport.width;
+      canvas.height = viewport.height;
+      await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
+
+      const {
+        data: { text },
+      } = await worker.recognize(canvas);
+      pages.push(text);
+
+      onProgress?.({ fileName: file.name, page: i, totalPages, ocrLoading: false });
+    }
+
+    return { pages };
+  } finally {
+    await loadingTask.destroy();
   }
-
-  const pages: string[] = [];
-  for (let i = 1; i <= totalPages; i++) {
-    const page = await doc.getPage(i);
-    const viewport = page.getViewport({ scale: 2.0 });
-    const canvas = document.createElement('canvas');
-    canvas.width = viewport.width;
-    canvas.height = viewport.height;
-    await page.render({ canvas, canvasContext: canvas.getContext('2d')!, viewport }).promise;
-
-    const {
-      data: { text },
-    } = await worker.recognize(canvas);
-    pages.push(text);
-
-    onProgress?.({ fileName: file.name, page: i, totalPages, ocrLoading: false });
-  }
-
-  await doc.destroy();
-  return { pages };
 }
