@@ -11,6 +11,7 @@ const preparePinnedWebActionPath = path.join(
 );
 const releaseWebWorkflowPath = path.join(repoRoot, '.github/workflows/release-web.yml');
 const releasePythonWorkflowPath = path.join(repoRoot, '.github/workflows/release-python.yml');
+const releaseDatasetWorkflowPath = path.join(repoRoot, '.github/workflows/release-dataset.yml');
 
 function loadYaml(filePath) {
   return yaml.load(fs.readFileSync(filePath, 'utf8'));
@@ -44,6 +45,24 @@ describe('deploy-pages workflow', () => {
     expect(downloadStep).toBeDefined();
     expect(downloadStep.run).toContain('--pattern "dataset-manifest.json"');
     expect(signatureDownload).toContain('--dir "dist/pages-root/datasets/${TAG}"');
+  });
+
+  it('scarica il dump OpenCUP con retry prima di buildare il dataset', () => {
+    const releaseDataset = loadYaml(releaseDatasetWorkflowPath);
+    const buildSteps = releaseDataset.jobs.build.steps;
+    const resolveStep = buildSteps.find((step) => step.name === 'Resolve OpenCUP projects URL');
+    const downloadStep = buildSteps.find((step) => step.name === 'Download OpenCUP dump');
+    const buildStep = buildSteps.find((step) => step.name === 'Build dataset');
+
+    expect(releaseDataset.env.OPENCUP_OPEN_DATA_URL).toContain('accesso-agli-open-data');
+    expect(releaseDataset.env.OPENCUP_PROJECTS_URL).toContain('OpendataProgetti.zip');
+    expect(resolveStep.run).toContain('OpendataProgetti.zip');
+    expect(resolveStep.run).toContain('projects_url=');
+    expect(downloadStep.run).toContain('curl "${{ steps.opencup.outputs.projects_url }}"');
+    expect(downloadStep.run).toContain('--retry-all-errors');
+    expect(downloadStep.run).toContain('--continue-at -');
+    expect(downloadStep.run).toContain('--output data/OpendataProgetti.zip');
+    expect(buildStep.run).toContain('--skip-if-exists');
   });
 
   it('isola il checkout fallback del web pinnato dal workspace del caller', () => {

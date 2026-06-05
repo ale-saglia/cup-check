@@ -16,6 +16,8 @@ permissions:
 
 env:
   DATASET_RETENTION_MONTHS: 3
+  OPENCUP_OPEN_DATA_URL: https://www.opencup.gov.it/portale/web/opencup/accesso-agli-open-data
+  OPENCUP_PROJECTS_URL: https://www.opencup.gov.it/portale/documents/21195/299152/OpendataProgetti.zip/
 
 concurrency:
   group: pages
@@ -43,7 +45,7 @@ jobs:
 
       - uses: actions/setup-python@a309ff8b426b58ec0e2a45f0f869d46889d02405 # v6
         with:
-          python-version: "3.12"
+          python-version: '3.12'
 
       - name: Install dependencies
         run: uv sync --locked
@@ -64,9 +66,64 @@ jobs:
           echo "dataset_tag=${DATASET_TAG}" >> "$GITHUB_OUTPUT"
           echo "cup_index_base_url=${CUP_INDEX_BASE_URL}" >> "$GITHUB_OUTPUT"
 
+      - name: Resolve OpenCUP projects URL
+        id: opencup
+        run: |
+          python - <<'PY'
+          import os
+          from html.parser import HTMLParser
+          from urllib.parse import urljoin
+          from urllib.request import Request, urlopen
+
+          class ProjectsLinkParser(HTMLParser):
+              def __init__(self):
+                  super().__init__()
+                  self.urls = []
+
+              def handle_starttag(self, tag, attrs):
+                  if tag != 'a':
+                      return
+                  href = dict(attrs).get('href')
+                  if href and 'OpendataProgetti.zip' in href:
+                      self.urls.append(href)
+
+          fallback_url = os.environ['OPENCUP_PROJECTS_URL']
+          page_url = os.environ['OPENCUP_OPEN_DATA_URL']
+          projects_url = fallback_url
+          try:
+              request = Request(page_url, headers={'User-Agent': 'cup-check-dataset-release/1'})
+              with urlopen(request, timeout=60) as response:
+                  html = response.read().decode('utf-8', errors='replace')
+              parser = ProjectsLinkParser()
+              parser.feed(html)
+              if parser.urls:
+                  projects_url = urljoin(page_url, parser.urls[0])
+          except OSError as exc:
+              print(f'OpenCUP projects URL discovery failed, using fallback: {exc}')
+          print(f'projects_url={projects_url}')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as output:
+              output.write(f'projects_url={projects_url}\n')
+          PY
+
+      - name: Download OpenCUP dump
+        run: |
+          set -euo pipefail
+          mkdir -p data
+          curl "${{ steps.opencup.outputs.projects_url }}" \
+            --fail \
+            --location \
+            --retry 8 \
+            --retry-all-errors \
+            --retry-delay 30 \
+            --connect-timeout 60 \
+            --max-time 7200 \
+            --continue-at - \
+            --output data/OpendataProgetti.zip
+
       - name: Build dataset
         run: |
           uv run python ../../scripts/build_dataset.py \
+            --skip-if-exists \
             "${{ steps.vars.outputs.snapshot_date }}" \
             "../../dist/dataset" \
             "${{ steps.vars.outputs.cup_index_base_url }}" \
@@ -77,7 +134,7 @@ jobs:
 
       - name: Sign manifest with cosign (keyless OIDC)
         env:
-          COSIGN_YES: "true"
+          COSIGN_YES: 'true'
         run: |
           cosign sign-blob \
             --bundle dist/dataset/dataset-manifest.json.sigstore.json \
