@@ -60,6 +60,8 @@ describe('deploy-pages workflow', () => {
     expect(resolveStep.run).toContain('projects_url=');
     expect(downloadStep.run).toContain('curl "${{ steps.opencup.outputs.projects_url }}"');
     expect(downloadStep.run).toContain('--retry-all-errors');
+    expect(downloadStep.run).toContain('--speed-limit 262144');
+    expect(downloadStep.run).toContain('--speed-time 300');
     expect(downloadStep.run).toContain('--continue-at -');
     expect(downloadStep.run).toContain('--output data/OpendataProgetti.zip');
     expect(buildStep.run).toContain('--skip-if-exists');

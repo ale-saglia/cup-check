@@ -116,6 +116,8 @@ jobs:
             --retry-all-errors \
             --retry-delay 30 \
             --connect-timeout 60 \
+            --speed-limit 262144 \
+            --speed-time 300 \
             --max-time 7200 \
             --continue-at - \
             --output data/OpendataProgetti.zip
