@@ -62,9 +62,11 @@ jobs:
           DATASET_TAG="dataset-${SNAPSHOT_DATE:0:7}"
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           CUP_INDEX_BASE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${REPO_NAME}/datasets/${DATASET_TAG}"
-          echo "snapshot_date=${SNAPSHOT_DATE}" >> "$GITHUB_OUTPUT"
-          echo "dataset_tag=${DATASET_TAG}" >> "$GITHUB_OUTPUT"
-          echo "cup_index_base_url=${CUP_INDEX_BASE_URL}" >> "$GITHUB_OUTPUT"
+          {
+            echo "snapshot_date=${SNAPSHOT_DATE}"
+            echo "dataset_tag=${DATASET_TAG}"
+            echo "cup_index_base_url=${CUP_INDEX_BASE_URL}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Resolve OpenCUP projects URL
         id: opencup
