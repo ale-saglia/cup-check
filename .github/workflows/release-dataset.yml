@@ -34,11 +34,11 @@ jobs:
       dataset_tag: ${{ steps.vars.outputs.dataset_tag }}
       snapshot_date: ${{ steps.vars.outputs.snapshot_date }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
         with:
           fetch-depth: 0
 
-      - uses: astral-sh/setup-uv@08807647e7069bb48b6ef5acd8ec9567f424441b # v8.1.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39 # v8.2.0
         with:
           enable-cache: true
           cache-dependency-glob: packages/cup_check/uv.lock
@@ -62,9 +62,11 @@ jobs:
           DATASET_TAG="dataset-${SNAPSHOT_DATE:0:7}"
           REPO_NAME="${GITHUB_REPOSITORY#*/}"
           CUP_INDEX_BASE_URL="https://${GITHUB_REPOSITORY_OWNER}.github.io/${REPO_NAME}/datasets/${DATASET_TAG}"
-          echo "snapshot_date=${SNAPSHOT_DATE}" >> "$GITHUB_OUTPUT"
-          echo "dataset_tag=${DATASET_TAG}" >> "$GITHUB_OUTPUT"
-          echo "cup_index_base_url=${CUP_INDEX_BASE_URL}" >> "$GITHUB_OUTPUT"
+          {
+            echo "snapshot_date=${SNAPSHOT_DATE}"
+            echo "dataset_tag=${DATASET_TAG}"
+            echo "cup_index_base_url=${CUP_INDEX_BASE_URL}"
+          } >> "$GITHUB_OUTPUT"
 
       - name: Resolve OpenCUP projects URL
         id: opencup
@@ -230,7 +232,7 @@ jobs:
       name: github-pages
       url: ${{ steps.deployment.outputs.page_url }}
     steps:
-      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
+      - uses: actions/checkout@df4cb1c069e1874edd31b4311f1884172cec0e10 # v6
 
       - name: Prepare pinned web
         uses: ./.github/actions/prepare-pinned-web
