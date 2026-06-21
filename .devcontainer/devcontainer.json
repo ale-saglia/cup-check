@@ -26,6 +26,10 @@
       }
     }
   },
+  "mounts": [
+    "source=cup-check-gh-config,target=/home/vscode/.config/gh,type=volume",
+    "source=cup-check-vscode-extensions,target=/home/vscode/.vscode-server/extensions,type=volume"
+  ],
   "containerEnv": {},
   "forwardPorts": [5173, 5900, 9000],
   "portsAttributes": {
