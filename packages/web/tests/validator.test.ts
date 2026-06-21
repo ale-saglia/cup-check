@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import type { Outcome, Rule, ValidationResult, Warning } from '../src/lib/types.js';
 import {
   OUTCOMES,

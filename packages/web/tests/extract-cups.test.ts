@@ -1,7 +1,7 @@
 import fs from 'node:fs';
 import path from 'node:path';
 import { describe, expect, it } from 'vitest';
-import yaml from 'js-yaml';
+import * as yaml from 'js-yaml';
 import { extractCupsFromText, extractCupsFromPages } from '../src/lib/pdf/extract-cups.js';
 
 const fixtureDir = path.resolve(import.meta.dirname, '../../../tests/fixtures');

@@ -177,7 +177,7 @@
 
   // --- Dataset ---
 
-  async function initializeDataset(signal?: AbortSignal): Promise<Dataset | null> {
+  async function initializeDataset(signal: AbortSignal | undefined = undefined): Promise<Dataset | null> {
     setDatasetBar('');
     try {
       const loaded = await loadLatestDataset({
