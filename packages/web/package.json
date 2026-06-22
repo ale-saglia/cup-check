@@ -29,7 +29,7 @@
     "@codecov/vite-plugin": "^2.0.1",
     "@eslint/js": "^10.0.1",
     "@sveltejs/vite-plugin-svelte": "^7.1.2",
-    "@testing-library/svelte": "^5.4.0",
+    "@testing-library/svelte": "^5.4.1",
     "@types/papaparse": "^5.5.2",
     "@types/sql.js": "^1.4.11",
     "@vitest/coverage-v8": "^4.1.9",
