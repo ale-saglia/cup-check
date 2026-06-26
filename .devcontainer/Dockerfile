@@ -39,4 +39,6 @@ RUN rm -f /etc/apt/sources.list.d/yarn.list /etc/apt/sources.list.d/yarn*.list /
   && ln -sf /usr/bin/chromium /usr/local/bin/google-chrome \
   && ln -sf /usr/share/novnc/vnc.html /usr/share/novnc/index.html \
   && apt-get clean \
-  && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/* \
+  && mkdir -p /home/vscode/.vscode-server/extensions /home/vscode/.config/gh \
+  && chown -R vscode:vscode /home/vscode/.vscode-server /home/vscode/.config
