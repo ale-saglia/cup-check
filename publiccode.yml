@@ -1,0 +1,97 @@
+publiccodeYmlVersion: "0"
+
+name: cup-check
+url: https://github.com/ale-saglia/cup-check.git
+landingURL: https://ale-saglia.github.io/cup-check/
+softwareVersion: "0.5.1"
+releaseDate: "2026-05-21"
+logo: packages/web/public/favicon.svg
+
+platforms:
+  - web
+
+categories:
+  - data-analytics
+  - data-collection
+
+roadmap: https://github.com/ale-saglia/cup-check/blob/main/docs/roadmap.md
+developmentStatus: beta
+softwareType: standalone/web
+
+intendedAudience:
+  countries:
+    - IT
+  scope:
+    - government
+    - finance-and-economic-development
+    - local-authorities
+
+description:
+  it:
+    localisedName: cup-check
+    shortDescription: Controllo locale dei codici CUP con lookup OpenCUP ed estrazione da documenti amministrativi.
+    longDescription: >-
+      cup-check aiuta funzionari pubblici, soggetti attuatori e team tecnici a
+      controllare liste di Codici Unici di Progetto prima di rendicontazioni e
+      caricamenti amministrativi. La web app elabora localmente file CSV e XLSX,
+      estrae CUP da fatture PDF e XML e confronta i codici formalmente validi con
+      uno snapshot statico di OpenCUP. I risultati sono cautelativi e non
+      sostituiscono i canali ufficiali del Sistema CUP o OpenCUP. È disponibile
+      anche una libreria Python per integrare gli stessi controlli in script e
+      applicazioni.
+    documentation: https://github.com/ale-saglia/cup-check/blob/main/docs/user-guide.md
+    features:
+      - Controllo in batch di CUP da file CSV e XLSX o da testo incollato
+      - Verifica formale e normalizzazione dei codici CUP
+      - Confronto con uno snapshot statico e versionato di OpenCUP
+      - Estrazione di CUP da fatture PDF con OCR locale opzionale
+      - Estrazione di CUP da fatture elettroniche XML FatturaPA
+      - Esportazione CSV dei risultati con tracciabilità della sorgente
+      - Elaborazione locale nel browser e funzionamento offline-first
+      - Libreria Python per script, pipeline e integrazioni applicative
+    screenshots:
+      - docs/assets/screenshot.png
+  en:
+    localisedName: cup-check
+    shortDescription: Local-first CUP code validation with OpenCUP lookup and extraction from administrative documents.
+    longDescription: >-
+      cup-check helps public officials, project owners and technical teams review
+      Italian Unique Project Codes before administrative reporting and data
+      submissions. The web application processes CSV and XLSX files locally,
+      extracts CUP codes from PDF and XML invoices, and compares formally valid
+      codes with a static OpenCUP snapshot. Results are intentionally cautious
+      and do not replace the official CUP System or OpenCUP channels. A Python
+      library is also available for integrating the same checks into scripts and
+      applications.
+    features:
+      - Batch checking from CSV and XLSX files or pasted text
+      - Formal CUP validation and normalization
+      - Lookup against a static and versioned OpenCUP snapshot
+      - CUP extraction from PDF invoices with optional local OCR
+      - CUP extraction from FatturaPA XML electronic invoices
+      - CSV result export with source traceability
+      - Local browser processing with offline-first operation
+      - Python library for scripts, pipelines and application integrations
+    screenshots:
+      - docs/assets/screenshot.png
+
+legal:
+  license: EUPL-1.2
+  mainCopyrightOwner: Alessandro Saglia
+
+maintenance:
+  type: community
+  contacts:
+    - name: Alessandro Saglia
+
+localisation:
+  localisationReady: true
+  availableLanguages:
+    - it
+    - en
+
+dependsOn:
+  open:
+    - name: Python
+      versionMin: "3.12"
+      optional: true
