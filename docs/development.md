@@ -53,6 +53,12 @@ dataset OpenCUP è in [Processo di release](release-process.md).
 
 ## Svelte 5 — note e gotcha
 
+### Aggiornamenti TypeScript
+
+Il progetto usa TypeScript 6, compatibile con `typescript-eslint` e `svelte-check`.
+Dependabot propone gli aggiornamenti del compilatore in PR separate dal gruppo npm,
+così una migrazione della toolchain non blocca gli altri aggiornamenti.
+
 ### Identità dei proxy reattivi con `$state`
 
 Quando un plain object viene pushato in **due array `$state` distinti**, Svelte crea due proxy reattivi separati. Mutazioni fatte tramite il proxy di un array non aggiornano i dipendenti dell'altro.

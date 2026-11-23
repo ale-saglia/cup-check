@@ -35,6 +35,10 @@ Vite non dichiara un `target` esplicito; la build produce ES modules nativi (equ
 
 ### Polyfill
 
+La web app carica la build `legacy` di pdf.js e il relativo worker dalla stessa
+versione di `pdfjs-dist`. Questa build include i polyfill delle API JavaScript
+moderne richieste dal parser PDF, compresi gli iterator helper assenti in Chromium 109.
+
 L'IIFE in `src/polyfills.js` è iniettato da Vite in `<head>` prima di qualsiasi modulo e anteposto al worker pdf.js. Copre le API mancanti nei browser pre-2023:
 
 | API                                       | Introdotta nativamente |
