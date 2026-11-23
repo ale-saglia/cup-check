@@ -6,7 +6,7 @@ import { readFileSync, readdirSync } from 'node:fs';
 import { dirname, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/build/pdf.worker.min.mjs';
+const pdfjsWorkerSrc = 'node_modules/pdfjs-dist/legacy/build/pdf.worker.min.mjs';
 
 const webDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(webDir, '../..');
@@ -73,7 +73,6 @@ export default defineConfig({
     environment: 'node',
     coverage: {
       provider: 'v8',
-      all: true,
       include: ['src/**/*.{js,ts,svelte}'],
       reporter: ['text', 'lcov'],
       reportsDirectory: 'coverage',

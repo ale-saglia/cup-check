@@ -113,7 +113,7 @@ describe('layout: escaping voci menu', () => {
     document.body.appendChild(root);
     mountFresh(root);
 
-    const html = root.querySelector('.nav-menu-list').innerHTML;
+    const html = root.querySelector('.nav-menu-list')!.innerHTML;
     expect(html).not.toContain('<script>');
     expect(html).toContain('&lt;script&gt;');
     expect(html).not.toContain('"><img');

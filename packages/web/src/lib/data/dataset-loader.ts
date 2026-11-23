@@ -256,7 +256,7 @@ async function initDefaultSql(options?: Record<string, unknown>) {
     // @ts-expect-error — Vite URL import, no TS declarations
     import('sql.js/dist/sql-wasm.wasm?url'),
   ]);
-  return initSqlJs({ locateFile: () => sqlWasmUrl, ...options });
+  return initSqlJs({ useOldExtensionFunctions: true, locateFile: () => sqlWasmUrl, ...options });
 }
 
 async function downloadCupIndex(fetchFn: FetchFn, cupIndex: DatasetCupIndex, onProgress: (p: Omit<DownloadProgress, 'datasetTag'>) => void, signal?: AbortSignal): Promise<Uint8Array> {
@@ -352,7 +352,7 @@ async function readResponseBytes(response: Response, onBytes: (n: number) => voi
   }
 
   const reader = response.body.getReader();
-  const chunks = [];
+  const chunks: Uint8Array[] = [];
   let totalSize = 0;
 
   while (true) {

@@ -1,9 +1,12 @@
-let _pdfjsPromise: Promise<typeof import('pdfjs-dist')> | null = null;
+let _pdfjsPromise: Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs')> | null = null;
 
-export function loadPdfjs(): Promise<typeof import('pdfjs-dist')> {
+export function loadPdfjs(): Promise<typeof import('pdfjs-dist/legacy/build/pdf.mjs')> {
   if (!_pdfjsPromise) {
-    _pdfjsPromise = import('pdfjs-dist').then((pdfjs) => {
-      pdfjs.GlobalWorkerOptions.workerSrc = new URL('pdfjs/pdf.worker.min.mjs', document.baseURI).href;
+    _pdfjsPromise = import('pdfjs-dist/legacy/build/pdf.mjs').then((pdfjs) => {
+      pdfjs.GlobalWorkerOptions.workerSrc = new URL(
+        'pdfjs/pdf.worker.min.mjs',
+        document.baseURI,
+      ).href;
       return pdfjs;
     });
   }
