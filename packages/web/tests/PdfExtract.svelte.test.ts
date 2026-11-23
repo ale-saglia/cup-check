@@ -7,7 +7,9 @@ import { flushSync } from 'svelte';
 
 const mockGlobalWorkerOptions = { workerSrc: '' };
 
-vi.mock('pdfjs-dist', () => ({ GlobalWorkerOptions: mockGlobalWorkerOptions }));
+vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
+  GlobalWorkerOptions: mockGlobalWorkerOptions,
+}));
 vi.mock('../src/lib/pdf/extract-text.js', () => ({ extractPdfText: vi.fn() }));
 vi.mock('../src/lib/pdf/ocr.js', () => ({ ocrPdf: vi.fn(), terminateOcrWorker: vi.fn() }));
 vi.mock('../src/lib/pdf/extract-cups.js', () => ({ extractCupsFromPages: vi.fn() }));

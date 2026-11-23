@@ -3,9 +3,9 @@
 
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { extractPdfText } from '../src/lib/pdf/extract-text.js';
-import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist';
+import { getDocument, GlobalWorkerOptions } from 'pdfjs-dist/legacy/build/pdf.mjs';
 
-vi.mock('pdfjs-dist', () => ({
+vi.mock('pdfjs-dist/legacy/build/pdf.mjs', () => ({
   GlobalWorkerOptions: { workerSrc: '' },
   getDocument: vi.fn(),
 }));

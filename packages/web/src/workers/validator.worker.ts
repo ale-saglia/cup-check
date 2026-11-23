@@ -1,4 +1,4 @@
-import type { Outcome, UniqueResult } from '../lib/types.js';
+import type { Outcome, UniqueResult, ValidationResult } from '../lib/types.js';
 import { uniqueResultsByCup } from '../lib/core/results.js';
 import { OUTCOMES, validateCup } from '../lib/core/validator.js';
 import type { BatchInputRow, BatchProgress } from '../lib/core/validation-worker.js';
@@ -66,7 +66,7 @@ async function runBatch(message: StartMessage) {
     chunkSize,
     lookupTimeoutMs = DEFAULT_LOOKUP_TIMEOUT_MS,
   } = message;
-  const raw = [];
+  const raw: ValidationResult[] = [];
 
   postProgress('validate', 0, rows.length);
   for (let index = 0; index < rows.length; index += chunkSize) {

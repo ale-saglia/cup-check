@@ -19,6 +19,9 @@ updates:
       npm-dependencies:
         patterns:
           - "*"
+        # Il compilatore richiede una migrazione coordinata con lint e svelte-check.
+        exclude-patterns:
+          - "typescript"
 
   - package-ecosystem: "pip"
     directory: "/packages/cup_check"
